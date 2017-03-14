@@ -1,0 +1,4 @@
+**/chain_db/
+solc
+build
+.idea
