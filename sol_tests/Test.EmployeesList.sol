@@ -70,7 +70,7 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
     assertEq(isNew, true);
     sere = l.getSerializedEmployee(address(emp2));
     assembly { emp := sere }
-    assertEq(uint(emp.idx-1), 3, "employee 2 indexes must match");
+    assertEq(uint(emp.idx-1), 2, "employee 2a indexes must match");
   }
 
   function testPersistence() logs_gas() {
