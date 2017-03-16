@@ -20,6 +20,8 @@ contract ESOP is ESOPTypes, Upgradeable
   uint public newEmployeePoolPromille;
   // total options in base pool
   uint public totalOptions;
+  // CEO address
+  address public addressOfCEO;
 
   // STATE
   // options that remain to be assigned
@@ -55,6 +57,26 @@ contract ESOP is ESOPTypes, Upgradeable
     if (esopState != ESOPState.Conversion)
       throw;
     _;
+  }
+
+  modifier onlyCEO() {
+    if (addressOfCEO != msg.sender)
+      throw;
+    _;
+  }
+
+  function changeCEO(address newCEO)
+    external
+    onlyOwner
+  {
+    if (newCEO != address(0)) addressOfCEO = newCEO;
+  }
+
+  function distributeAndReturnToPool(uint32 options, uint16 fromIdx)
+    private
+    returns (uint)
+  {
+
   }
 
   function removeEmployeesWithExpiredSignatures()
@@ -144,7 +166,7 @@ contract ESOP is ESOPTypes, Upgradeable
   function addNewEmployeeToESOP(address e, uint32 vestingStarts, uint32 timeToSign, uint32 extraOptions)
     external
     onlyESOPOpen
-    onlyOwner
+    onlyCEO
     returns (ReturnCodes)
   {
     // do not add twice
@@ -167,7 +189,7 @@ contract ESOP is ESOPTypes, Upgradeable
   function addNewEmployeesToESOP(address[] emps, uint32 vestingStarts, uint32 timeToSign)
     external
     onlyESOPOpen
-    onlyOwner
+    onlyCEO
     returns (ReturnCodes)
   {
     // recover options for employees with expired signatures
@@ -192,7 +214,7 @@ contract ESOP is ESOPTypes, Upgradeable
   function addEmployeeWithExtraOptions(address e, uint32 vestingStarts, uint32 timeToSign, uint32 extraOptions)
     external
     onlyESOPOpen
-    onlyOwner
+    onlyCEO
     returns (ReturnCodes)
   {
     // do not add twice
@@ -228,7 +250,7 @@ contract ESOP is ESOPTypes, Upgradeable
   function terminateEmployee(address e, uint32 terminatedAt, uint8 terminationType)
     external
     onlyESOPOpen
-    onlyOwner
+    onlyCEO
     hasEmployee(e)
     returns (ReturnCodes)
   {
@@ -269,7 +291,7 @@ contract ESOP is ESOPTypes, Upgradeable
   function increaseEmployeeOptions(address e, uint32 optionsDelta)
     external
     onlyESOPOpen
-    onlyOwner
+    onlyCEO
     hasEmployee(e)
     returns (ReturnCodes)
   {
@@ -292,7 +314,7 @@ contract ESOP is ESOPTypes, Upgradeable
   function esopConversionEvent(uint32 convertedAt, uint32 conversionDeadline , IOptionsConverter conversionProxy )
     external
     onlyESOPOpen
-    onlyOwner
+    onlyCEO
     returns (ReturnCodes)
   {
     // prevent stupid things, give at least two weeks for employees to convert
@@ -406,7 +428,7 @@ contract ESOP is ESOPTypes, Upgradeable
   }
 
 
-
+  // todo: make parameters explicit
   function ESOP() {
     // esopState = ESOPState.Open; // thats initial value
     employees = new EmployeesList();
@@ -417,5 +439,6 @@ contract ESOP is ESOPTypes, Upgradeable
     newEmployeePoolPromille = 100;
     totalOptions = 100000;
     remainingOptions = totalOptions;
+    addressOfCEO = owner;
   }
 }
