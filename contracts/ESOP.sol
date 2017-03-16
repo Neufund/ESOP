@@ -65,6 +65,10 @@ contract ESOP is ESOPTypes, Upgradeable
     _;
   }
 
+  function divRound(uint v, uint d) private returns(uint) {
+    return v/d + (v % d >= d/2 ? 1: 0);
+  }
+
   function changeCEO(address newCEO)
     external
     onlyOwner
@@ -72,11 +76,29 @@ contract ESOP is ESOPTypes, Upgradeable
     if (newCEO != address(0)) addressOfCEO = newCEO;
   }
 
-  function distributeAndReturnToPool(uint32 options, uint16 fromIdx)
+  function distributeAndReturnToPool(uint distributedOptions, uint idx)
     private
     returns (uint)
   {
-
+    // enumerate all employees that joined later than fromIdx -1 employee
+    Employee memory emp;
+    for(uint i=idx; i< employees.size(); i++) {
+      address ea = employees.addresses(i);
+      if (ea != 0) { // address(0) is deleted employee
+        var sere = employees.getSerializedEmployee(ea);
+        assembly { emp := sere }
+        // skip employees with no options and terminated employees
+        if( emp.options > 0 && ( emp.state == EmployeeState.WaitingForSignature || emp.state == EmployeeState.Employed) ) {
+          // we could handle Terminated employees as well: compute vesting on new options and add vested part to distributedOptions to pass it to others
+          // however we decided not to give more options to terminated employees
+          uint newoptions = calcNewEmployeeOptions(distributedOptions, 1);
+          emp.options += uint32(newoptions);
+          distributedOptions -= uint32(newoptions);
+          employees.setEmployee(ea, emp.vestingStarted, emp.timeToSign, emp.terminatedAt, emp.fadeoutStarts, emp.options, emp.extraOptions, emp.state);
+        }
+      }
+    }
+    return distributedOptions;
   }
 
   function removeEmployeesWithExpiredSignatures()
@@ -93,32 +115,13 @@ contract ESOP is ESOPTypes, Upgradeable
         var sere = employees.getSerializedEmployee(ea);
         assembly { emp := sere }
         if (t > emp.timeToSign) {
-          remainingOptions += emp.options;
+          remainingOptions += distributeAndReturnToPool(emp.options, i+1);
           totalExtraOptions -= emp.extraOptions;
+          // actually this just sets address to 0 so iterator can continue
           employees.removeEmployee(ea);
         }
       }
     }
-
-    // remove all employees that expired their signatures and distribute their options
-    // when we remove employee we have to assign his options to employees that came later
-    // we know who came later as they have less or equal number of options as employee being removed
-    // list of addresses is ordered in sequence of being added
-    /*address[] memory empaddrs;
-    for(uint32 i=0; i< empaddrs.length; i++) {
-      if (currentTime() > timeToSign) {}
-      var (mod_vestingStart, mod_timeToSign, mod_fadeoutStarts, mod_options, mod_empGroupSize, mod_extraOptions, mod_state) = employees.getEmployee(empaddrs[i]);
-      // user has less or same number of options so should be modified
-      if (mod_maxOptions <= maxOptions &&
-          // skip terminated users,they get nothing
-          (mod_state == uint8(EmployeeState.WaitingForSignature) || mod_state == uint8(EmployeeState.Employed))) {
-        // later employees participate in options coming from deleted employee with the same rate they participated
-        // in options from the main pool: participation*remaining
-        uint16 moreOptions = uint16(uint(mod_effPromille) * maxOptions);
-        mod_maxOptions += moreOptions;
-        maxOptions -= moreOptions;
-        employees.setEmployee();
-      }*/
   }
 
   function returnFadeoutToPool()
@@ -142,6 +145,7 @@ contract ESOP is ESOPTypes, Upgradeable
             - calcFadeout(emp.fadeoutStarts, emp.vestingStarted, emp.terminatedAt, emp.extraOptions);
           if (returnedOptions > 0 || returnedExtraOptions > 0) {
             employees.terminateEmployee(employees.addresses(i), emp.terminatedAt, t, EmployeeState.Terminated);
+            // options from fadeout are not distributed to other employees but returned to pool
             remainingOptions += returnedOptions;
             totalExtraOptions -= returnedExtraOptions;
           }
@@ -156,7 +160,7 @@ contract ESOP is ESOPTypes, Upgradeable
     returns (uint options)
   {
     for(uint i=0; i<groupSize; i++) {
-      uint s = (remaining * newEmployeePoolPromille)/1000;
+      uint s = divRound(remaining * newEmployeePoolPromille, 1000);
       options += s;
       remaining -= s;
     }
@@ -186,7 +190,8 @@ contract ESOP is ESOPTypes, Upgradeable
     return ReturnCodes.OK;
   }
 
-  function addNewEmployeesToESOP(address[] emps, uint32 vestingStarts, uint32 timeToSign)
+  // todo: implement group add someday, however func distributeAndReturnToPool gets very complicated
+  /*function addNewEmployeesToESOP(address[] emps, uint32 vestingStarts, uint32 timeToSign)
     external
     onlyESOPOpen
     onlyCEO
@@ -209,7 +214,7 @@ contract ESOP is ESOPTypes, Upgradeable
       remainingOptions -= options;
     }
     return ReturnCodes.OK;
-  }
+  }*/
 
   function addEmployeeWithExtraOptions(address e, uint32 vestingStarts, uint32 timeToSign, uint32 extraOptions)
     external
@@ -238,7 +243,7 @@ contract ESOP is ESOPTypes, Upgradeable
       return ReturnCodes.InvalidEmployeeState;
     uint32 t = currentTime();
     if (t > emp.timeToSign) {
-      remainingOptions += emp.options;
+      remainingOptions += distributeAndReturnToPool(emp.options, emp.idx);
       totalExtraOptions -= emp.extraOptions;
       employees.removeEmployee(msg.sender);
       return ReturnCodes.TooLate;
@@ -283,31 +288,8 @@ contract ESOP is ESOPTypes, Upgradeable
     else
       employees.terminateEmployee(e, terminatedAt, terminatedAt,
         termType == TerminationType.GoodWill ? EmployeeState.GoodWillTerminated: EmployeeState.Terminated);
-    remainingOptions += returnedOptions;
+    remainingOptions += distributeAndReturnToPool(returnedOptions, emp.idx);
     totalExtraOptions -= returnedExtraOptions;
-    return ReturnCodes.OK;
-  }
-
-  function increaseEmployeeOptions(address e, uint32 optionsDelta)
-    external
-    onlyESOPOpen
-    onlyCEO
-    hasEmployee(e)
-    returns (ReturnCodes)
-  {
-    // this method is intended to increase employee options amount if other employee was terminated
-    // sometimes it is not fair to give later employee more than much earlier ones
-    // todo: automatically assign options returned to pool to employees
-    if (optionsDelta > remainingOptions) // also checks for overflows
-      return ReturnCodes.InvalidParameters;
-    var sere = employees.getSerializedEmployee(e);
-    Employee memory emp;
-    assembly { emp := sere }
-    if (emp.state != EmployeeState.Employed)
-      return ReturnCodes.InvalidEmployeeState;
-    emp.options += optionsDelta;
-    remainingOptions -= optionsDelta;
-    employees.setEmployee(e, emp.vestingStarted, emp.timeToSign, emp.terminatedAt, emp.fadeoutStarts, emp.options, emp.extraOptions, emp.state);
     return ReturnCodes.OK;
   }
 
@@ -381,7 +363,7 @@ contract ESOP is ESOPTypes, Upgradeable
     uint32 fadeoutDuration = terminatedAt - vestingStarted;
     uint effectiveFadeoutPromille = timefromTermination > fadeoutDuration ? maxFadeoutPromille : maxFadeoutPromille*timefromTermination/fadeoutDuration;
     // return fadeout amount
-    return options * effectiveFadeoutPromille / 1000;
+    return divRound(options * effectiveFadeoutPromille, 1000);
   }
 
   function calcEffectiveOptionsForEmployee(address e, uint32 calcAtTime)

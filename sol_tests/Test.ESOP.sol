@@ -2,28 +2,8 @@ pragma solidity ^0.4.0;
 
 import 'dapple/test.sol';
 import 'dapple/reporter.sol';
-import "Test.DummyOptionConverter.sol";
-import "./ESOP.sol";
-
-
-contract EmpTester {
-  address _t;
-  function _target( address target ) {
-    _t = target;
-  }
-  function() {
-    if(!_t.call(msg.data)) throw;
-  }
-
-  function employeeConvertsOptions() returns (uint8){
-      return uint8(ESOP(_t).employeeConvertsOptions());
-  }
-
-  function employeeSignsToESOP() returns (uint8){
-      return uint8(ESOP(_t).employeeSignsToESOP());
-  }
-}
-
+import "./Test.DummyOptionConverter.sol";
+import "./Test.Types.sol";
 
 contract TestESOP is Test, Reporter, ESOPTypes
 {
@@ -37,27 +17,6 @@ contract TestESOP is Test, Reporter, ESOPTypes
     emp2 = new Tester();
     esop = new ESOP();
     converter = new DummyOptionsConverter(address(esop));
-  }
-
-  function skipSerializedEmployee() logs_gas()
-  {
-    uint32 ct = esop.currentTime();
-    uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 100));
-    //@info addNewEmployeeToESOP rc `uint8 rc` ct `uint32 ct`
-    EmployeesList employees = esop.employees();
-    // var (_, _1, _2, _3, _4, _5, state) = employees.getEmployee(address(emp1));
-    //info extra `uint16 _5`
-    var sere = employees.getSerializedEmployee(address(emp1));
-    //@info sere `uint[8] sere`
-    Employee memory emp;
-    assembly {
-      //mstore(emp, sere)
-      emp := sere
-    }
-    //@info emp.vestingStarted `uint32 emp.vestingStarted`
-    //@info emp.timeToSign `uint32 emp.timeToSign`
-    //@info emp.extraOptions `uint32 emp.extraOptions`
-    //@info emp.state `uint8 uint8(emp.state)`
   }
 
   function testAccess()
@@ -74,9 +33,104 @@ contract TestESOP is Test, Reporter, ESOPTypes
     // also check if still the same options are calculated on termination
   }
 
+  function prepExpectedOptionsAmount(uint count, ESOP E) returns (uint[])
+  {
+    // calculate option amount for 'count' employees
+    uint[] memory options = new uint[](count);
+    uint remPool = E.totalOptions();
+    for(uint i=0; i<count; i++)
+    {
+      uint o = (remPool * E.newEmployeePoolPromille()) / 1000;
+      options[i] = o;
+      remPool -= o;
+    }
+    return options;
+  }
+
+  function massAddEmployees(uint count, ESOP E) returns (address[])
+  {
+    uint32 ct = esop.currentTime();
+    address[] memory employees = new address[](count);
+    for(uint i=0; i<count; i++) {
+      emp1 = new EmpTester();
+      employees[i] = emp1;
+      E.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0);
+      emp1._target(E);
+    }
+    return employees;
+  }
+
+  function checkOptionsInEmployeeList(EmployeesList employees, uint[] options)
+  {
+    Employee memory emp;
+    uint j=0;
+    uint size = employees.size();
+    assertEq(size, options.length, "optcheck sizes must be equal");
+    for(uint i=0; i< size; i++) {
+      address ea = employees.addresses(i);
+      if (ea != 0) { // address(0) is deleted employee
+        var sere = employees.getSerializedEmployee(ea);
+        assembly { emp := sere }
+        //@info `uint emp.options` `uint options[j]`
+        int diff = int(emp.options) - int(options[j]);
+        if (diff > 1 || diff < -1)
+          assertEq(uint(emp.options), options[j], "optcheck options");
+        j++;
+      }
+    }
+    //@info found `uint j` employees
+  }
+
   function testSignaturesExpiredToPool()
   {
+    ESOP E = new ESOP();
+    address[] memory employees = massAddEmployees(15, E);
+    uint[] memory options = prepExpectedOptionsAmount(15, E);
+    // check pool before anything expires
+    //@info `uint[] options`
+    checkOptionsInEmployeeList(E.employees(), options);
+    // now expire signatures
+    uint32 ct = esop.currentTime();
+    E.mockTime(ct+4 weeks);
+    uint rc = uint(EmpTester(employees[7]).employeeSignsToESOP());
+    // must return too late
+    assertEq(rc, 2);
+    checkOptionsInEmployeeList(E.employees(), options);
+    rc = uint(EmpTester(employees[3]).employeeSignsToESOP());
+    // must return too late
+    assertEq(rc, 2);
+    checkOptionsInEmployeeList(E.employees(), options);
+    rc = uint(EmpTester(employees[14]).employeeSignsToESOP());
+    // must return too late
+    assertEq(rc, 2);
+    checkOptionsInEmployeeList(E.employees(), options);
+    // now return everyting in loop
+    for(uint i=0; i<15; i++) {
+      if(E.employees().hasEmployee(employees[i])) {
+        rc = uint(EmpTester(employees[i]).employeeSignsToESOP());
+        // must return too late
+        assertEq(rc, 2);
+        checkOptionsInEmployeeList(E.employees(), options);
+      }
+    }
+    // all should be back in pool
+    assertEq(E.totalOptions(), E.remainingOptions(), "all back in pool");
+  }
 
+  function testRemoveSignaturesExpiredToPool()
+  {
+    ESOP E = new ESOP();
+    address[] memory employees = massAddEmployees(15, E);
+    uint[] memory options = prepExpectedOptionsAmount(15, E);
+    // check pool before anything expires
+    //@info `uint[] options`
+    checkOptionsInEmployeeList(E.employees(), options);
+    // now expire signatures
+    uint32 ct = esop.currentTime();
+    E.mockTime(ct+4 weeks);
+    E.removeEmployeesWithExpiredSignatures();
+    // all should be back in pool
+    assertEq(E.totalOptions(), E.remainingOptions(), "all back in pool");
   }
 
   function testLifecycleOptions()
