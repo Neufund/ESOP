@@ -42,6 +42,15 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
     assertEq(l.addresses(0), address(emp1));
     assertEq(l.hasEmployee(address(emp1)), true);
     assertEq(l.addresses(1), address(emp2));
+    // test if indexes match
+    Employee memory emp;
+    var sere = l.getSerializedEmployee(address(emp1));
+    assembly { emp := sere }
+    assertEq(uint(emp.idx-1), 0, "employee 1 indexes must match");
+    sere = l.getSerializedEmployee(address(emp2));
+    assembly { emp := sere }
+    assertEq(uint(emp.idx-1), 1, "employee 2 indexes must match");
+
     bool isRem = l.removeEmployee(address(emp2));
     assertEq(isRem, true);
     assertEq(uint(l.size()), 2);
@@ -56,6 +65,12 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
     assertEq(l.hasEmployee(address(emp1)), false);
     assertEq(l.addresses(1), address(0));
     assertEq(l.hasEmployee(address(emp2)), false);
+    // test indexes again by adding user that was just deleted
+    isNew = l.setEmployee(address(emp2), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 100, 0, EmployeeState.Employed);
+    assertEq(isNew, true);
+    sere = l.getSerializedEmployee(address(emp2));
+    assembly { emp := sere }
+    assertEq(uint(emp.idx-1), 3, "employee 2 indexes must match");
   }
 
   function testPersistence() logs_gas() {
