@@ -120,6 +120,8 @@ contract ESOPTypes
 
 contract EmployeesList is ESOPTypes, Ownable
 {
+  event CreateEmployee(address indexed e, uint32 options, uint32 extraOptions, uint16 idx);
+  event UpdateEmployee(address indexed e, uint32 options, uint32 extraOptions, uint16 idx);
   mapping (address => Employee) employees;
   // addresses in the mapping, ever
   address[] public addresses;
@@ -144,8 +146,10 @@ contract EmployeesList is ESOPTypes, Ownable
       isNew = true;
       empIdx = uint16(size + 1);
       addresses.push(e);
+      CreateEmployee(e, options, extraOptions, empIdx);
     } else {
       isNew = false;
+      UpdateEmployee(e, options, extraOptions, empIdx);
     }
     employees[e] = Employee({
         vestingStarted: vestingStarted,
