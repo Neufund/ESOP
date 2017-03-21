@@ -22,6 +22,8 @@ contract ESOP is ESOPTypes, Upgradeable
   uint public totalOptions;
   // CEO address
   address public addressOfCEO;
+  // scale of the promille
+  uint public constant fpScale = 10000;
 
   // STATE
   // options that remain to be assigned
@@ -65,8 +67,9 @@ contract ESOP is ESOPTypes, Upgradeable
     _;
   }
 
-  function divRound(uint v, uint d) private returns(uint) {
-    return v/d + (v % d >= d/2 ? 1: 0);
+  function divRound(uint v, uint d) public constant returns(uint) {
+    // round up if % is half or more
+    return v/d + (v % d >= (d%2 == 1 ? d/2+1 : d/2) ? 1: 0);
   }
 
   function changeCEO(address newCEO)
@@ -77,7 +80,7 @@ contract ESOP is ESOPTypes, Upgradeable
   }
 
   function distributeAndReturnToPool(uint distributedOptions, uint idx)
-    private
+    internal
     returns (uint)
   {
     // enumerate all employees that joined later than fromIdx -1 employee
@@ -91,7 +94,7 @@ contract ESOP is ESOPTypes, Upgradeable
         if( emp.options > 0 && ( emp.state == EmployeeState.WaitingForSignature || emp.state == EmployeeState.Employed) ) {
           // we could handle Terminated employees as well: compute vesting on new options and add vested part to distributedOptions to pass it to others
           // however we decided not to give more options to terminated employees
-          uint newoptions = calcNewEmployeeOptions(distributedOptions, 1);
+          uint newoptions = calcNewEmployeeOptions(distributedOptions);
           emp.options += uint32(newoptions);
           distributedOptions -= uint32(newoptions);
           employees.setEmployee(ea, emp.vestingStarted, emp.timeToSign, emp.terminatedAt, emp.fadeoutStarts, emp.options, emp.extraOptions, emp.state);
@@ -154,20 +157,15 @@ contract ESOP is ESOPTypes, Upgradeable
     }
   }
 
-  function calcNewEmployeeOptions(uint remaining, uint8 groupSize)
+  function calcNewEmployeeOptions(uint remaining)
     internal
     constant
     returns (uint options)
   {
-    for(uint i=0; i<groupSize; i++) {
-      uint s = divRound(remaining * newEmployeePoolPromille, 1000);
-      options += s;
-      remaining -= s;
-    }
-    return options/groupSize;
+    return divRound(remaining * newEmployeePoolPromille, fpScale);
   }
 
-  function addNewEmployeeToESOP(address e, uint32 vestingStarts, uint32 timeToSign, uint32 extraOptions)
+  function addNewEmployeeToESOP(address e, uint32 vestingStarts, uint32 timeToSign, uint32 extraOptions, bool poolCleanup)
     external
     onlyESOPOpen
     onlyCEO
@@ -176,12 +174,14 @@ contract ESOP is ESOPTypes, Upgradeable
     // do not add twice
     if(employees.hasEmployee(e))
       return ReturnCodes.InvalidEmployeeState;
-    // recover options for employees with expired signatures
-    this.removeEmployeesWithExpiredSignatures();
-    // return fade out to pool
-    this.returnFadeoutToPool();
+    if (poolCleanup) {
+      // recover options for employees with expired signatures
+      this.removeEmployeesWithExpiredSignatures();
+      // return fade out to pool
+      this.returnFadeoutToPool();
+    }
     // assign options for group of size 1 obviously
-    uint options = calcNewEmployeeOptions(remainingOptions, 1);
+    uint options = calcNewEmployeeOptions(remainingOptions);
     if (options > 0xFFFF)
       throw;
     employees.setEmployee(e, vestingStarts, timeToSign, 0, 0, uint32(options), extraOptions, EmployeeState.WaitingForSignature );
@@ -191,7 +191,20 @@ contract ESOP is ESOPTypes, Upgradeable
   }
 
   // todo: implement group add someday, however func distributeAndReturnToPool gets very complicated
-  /*function addNewEmployeesToESOP(address[] emps, uint32 vestingStarts, uint32 timeToSign)
+  /*function calcNewEmployeeOptions(uint remaining, uint8 groupSize)
+    internal
+    constant
+    returns (uint options)
+  {
+    for(uint i=0; i<groupSize; i++) {
+      uint s = divRound(remaining * newEmployeePoolPromille, fpScale);
+      options += s;
+      remaining -= s;
+    }
+    return options/groupSize;
+  }
+
+  function addNewEmployeesToESOP(address[] emps, uint32 vestingStarts, uint32 timeToSign)
     external
     onlyESOPOpen
     onlyCEO
@@ -350,8 +363,7 @@ contract ESOP is ESOPTypes, Upgradeable
     if (effectiveTime < cliffDuration)
       return 0;
     else
-      // all option calculations are always rounded DOWN
-      return  effectiveTime < vestingDuration ? (options * effectiveTime)/vestingDuration : options;
+      return  effectiveTime < vestingDuration ? divRound(options * effectiveTime, vestingDuration) : options;
   }
 
   function calcFadeout(uint32 t, uint32 vestingStarted, uint32 terminatedAt, uint options)
@@ -359,11 +371,16 @@ contract ESOP is ESOPTypes, Upgradeable
     constant
     returns (uint)
   {
-    uint32 timefromTermination = t - terminatedAt;
-    uint32 fadeoutDuration = terminatedAt - vestingStarted;
-    uint effectiveFadeoutPromille = timefromTermination > fadeoutDuration ? maxFadeoutPromille : maxFadeoutPromille*timefromTermination/fadeoutDuration;
+    uint timefromTermination = t - terminatedAt;
+    uint fadeoutDuration = terminatedAt - vestingStarted;
+    // long return expression minimizing scaling errors
+    return timefromTermination > fadeoutDuration ?
+      divRound(options * maxFadeoutPromille, fpScale) :
+      divRound(options * maxFadeoutPromille * timefromTermination, fpScale * fadeoutDuration);
+    /*uint effectiveFadeoutPromille = timefromTermination > fadeoutDuration
+      ? maxFadeoutPromille : divRound(maxFadeoutPromille*timefromTermination, fadeoutDuration);
     // return fadeout amount
-    return divRound(options * effectiveFadeoutPromille, 1000);
+    return divRound(options * effectiveFadeoutPromille, fpScale);*/
   }
 
   function calcEffectiveOptionsForEmployee(address e, uint32 calcAtTime)
@@ -399,7 +416,7 @@ contract ESOP is ESOPTypes, Upgradeable
     // exit bonus only on conversion event and for employees that are not terminated, no exception for good will termination
     // do not apply bonus for extraOptions
     uint bonus = (esopState == ESOPState.Conversion && emp.state == EmployeeState.Employed) ?
-      (emp.options*vestedOptions*exitBonusPromille)/(1000*allOptions) : 0;
+      divRound(emp.options*vestedOptions*exitBonusPromille, fpScale*allOptions) : 0;
     return  vestedOptions + bonus;
   }
 
@@ -416,9 +433,9 @@ contract ESOP is ESOPTypes, Upgradeable
     employees = new EmployeesList();
     cliffDuration = 1 years;
     vestingDuration = 4 years;
-    maxFadeoutPromille = 800;
-    exitBonusPromille = 200;
-    newEmployeePoolPromille = 100;
+    maxFadeoutPromille = 8000;
+    exitBonusPromille = 2000;
+    newEmployeePoolPromille = 1000;
     totalOptions = 100000;
     remainingOptions = totalOptions;
     addressOfCEO = owner;
