@@ -5,7 +5,7 @@ import 'dapple/reporter.sol';
 import "./Test.DummyOptionConverter.sol";
 import "./Test.Types.sol";
 
-contract TestFrontier is Test, Reporter, ESOPTypes
+contract TestReturnToPool is Test, Reporter, ESOPTypes
 {
     EmpTester emp1;
     //Tester emp2;
