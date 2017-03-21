@@ -16,7 +16,6 @@ contract TestESOP is Test, Reporter, ESOPTypes
     emp1 = new EmpTester();
     emp2 = new Tester();
     esop = new ESOP();
-    converter = new DummyOptionsConverter(address(esop));
   }
 
   function testAccess()
@@ -28,10 +27,6 @@ contract TestESOP is Test, Reporter, ESOPTypes
 
   }
 
-  function testLifecycleOptions()
-  {
-
-  }
 
   function testTermination()
   {
@@ -51,6 +46,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
     assertEq(uint(rc), 0);
     // then after a month fund converts
     ct += 30 days;
+    converter = new DummyOptionsConverter(address(esop));
     uint8 rc = uint8(esop.esopConversionEvent(ct, ct + 60 days, converter));
     assertEq(uint(rc), 0, "esopConversionEvent");
     uint optionsAtConv = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
@@ -68,6 +64,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
     ESOP(emp1).employeeSignsToESOP();
     // then after a year fund converts
     ct += 1 years;
+    converter = new DummyOptionsConverter(address(esop));
     uint8 rc = uint8(esop.esopConversionEvent(ct, ct + 2 weeks, converter));
     assertEq(uint(rc), 0, "esopConversionEvent");
     // mock time
