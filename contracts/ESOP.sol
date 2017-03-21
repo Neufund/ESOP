@@ -75,6 +75,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
   function changeCEO(address newCEO)
     external
     onlyOwner
+    notInMigration
   {
     if (newCEO != address(0)) addressOfCEO = newCEO;
   }
@@ -106,6 +107,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
 
   function removeEmployeesWithExpiredSignatures()
     onlyESOPOpen
+    notInMigration
     external
   {
     // removes employees that didn't sign and sends their options back to the pool
@@ -129,6 +131,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
 
   function returnFadeoutToPool()
     onlyESOPOpen
+    notInMigration
     external
   {
     // computes fadeout for terminated employees and returns it to pool
@@ -172,6 +175,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     external
     onlyESOPOpen
     onlyCEO
+    notInMigration
     returns (ReturnCodes)
   {
     // do not add twice
@@ -236,6 +240,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     external
     onlyESOPOpen
     onlyCEO
+    notInMigration
     returns (ReturnCodes)
   {
     // do not add twice
@@ -250,6 +255,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     external
     hasEmployee(msg.sender)
     onlyESOPOpen
+    notInMigration
     returns (ReturnCodes)
   {
     var sere = employees.getSerializedEmployee(msg.sender);
@@ -273,6 +279,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     onlyESOPOpen
     onlyCEO
     hasEmployee(e)
+    notInMigration
     returns (ReturnCodes)
   {
     // terminates an employee
@@ -313,6 +320,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     external
     onlyESOPOpen
     onlyCEO
+    notInMigration
     returns (ReturnCodes)
   {
     // prevent stupid things, give at least two weeks for employees to convert
@@ -337,6 +345,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     external
     onlyESOPConversion
     hasEmployee(msg.sender)
+    notInMigration
     returns (ReturnCodes)
   {
     uint32 ct = currentTime();
@@ -391,6 +400,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     external
     constant
     hasEmployee(e)
+    notInMigration
     returns (uint)
   {
     var sere = employees.getSerializedEmployee(e);

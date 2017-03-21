@@ -21,7 +21,7 @@ contract Ownable {
 
 contract TimeSource is Ownable {
   uint32 mockNow;
-  
+
   function currentTime() public constant returns (uint32) {
     // we do not support dates much into future (Sun, 07 Feb 2106 06:28:15 GMT)
     if (block.timestamp > 0xFFFFFFFF)
@@ -54,37 +54,37 @@ contract Upgradeable is Ownable {
     enum MigrationState { Operational, OngoingMigration, Migrated}
     MigrationState public migrationState;
 
-    modifier onlyOperational() {
+    modifier notInMigration() {
       if (migrationState != MigrationState.Operational)
         throw;
       _;
     }
 
-    modifier onlyOngoingMigration() {
+    modifier inMigration() {
       if (migrationState != MigrationState.OngoingMigration)
         throw;
       _;
     }
-    modifier onlyMigrated() {
+    modifier migrated() {
       if (migrationState != MigrationState.Migrated)
         throw;
       _;
     }
 
-    function kill() onlyOwner onlyMigrated
+    function kill() onlyOwner migrated
     {
       selfdestruct(owner);
     }
 
-    function beginMigration() public onlyOwner onlyOperational {
+    function beginMigration() public onlyOwner notInMigration {
         migrationState = MigrationState.OngoingMigration;
     }
 
-    function cancelMigration() public onlyOwner onlyOngoingMigration {
+    function cancelMigration() public onlyOwner inMigration {
       migrationState = MigrationState.Operational;
     }
 
-    function completeMigration() public onlyOwner onlyOngoingMigration {
+    function completeMigration() public onlyOwner inMigration {
       migrationState = MigrationState.Migrated;
     }
 }
