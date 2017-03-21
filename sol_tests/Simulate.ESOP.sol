@@ -67,23 +67,13 @@ contract TestESOP is Test, Reporter, ESOPTypes
   function testSimulateEmployeeOnlyExtra() logs_gas()
   {
     uint32 ct = esop.currentTime();
-    uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 10000));
+    uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 10000, false));
     emp1._target(esop);
     //@doc vesting until maximum and keep
     simulateLifecycleSingleEmp(ct);
   }
 
   function testSimulateAmounts() logs_gas()
-  {
-
-  }
-
-  function testSimulateAmountsGroup2() logs_gas()
-  {
-
-  }
-
-  function testSimulateAmountsGroupIncr() logs_gas()
   {
 
   }
@@ -96,7 +86,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
   function testSimulateEmployeeWithEarlyExitBonus() logs_gas()
   {
     uint32 ct = esop.currentTime();
-    uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0));
+    uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false));
     emp1._target(esop);
     emp1.employeeSignsToESOP();
     //@info vesting sim days `uint esop.vestingDuration()`
@@ -128,7 +118,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
   function testSimulateEmployeeWithExitBonus() logs_gas()
   {
     uint32 ct = esop.currentTime();
-    uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0));
+    uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false));
     emp1._target(esop);
     rc = emp1.employeeSignsToESOP();
     //@info vesting sim days `uint esop.vestingDuration()`
@@ -160,7 +150,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
   function testSimulateEmployeeOptionsWithRegTermFull() logs_gas()
   {
     uint32 ct = esop.currentTime();
-    uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0));
+    uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false));
     emp1._target(esop);
     //@doc vesting until maximum and fade out in full
     simulateLifecycleSingleEmp(ct);
