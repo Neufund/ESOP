@@ -142,12 +142,15 @@ contract ESOP is ESOPTypes, Upgradeable
         assembly { emp := sere }
         // only terminated with not returned to pool
         if (emp.state == EmployeeState.Terminated && t != emp.fadeoutStarts) {
-          uint returnedOptions = calcFadeout(t, emp.vestingStarted, emp.terminatedAt, emp.options)
-            - calcFadeout(emp.fadeoutStarts, emp.vestingStarted, emp.terminatedAt, emp.options);
-          uint returnedExtraOptions = calcFadeout(t, emp.vestingStarted, emp.terminatedAt, emp.extraOptions)
-            - calcFadeout(emp.fadeoutStarts, emp.vestingStarted, emp.terminatedAt, emp.extraOptions);
+          uint vestedOptions = calcVestedOptions(emp.terminatedAt, emp.vestingStarted, emp.options);
+          uint returnedOptions = calcFadeout(emp.fadeoutStarts, emp.vestingStarted, emp.terminatedAt, emp.options, vestedOptions) -
+            calcFadeout(t, emp.vestingStarted, emp.terminatedAt, emp.options, vestedOptions);
+          uint vestedExtraOptions = calcVestedOptions(emp.terminatedAt, emp.vestingStarted, emp.extraOptions);
+          uint returnedExtraOptions = calcFadeout(emp.fadeoutStarts, emp.vestingStarted, emp.terminatedAt, emp.extraOptions, vestedExtraOptions) -
+            calcFadeout(t, emp.vestingStarted, emp.terminatedAt, emp.extraOptions, vestedExtraOptions);
           if (returnedOptions > 0 || returnedExtraOptions > 0) {
-            employees.terminateEmployee(employees.addresses(i), emp.terminatedAt, t, EmployeeState.Terminated);
+            employees.setEmployee(employees.addresses(i), emp.vestingStarted, emp.timeToSign, emp.terminatedAt, t,
+              emp.options, emp.extraOptions, EmployeeState.Terminated);
             // options from fadeout are not distributed to other employees but returned to pool
             remainingOptions += returnedOptions;
             totalExtraOptions -= returnedExtraOptions;
@@ -366,7 +369,7 @@ contract ESOP is ESOPTypes, Upgradeable
       return  effectiveTime < vestingDuration ? divRound(options * effectiveTime, vestingDuration) : options;
   }
 
-  function calcFadeout(uint32 t, uint32 vestingStarted, uint32 terminatedAt, uint options)
+  function calcFadeout(uint32 t, uint32 vestingStarted, uint32 terminatedAt, uint options, uint vestedOptions)
     internal
     constant
     returns (uint)
@@ -374,9 +377,10 @@ contract ESOP is ESOPTypes, Upgradeable
     uint timefromTermination = t - terminatedAt;
     uint fadeoutDuration = terminatedAt - vestingStarted;
     // long return expression minimizing scaling errors
+    uint minFadeValue = divRound(options * (fpScale - maxFadeoutPromille), fpScale);
     return timefromTermination > fadeoutDuration ?
-      divRound(options * maxFadeoutPromille, fpScale) :
-      divRound(options * maxFadeoutPromille * timefromTermination, fpScale * fadeoutDuration);
+      minFadeValue  :
+      (minFadeValue + divRound((vestedOptions - minFadeValue) * (fadeoutDuration - timefromTermination), fadeoutDuration));
     /*uint effectiveFadeoutPromille = timefromTermination > fadeoutDuration
       ? maxFadeoutPromille : divRound(maxFadeoutPromille*timefromTermination, fadeoutDuration);
     // return fadeout amount
@@ -404,15 +408,16 @@ contract ESOP is ESOPTypes, Upgradeable
         return 0;
     // if conversion event was triggered OR employee was terminated in good will then vesting does not apply and full amount is due
     // otherwise calc vested options. for terminated employee use termination date to compute vesting, otherwise use 'now'
-    uint vestedOptions = (esopState == ESOPState.Conversion || emp.state == EmployeeState.GoodWillTerminated) ?  allOptions:
+    bool skipVesting = (esopState == ESOPState.Conversion && emp.state == EmployeeState.Employed)
+      || emp.state == EmployeeState.GoodWillTerminated;
+    uint vestedOptions = skipVesting ?  allOptions:
       calcVestedOptions(emp.state == EmployeeState.Terminated ? emp.terminatedAt : calcAtTime, emp.vestingStarted, allOptions);
     // calc fadeout for terminated employees
     // use conversion event time to compute fadeout to stop fadeout when exit
-    uint fadeoutAmount = emp.state == EmployeeState.Terminated ?
-      calcFadeout(esopState == ESOPState.Conversion ? conversionEventTime : calcAtTime, emp.vestingStarted, emp.terminatedAt, vestedOptions) : 0;
-    if (fadeoutAmount > vestedOptions)
-      throw;
-    vestedOptions -= fadeoutAmount;
+    if (emp.state == EmployeeState.Terminated) {
+      vestedOptions = calcFadeout(esopState == ESOPState.Conversion ? conversionEventTime : calcAtTime,
+        emp.vestingStarted, emp.terminatedAt, allOptions, vestedOptions);
+    }
     // exit bonus only on conversion event and for employees that are not terminated, no exception for good will termination
     // do not apply bonus for extraOptions
     uint bonus = (esopState == ESOPState.Conversion && emp.state == EmployeeState.Employed) ?
@@ -439,5 +444,9 @@ contract ESOP is ESOPTypes, Upgradeable
     totalOptions = 100000;
     remainingOptions = totalOptions;
     addressOfCEO = owner;
+    // check invalid ESOP configurations
+    // 1. cliff must be higher than max fadout
+    //if (divRound(totalOptions*cliffDuration,vestingDuration) >= divRound(totalOptions*(fpScale - maxFadeoutPromille), fpScale))
+    //  throw;
   }
 }
