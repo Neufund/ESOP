@@ -3,7 +3,6 @@ pragma solidity ^0.4.0;
 contract Ownable {
   // replace with proper zeppelin smart contract
   address public owner;
-  uint32 mockNow;
 
   function Ownable() {
     owner = msg.sender;
@@ -18,7 +17,11 @@ contract Ownable {
   function transferOwnership(address newOwner) onlyOwner {
     if (newOwner != address(0)) owner = newOwner;
   }
+}
 
+contract TimeSource is Ownable {
+  uint32 mockNow;
+  
   function currentTime() public constant returns (uint32) {
     // we do not support dates much into future (Sun, 07 Feb 2106 06:28:15 GMT)
     if (block.timestamp > 0xFFFFFFFF)
@@ -33,7 +36,6 @@ contract Ownable {
   function mockTime(uint32 t) public onlyOwner {
     mockNow = t;
   }
-
 }
 
 contract RootOfTrust is Ownable

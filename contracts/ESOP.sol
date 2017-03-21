@@ -1,7 +1,7 @@
 pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 
-contract ESOP is ESOPTypes, Upgradeable
+contract ESOP is ESOPTypes, Upgradeable, TimeSource
 {
   enum ESOPState { Open, Conversion }
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
