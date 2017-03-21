@@ -18,4 +18,10 @@ contract EmpTester {
   function employeeSignsToESOP() returns (uint8){
       return uint8(ESOP(_t).employeeSignsToESOP());
   }
+
+  function calcEffectiveOptionsForEmployee(address e, uint32 calcAtTime) returns (uint) {
+    return ESOP(_t).calcEffectiveOptionsForEmployee(e, calcAtTime);
+  }
 }
+
+//contract ESOPTest is ESOP
