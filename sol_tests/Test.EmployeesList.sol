@@ -13,7 +13,7 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
   function testAddRemoveEmployee() logs_gas() {
     Tester emp1 = new Tester();
     EmployeesList l = new EmployeesList();
-    uint32 ct = l.currentTime();
+    uint32 ct = uint32(block.timestamp);
     bool isNew = l.setEmployee(address(emp1), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 100, 200, EmployeeState.Employed);
     assertEq(isNew, true);
     isNew = l.setEmployee(address(emp1), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 100, 200, EmployeeState.Employed);
@@ -32,7 +32,7 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
   function testMultiAddRemoveEmployee() logs_gas() {
     Tester emp1 = new Tester();
     EmployeesList l = new EmployeesList();
-    uint32 ct = l.currentTime();
+    uint32 ct = uint32(block.timestamp);
     bool isNew = l.setEmployee(address(emp1), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 100, 200, EmployeeState.Employed);
     assertEq(isNew, true);
     Tester emp2 = new Tester();
@@ -76,7 +76,7 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
   function testPersistence() logs_gas() {
     Tester emp1 = new Tester();
     EmployeesList l = new EmployeesList();
-    uint32 ct = l.currentTime();
+    uint32 ct = uint32(block.timestamp);
     l.setEmployee(address(emp1), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 100, 200, EmployeeState.Employed);
     Employee memory emp;
     var sere = l.getSerializedEmployee(address(emp1));
@@ -112,7 +112,7 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
   function testThrowGetNonExistingEmployee() {
     Tester emp1 = new Tester();
     EmployeesList l = new EmployeesList();
-    uint32 ct = l.currentTime();
+    uint32 ct = uint32(block.timestamp);
     l.setEmployee(address(emp1), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 100, 200, EmployeeState.Employed);
     Tester emp2 = new Tester();
     var sere = l.getSerializedEmployee(address(emp2));
