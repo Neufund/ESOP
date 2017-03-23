@@ -316,7 +316,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     return ReturnCodes.OK;
   }
 
-  function esopConversionEvent(uint32 convertedAt, uint32 conversionDeadline , IOptionsConverter conversionProxy )
+  function esopConversionEvent(uint32 convertedAt, IOptionsConverter converter )
     external
     onlyESOPOpen
     onlyCEO
@@ -324,18 +324,18 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     returns (ReturnCodes)
   {
     // prevent stupid things, give at least two weeks for employees to convert
-    if (convertedAt >= conversionDeadline || conversionDeadline + 2 weeks < currentTime())
+    if (convertedAt >= converter.getConversionDeadline() || converter.getConversionDeadline() + 2 weeks < currentTime())
       return ReturnCodes.TooLate;
     // convertOptions must be callable by us
-    if (conversionProxy.getESOP() != address(this))
+    if (converter.getESOP() != address(this))
       return ReturnCodes.InvalidParameters;
     // return to pool everything we can
     this.removeEmployeesWithExpiredSignatures();
     this.returnFadeoutToPool();
     // from now vesting and fadeout stops, no new employees may be added
     conversionEventTime = convertedAt;
-    employeeConversionDeadline = conversionDeadline;
-    optionsConverter = conversionProxy;
+    employeeConversionDeadline = converter.getConversionDeadline();
+    optionsConverter = converter;
     // this is very irreversible
     esopState = ESOPState.Conversion;
     return ReturnCodes.OK;
