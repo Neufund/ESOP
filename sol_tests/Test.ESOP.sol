@@ -27,6 +27,11 @@ contract TestESOP is Test, Reporter, ESOPTypes
 
   }
 
+  function testChangeCEO()
+  {
+
+  }
+
 
   function testTermination()
   {
@@ -46,8 +51,8 @@ contract TestESOP is Test, Reporter, ESOPTypes
     assertEq(uint(rc), 0);
     // then after a month fund converts
     ct += 30 days;
-    converter = new DummyOptionsConverter(address(esop));
-    uint8 rc = uint8(esop.esopConversionEvent(ct, ct + 60 days, converter));
+    converter = new DummyOptionsConverter(address(esop), ct + 60 days);
+    uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
     assertEq(uint(rc), 0, "esopConversionEvent");
     uint optionsAtConv = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
     uint optionsCv1m = esop.calcEffectiveOptionsForEmployee(address(emp1), ct + 30 days);
@@ -64,8 +69,8 @@ contract TestESOP is Test, Reporter, ESOPTypes
     ESOP(emp1).employeeSignsToESOP();
     // then after a year fund converts
     ct += 1 years;
-    converter = new DummyOptionsConverter(address(esop));
-    uint8 rc = uint8(esop.esopConversionEvent(ct, ct + 2 weeks, converter));
+    converter = new DummyOptionsConverter(address(esop), ct + 2 weeks);
+    uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
     assertEq(uint(rc), 0, "esopConversionEvent");
     // mock time
     uint32 toolate = (ct + 4 weeks);
@@ -73,7 +78,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
     // should be too late
     //@info ct `uint32 ct` convertedAt `uint32 esop.conversionEventTime()` conv deadline `uint32 esop.employeeConversionDeadline()` too late `uint32 toolate`
     rc = emp1.employeeConvertsOptions();
-    assertEq(uint(rc), 2, "employeeConvertsOptions");
+    assertEq(uint(rc), 2, "employeeConvertsOptions too late");
     //@info `uint converter.totalConvertedOptions()` converted, should be 0
     esop.mockTime(ct + 2 weeks);
     // convert options
@@ -87,7 +92,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
     //@info `uint expopts` converted
     // invalid emp state
     rc = emp1.employeeConvertsOptions();
-    assertEq(uint(rc), 1, "employeeConvertsOptions");
+    assertEq(uint(rc), 1, "already converted");
     // 0 options left
     uint options = esop.calcEffectiveOptionsForEmployee(address(emp1), ct + 2 weeks);
     assertEq(options, 0);

@@ -70,8 +70,8 @@ contract TestLifecycle is Test, Reporter, ESOPTypes
     assertEq(options, minFade, "full fadeout + 1y");
     // convert at half fadeout
     ct -= uint32(esop.vestingDuration()/4);
-    IOptionsConverter converter = new DummyOptionsConverter(address(esop));
-    uint8 rc = uint8(esop.esopConversionEvent(ct, ct + 2 years, converter));
+    IOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
+    uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
     assertEq(uint(rc), 0, "esopConversionEvent");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, halfFade, "half fade conversion");
@@ -90,8 +90,8 @@ contract TestLifecycle is Test, Reporter, ESOPTypes
     ct += uint32(esop.vestingDuration()) + 1 years;
     uint options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, totOptions, "1y after vesting");
-    IOptionsConverter converter = new DummyOptionsConverter(address(esop));
-    uint8 rc = uint8(esop.esopConversionEvent(ct, ct + 2 years, converter));
+    IOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
+    uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
     assertEq(uint(rc), 0, "esopConversionEvent");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, totOptions + esop.divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.fpScale()), "exit bonus");
