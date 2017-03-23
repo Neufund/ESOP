@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 cd contracts
-solc --asm --abi --optimize ESOP.sol -o ../solc
+solc --asm --abi --optimize *.sol -o ../solc
