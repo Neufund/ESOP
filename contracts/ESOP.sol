@@ -1,7 +1,7 @@
 pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 
-contract ESOP is ESOPTypes, Upgradeable, TimeSource
+contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
 {
   enum ESOPState { Open, Conversion }
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
@@ -65,11 +65,6 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     if (addressOfCEO != msg.sender)
       throw;
     _;
-  }
-
-  function divRound(uint v, uint d) public constant returns(uint) {
-    // round up if % is half or more
-    return v/d + (v % d >= (d%2 == 1 ? d/2+1 : d/2) ? 1: 0);
   }
 
   function changeCEO(address newCEO)

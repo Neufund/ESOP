@@ -2,7 +2,7 @@ pragma solidity ^0.4.0;
 
 import './ESOPTypes.sol';
 
-contract ERC20OptionsConverter is IOptionsConverter, TimeSource
+contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math
 {
   address esopAddress;
   uint32 conversionDeadline;
@@ -87,20 +87,22 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter
     if (paymentId == payouts.length)
       return 0;
     // if non existing withdrawal, then count from 1
-    if (paymentId == 0) paymentId = 1;
+    //if (paymentId == 0) paymentId = 1;
     uint payout = 0;
-    for (uint i = paymentId - 1; i<payouts.length; i++)
+    for (uint i = paymentId; i<payouts.length; i++)
     {
       // it is up to wei resolution, no point in rounding
-      // todo: use division library
-      uint thisPayout = (payouts[i] * balance) / totalSupply;
+      uint thisPayout = safeMul(payouts[i], balance) / totalSupply;
       payout += thisPayout;
     }
-    // change now to prevent re-entry
+    // change now to prevent re-entry (not necessary due to low send() gas limit)
     withdrawals[msg.sender] = payouts.length;
     if (payout > 0) {
       // now modify payout within 100 weis as we had rounding errors coming from pro-rata amounts
-      // if (this.balance )
+      if ( absDiff(this.balance, payout) < 100 wei )
+        payout = this.balance; // send all
+      //if(!msg.sender.call.value(payout)()) // re entry test
+      //  throw;
       if(!msg.sender.send(payout))
         throw;
     }

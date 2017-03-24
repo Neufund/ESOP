@@ -19,6 +19,26 @@ contract Ownable {
   }
 }
 
+contract Math {
+  // todo: should be a library
+  function divRound(uint v, uint d) public constant returns(uint) {
+    // round up if % is half or more
+    return v/d + (v % d >= (d%2 == 1 ? d/2+1 : d/2) ? 1: 0);
+  }
+
+  function absDiff(uint v1, uint v2) public constant returns(uint) {
+    return v1 >= v2 ? v1 - v2 : uint(-(int(v1 - v2)));
+  }
+
+  function safeMul(uint a, uint b) public constant returns (uint) {
+    uint c = a * b;
+    if (a == 0 || c / a == b)
+      return c;
+    else
+      throw;
+  }
+}
+
 contract TimeSource is Ownable {
   uint32 mockNow;
 
