@@ -59,8 +59,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
         var sere = employees.getSerializedEmployee(ea);
         assembly { emp := sere }
         //@info `uint emp.options` `uint options[j]`
-        int diff = int(emp.options) - int(options[j]);
-        if (diff > 1 || diff < -1)
+        if (esop.absDiff(emp.options, options[j]) > 1)
           assertEq(uint(emp.options), options[j], "optcheck options");
         j++;
       }
@@ -94,15 +93,13 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
       //@info iter `uint i` fade `uint fade` tot fade `uint tot_fade`
       uint copts = esop.calcEffectiveOptionsForEmployee(emp1, term_t);
       // there are scaling errors, until nice fixed point lib is made I will not fight that
-      int diff = int(copts) - int(extraOptions - tot_fade);
-      if (diff > 2 || diff < -2)
+      if (esop.absDiff(copts, extraOptions - tot_fade)>2)
         assertEq(copts, extraOptions - tot_fade, "tot opts - fade");
       // return fadeout
       esop.mockTime(term_t);
       uint ppool = esop.totalExtraOptions();
       esop.returnFadeoutToPool();
-      diff = int(ppool - esop.totalExtraOptions()) - int(fade);
-      if (diff > 2 || diff < -2)
+      if (esop.absDiff(ppool - esop.totalExtraOptions(), fade) > 2)
         assertEq(ppool - esop.totalExtraOptions(), fade, "pool eqs fade");
       // also check if still the same options are calculated on termination
     }
@@ -132,15 +129,13 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
       //@info iter `uint i` fade `uint fade` tot fade `uint tot_fade`
       uint copts = esop.calcEffectiveOptionsForEmployee(emp1, term_t);
       // there are scaling errors, until nice fixed point lib is made I will not fight that
-      int diff = int(copts) - int(poolOptions - tot_fade);
-      if (diff > 2 || diff < -2)
+      if (esop.absDiff(copts, poolOptions - tot_fade) > 2)
         assertEq(copts, poolOptions - tot_fade, "tot opts - fade");
       // return fadeout
       esop.mockTime(term_t);
       rc = esop.remainingOptions();
       esop.returnFadeoutToPool();
-      diff = int(esop.remainingOptions() - rc) - int(fade);
-      if (diff > 2 || diff < -2)
+      if (esop.absDiff(esop.remainingOptions() - rc, fade) > 2)
         assertEq(esop.remainingOptions() - rc, fade, "pool eqs fade");
       // also check if still the same options are calculated on termination
     }
