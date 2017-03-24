@@ -27,7 +27,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
     uint remPool = E.totalOptions();
     for(uint i=0; i<count; i++)
     {
-      uint o = (remPool * E.newEmployeePoolPromille()) / esop.fpScale();
+      uint o = (remPool * E.newEmployeePoolPromille()) / E.fpScale();
       options[i] = o;
       remPool -= o;
     }
@@ -36,7 +36,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
 
   function massAddEmployees(uint count, ESOP E) returns (address[])
   {
-    uint32 ct = esop.currentTime();
+    uint32 ct = E.currentTime();
     address[] memory employees = new address[](count);
     for(uint i=0; i<count; i++) {
       emp1 = new EmpTester();
@@ -80,6 +80,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
     assertEq(rc, 0);
     // employee leaves on vesting end day
     uint32 term_t = ct+uint32(esop.vestingDuration());
+    esop.mockTime(term_t);
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
     uint32 delta_t = uint32(esop.vestingDuration());
@@ -117,6 +118,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
     assertEq(rc, 0);
     // employee leaves on vesting end day
     uint32 term_t = ct+uint32(esop.vestingDuration());
+    esop.mockTime(term_t);
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
     uint32 delta_t = uint32(esop.vestingDuration());
@@ -145,13 +147,13 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
     // check both extra and normal pool
   }
 
-  function testTerminateEmployeeToPool() logs_gas
+  function testTerminateEmployeeToPool()
   {
     ESOP E = new ESOP();
     address[] memory employees = massAddEmployees(7, E);
     uint[] memory options = prepExpectedOptionsAmount(7, E);
     // sign and terminate employee no 2
-    uint32 ct = esop.currentTime();
+    uint32 ct = E.currentTime();
     uint rc = uint(EmpTester(employees[3]).employeeSignsToESOP());
     assertEq(rc, 0);
     rc = uint(EmpTester(employees[1]).employeeSignsToESOP());
@@ -159,13 +161,14 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
     uint ppool = E.remainingOptions();
     // terminate exactly half way so half options are returned
     uint32 term_t = ct+uint32(E.vestingDuration()/2);
+    E.mockTime(term_t);
     rc = uint(E.terminateEmployee(employees[3], term_t, 0));
     assertEq(rc,0);
     uint vested = options[3]/2;
     //@info vesting should be half of options `uint vested` of `uint options[3]`
     // now modify reference list by distributing vested part
     for(uint i=4; i<7; i++) {
-      uint modopt = E.divRound(vested * E.newEmployeePoolPromille(), esop.fpScale());
+      uint modopt = E.divRound(vested * E.newEmployeePoolPromille(), E.fpScale());
       vested -= modopt;
       options[i] += modopt;
     }
@@ -178,7 +181,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
     uint vested2 = options[1]/2;
     for(i=2; i<7; i++) {
         if (i != 3) { //skip already terminated employee
-          modopt = E.divRound(vested2 * E.newEmployeePoolPromille(), esop.fpScale());
+          modopt = E.divRound(vested2 * E.newEmployeePoolPromille(), E.fpScale());
           vested2 -= modopt;
           options[i] += modopt;
       }
@@ -199,7 +202,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
     uint rc = uint(EmpTester(employees[5]).employeeSignsToESOP());
     assertEq(rc, 0);
     // now expire signatures
-    uint32 ct = esop.currentTime();
+    uint32 ct = E.currentTime();
     E.mockTime(ct+4 weeks);
     rc = uint(EmpTester(employees[7]).employeeSignsToESOP());
     // must return too late
@@ -236,10 +239,28 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
     //@info `uint[] options`
     checkOptionsInEmployeeList(E.employees(), options);
     // now expire signatures
-    uint32 ct = esop.currentTime();
+    uint32 ct = E.currentTime();
     E.mockTime(ct+4 weeks);
     E.removeEmployeesWithExpiredSignatures();
     // all should be back in pool
     assertEq(E.totalOptions(), E.remainingOptions(), "all back in pool");
+  }
+
+  function testRemoveSignaturesExpiredToPoolOneEmployed() logs_gas
+  {
+    ESOP E = new ESOP();
+    address[] memory employees = massAddEmployees(15, E);
+    uint[] memory options = prepExpectedOptionsAmount(15, E);
+    EmpTester(employees[0]).employeeSignsToESOP();
+    // check pool before anything expires
+    //@info `uint[] options`
+    checkOptionsInEmployeeList(E.employees(), options);
+
+    // now expire signatures
+    uint32 ct = E.currentTime();
+    E.mockTime(ct+4 weeks);
+    E.removeEmployeesWithExpiredSignatures();
+    // all should be back in pool
+    assertEq(E.totalOptions(), E.remainingOptions() + options[0], "all back in pool");
   }
 }
