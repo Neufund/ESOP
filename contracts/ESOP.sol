@@ -105,21 +105,15 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     return distributedOptions;
   }
 
-  function removeEmployeesWithExpiredSignatures()
-    onlyESOPOpen
-    notInMigration
-    external
+  function removeEmployeesWithExpiredSignatures(uint32 t) internal
   {
-    // removes employees that didn't sign and sends their options back to the pool
-    // we let anyone to call that method and spend gas on it
-    uint32 t = currentTime();
     Employee memory emp;
     for(uint i=0; i< employees.size(); i++) {
       address ea = employees.addresses(i);
       if (ea != 0) { // address(0) is deleted employee
         var sere = employees.getSerializedEmployee(ea);
         assembly { emp := sere }
-        if (t > emp.timeToSign) {
+        if (t > emp.timeToSign && emp.state == EmployeeState.WaitingForSignature) {
           remainingOptions += distributeAndReturnToPool(emp.options, i+1);
           totalExtraOptions -= emp.extraOptions;
           // actually this just sets address to 0 so iterator can continue
@@ -129,14 +123,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     }
   }
 
-  function returnFadeoutToPool()
-    onlyESOPOpen
-    notInMigration
-    external
+  function returnFadeoutToPool(uint32 t) internal
   {
-    // computes fadeout for terminated employees and returns it to pool
-    // we let anyone to call that method and spend gas on it
-    uint32 t = currentTime();
     Employee memory emp;
     for(uint i=0; i< employees.size(); i++) {
       address ea = employees.addresses(i);
@@ -163,6 +151,26 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     }
   }
 
+  function removeEmployeesWithExpiredSignatures()
+    onlyESOPOpen
+    notInMigration
+    public
+  {
+    // removes employees that didn't sign and sends their options back to the pool
+    // we let anyone to call that method and spend gas on it
+    removeEmployeesWithExpiredSignatures(currentTime());
+  }
+
+  function returnFadeoutToPool()
+    onlyESOPOpen
+    notInMigration
+    external
+  {
+    // computes fadeout for terminated employees and returns it to pool
+    // we let anyone to call that method and spend gas on it
+    returnFadeoutToPool(currentTime());
+  }
+
   function calcNewEmployeeOptions(uint remaining)
     internal
     constant
@@ -183,9 +191,9 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
       return ReturnCodes.InvalidEmployeeState;
     if (poolCleanup) {
       // recover options for employees with expired signatures
-      this.removeEmployeesWithExpiredSignatures();
+      removeEmployeesWithExpiredSignatures(currentTime());
       // return fade out to pool
-      this.returnFadeoutToPool();
+      returnFadeoutToPool(currentTime());
     }
     // assign options for group of size 1 obviously
     uint options = calcNewEmployeeOptions(remainingOptions);
@@ -330,8 +338,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource
     if (converter.getESOP() != address(this))
       return ReturnCodes.InvalidParameters;
     // return to pool everything we can
-    this.removeEmployeesWithExpiredSignatures();
-    this.returnFadeoutToPool();
+    removeEmployeesWithExpiredSignatures(currentTime());
+    returnFadeoutToPool(currentTime());
     // from now vesting and fadeout stops, no new employees may be added
     conversionEventTime = convertedAt;
     employeeConversionDeadline = converter.getConversionDeadline();
