@@ -92,12 +92,15 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter
     for (uint i = paymentId - 1; i<payouts.length; i++)
     {
       // it is up to wei resolution, no point in rounding
+      // todo: use division library
       uint thisPayout = (payouts[i] * balance) / totalSupply;
       payout += thisPayout;
     }
     // change now to prevent re-entry
     withdrawals[msg.sender] = payouts.length;
     if (payout > 0) {
+      // now modify payout within 100 weis as we had rounding errors coming from pro-rata amounts
+      // if (this.balance )
       if(!msg.sender.send(payout))
         throw;
     }
@@ -107,6 +110,8 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter
   function transfer(address _to, uint _value) converted public {
     // if anything was withdrawn then block transfer to prevent multiple withdrawals
     // todo: we could allow transfer to new account (no token balance)
+    // todo: we could allow transfer between account that fully withdrawn (but what's the point? -token has 0 value then)
+    // todo: there are a few other edge cases where there's transfer and no double spending
     if (withdrawals[_to] > 0 || withdrawals[msg.sender] > 0)
       throw;
     ERC20OptionsConverter.transfer(_to, _value);
