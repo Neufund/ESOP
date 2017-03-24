@@ -39,7 +39,6 @@ contract TestFrontier is Test, Reporter, ESOPTypes
     rc = uint(esop.esopConversionEvent(ct, converter));
     assertEq(rc, 0, "converter");
     uint32 cdead = converter.getConversionDeadline();
-    //@info ct `uint32 ct` cdead `uint32 cdead`
     //convert all users
     emp1.employeeConvertsOptions();
     emp2.employeeConvertsOptions();
@@ -101,16 +100,40 @@ contract TestFrontier is Test, Reporter, ESOPTypes
     converter.mockTime(ct);
     uint emp1b = converter.balanceOf(emp1);
     uint emp2b = converter.balanceOf(emp2);
+    uint totsupp = converter.totalSupply();
+    //@info emp1b `uint emp1b` emp2b `uint emp2b` totsupp `uint totsupp`
     // make few payouts
     converter.makePayout.value(2 ether)();
     converter.makePayout.value(5 ether)();
     uint cb = converter.balance;
     //@info balance `uint cb`
     assertEq(cb, 7 ether, "make payout");
+    // withdraw emp1 1
     emp1._target(converter);
     cb = emp1.withdraw();
     //@info e1 payout `uint cb`
-    cb = emp1.balance;
-    //@info e1 balance `uint cb`
+    assertEq(emp1.balance, cb, "e1 rv == balance");
+    uint expb = (7 ether * emp1b) / totsupp;
+    assertEq(cb, expb, "e1 withdraw amount");
+    converter.makePayout.value(1 ether)();
+    // emp2 should get share from 3 payouts
+    emp2._target(converter);
+    cb = emp2.withdraw();
+    expb = (8 ether * emp2b) / totsupp;
+    assertEq(cb, expb, "e2 withdraw amount");
+    // emp1 should get share from last payout
+    cb = emp1.withdraw();
+    expb = (1 ether * emp1b) / totsupp;
+    assertEq(cb, expb, "e1 withdraw 3 payout");
+    // emp should get 0
+    cb = emp1.withdraw();
+    assertEq(cb, 0, "e1 withdraw 0");
+    cb = emp2.withdraw();
+    assertEq(cb, 0, "e2 withdraw 0");
+    // total ether invariant
+    assertEq(8 ether, converter.balance + emp1.balance + emp2.balance, "total ether");
+    emp3._target(converter);
+    //cb = emp3.withdraw();
+    assertEq(converter.balance, 0, "all paid out");
   }
 }
