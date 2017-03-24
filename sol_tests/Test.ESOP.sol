@@ -47,10 +47,12 @@ contract TestESOP is Test, Reporter, ESOPTypes
     emp1.employeeSignsToESOP();
     // then after a year employee terminated regular
     ct += 1 years;
+    esop.mockTime(ct);
     rc = uint8(esop.terminateEmployee(emp1, ct, 0));
     assertEq(uint(rc), 0);
     // then after a month fund converts
     ct += 30 days;
+    esop.mockTime(ct);
     converter = new DummyOptionsConverter(address(esop), ct + 60 days);
     uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
     assertEq(uint(rc), 0, "esopConversionEvent");
@@ -66,12 +68,18 @@ contract TestESOP is Test, Reporter, ESOPTypes
     uint32 ct = esop.currentTime();
     esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 100, false);
     emp1._target(esop);
-    ESOP(emp1).employeeSignsToESOP();
+    emp1.employeeSignsToESOP();
     // then after a year fund converts
     ct += 1 years;
+    esop.mockTime(ct);
     converter = new DummyOptionsConverter(address(esop), ct + 2 weeks);
     uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
     assertEq(uint(rc), 0, "esopConversionEvent");
+    // get emp1 employee
+    Employee memory emp;
+    var sere = esop.employees().getSerializedEmployee(emp1);
+    assembly { emp := sere }
+    //@info ct `uint32 ct` timetosign `uint32 emp.timeToSign`
     // mock time
     uint32 toolate = (ct + 4 weeks);
     esop.mockTime(toolate);
@@ -108,6 +116,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
     rc = emp1.employeeSignsToESOP();
     assertEq(uint(rc), 0);
     // terminated for a cause
+    esop.mockTime(ct + 3 weeks);
     rc = uint8(esop.terminateEmployee(emp1, ct + 3 weeks, 2));
     assertEq(uint(rc), 0);
     assertEq(initialOptions, esop.remainingOptions());
