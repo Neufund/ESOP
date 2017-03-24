@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
-cp sol_tests/Test.*.sol contracts
+test="$1"
+if [ -z "$1" ]
+  then test="*"
+fi
+
+cp sol_tests/Test.DummyOptionConverter.sol contracts
+cp sol_tests/Test.Types.sol contracts
+cp sol_tests/Test.$test.sol contracts
 dapple test --report
 rm contracts/Test.*.sol
