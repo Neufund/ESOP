@@ -14,13 +14,15 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource
   event Creation(address indexed to, uint value);
 
   modifier converting() {
-    if (currentTime() > conversionDeadline)
+    if (currentTime() >= conversionDeadline)
+      // throw after deadline
       throw;
     _;
   }
 
   modifier converted() {
-    if (currentTime() <= conversionDeadline)
+    if (currentTime() < conversionDeadline)
+      // throw before deadline
       throw;
     _;
   }
@@ -48,7 +50,7 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource
     Transfer(msg.sender, _to, _value);
   }
 
-  function balanceOf(address _owner) constant converted public returns (uint balance) {
+  function balanceOf(address _owner) constant public returns (uint balance) {
     return balances[_owner];
   }
 
@@ -57,7 +59,7 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource
     throw;
   }
 
-  function DummyOptionsConverter(address esop, uint32 deadline) {
+  function ERC20OptionsConverter(address esop, uint32 deadline) {
     esopAddress = esop;
     conversionDeadline = deadline;
   }
@@ -68,15 +70,14 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter
   mapping (address => uint) internal withdrawals;
   uint[] internal payouts;
 
-  function makePayout() payable onlyOwner public {
+  function makePayout() converted payable onlyOwner public {
     // it does not make sense to distribute less than ether
     if (msg.value < 1 ether)
       throw;
     payouts.push(msg.value);
   }
 
-  function withdraw() public returns (uint) {
-    // do not allow owner
+  function withdraw() converted public returns (uint) {
     // withdraw for msg.sender
     uint balance = balanceOf(msg.sender);
     if (balance == 0)
@@ -85,17 +86,21 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter
     // if all payouts for given token holder executed then exit
     if (paymentId == payouts.length)
       return 0;
+    // if non existing withdrawal, then count from 1
+    if (paymentId == 0) paymentId = 1;
     uint payout = 0;
-    for (uint i = paymentId + 1; i <= payouts.length; i++)
+    for (uint i = paymentId - 1; i<payouts.length; i++)
     {
       // it is up to wei resolution, no point in rounding
-      uint thisPayout = (payouts[i-1] * balance) / totalSupply;
+      uint thisPayout = (payouts[i] * balance) / totalSupply;
       payout += thisPayout;
     }
     // change now to prevent re-entry
     withdrawals[msg.sender] = payouts.length;
-    if(!msg.sender.send(payout))
-      throw;
+    if (payout > 0) {
+      if(!msg.sender.send(payout))
+        throw;
+    }
     return payout;
   }
 
@@ -105,5 +110,8 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter
     if (withdrawals[_to] > 0 || withdrawals[msg.sender] > 0)
       throw;
     ERC20OptionsConverter.transfer(_to, _value);
+  }
+
+  function ProceedsOptionsConverter(address esop, uint32 deadline) ERC20OptionsConverter(esop, deadline) {
   }
 }
