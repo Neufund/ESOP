@@ -5,7 +5,7 @@ import 'dapple/reporter.sol';
 import "./Test.DummyOptionConverter.sol";
 import "./Test.Types.sol";
 
-contract TestLifecycle is Test, Reporter, ESOPTypes
+contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
 {
     EmpTester emp1;
     //Tester emp2;
@@ -15,7 +15,7 @@ contract TestLifecycle is Test, Reporter, ESOPTypes
   function setUp() {
     emp1 = new EmpTester();
     //emp2 = new Tester();
-    esop = new ESOP();
+    esop = makeNFESOP();
     emp1._target(esop);
     //converter = new DummyOptionsConverter(address(esop));
   }
@@ -56,6 +56,9 @@ contract TestLifecycle is Test, Reporter, ESOPTypes
     ct += uint32(esop.vestingDuration()/4);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     uint minFade = esop.divRound(totOptions*(esop.fpScale() - esop.maxFadeoutPromille()), esop.fpScale());
+    // if minFade > vested options then vested options is the min value after fadeout (basically - no fadeout in this case)
+    if (minFade >= totOptions/2)
+      minFade = totOptions/2;
     uint halfFade = minFade + (totOptions/2 - minFade)/2;
     assertEq(options, halfFade, "half fadeout");
     // full fadout
@@ -72,8 +75,8 @@ contract TestLifecycle is Test, Reporter, ESOPTypes
     ct -= uint32(esop.vestingDuration()/4);
     IOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
     esop.mockTime(ct);
-    uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
-    assertEq(uint(rc), 0, "esopConversionEvent");
+    uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
+    assertEq(uint(rc), 0, "convertESOPOptions");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, halfFade, "half fade conversion");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 1 years);
@@ -93,8 +96,8 @@ contract TestLifecycle is Test, Reporter, ESOPTypes
     assertEq(options, totOptions, "1y after vesting");
     IOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
     esop.mockTime(ct);
-    uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
-    assertEq(uint(rc), 0, "esopConversionEvent");
+    uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
+    assertEq(uint(rc), 0, "convertESOPOptions");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, totOptions + esop.divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.fpScale()), "exit bonus");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 1 years);
