@@ -5,7 +5,7 @@ import 'dapple/reporter.sol';
 import "./Test.DummyOptionConverter.sol";
 import "./Test.Types.sol";
 
-contract TestReturnToPool is Test, Reporter, ESOPTypes
+contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
 {
     EmpTester emp1;
     //Tester emp2;
@@ -15,7 +15,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
   function setUp() {
     emp1 = new EmpTester();
     //emp2 = new Tester();
-    esop = new ESOP();
+    esop = makeNFESOP();
     emp1._target(esop);
     //converter = new DummyOptionsConverter(address(esop));
   }
@@ -144,7 +144,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
 
   function testTerminateEmployeeToPool()
   {
-    ESOP E = new ESOP();
+    ESOP E = makeNFESOP();
     address[] memory employees = massAddEmployees(7, E);
     uint[] memory options = prepExpectedOptionsAmount(7, E);
     // sign and terminate employee no 2
@@ -187,7 +187,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
 
   function testSignaturesExpiredToPool() logs_gas
   {
-    ESOP E = new ESOP();
+    ESOP E = makeNFESOP();
     address[] memory employees = massAddEmployees(15, E);
     uint[] memory options = prepExpectedOptionsAmount(15, E);
     // check pool before anything expires
@@ -227,7 +227,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
 
   function testRemoveSignaturesExpiredToPool() logs_gas
   {
-    ESOP E = new ESOP();
+    ESOP E = makeNFESOP();
     address[] memory employees = massAddEmployees(15, E);
     uint[] memory options = prepExpectedOptionsAmount(15, E);
     // check pool before anything expires
@@ -243,7 +243,7 @@ contract TestReturnToPool is Test, Reporter, ESOPTypes
 
   function testRemoveSignaturesExpiredToPoolOneEmployed() logs_gas
   {
-    ESOP E = new ESOP();
+    ESOP E = makeNFESOP();
     address[] memory employees = massAddEmployees(15, E);
     uint[] memory options = prepExpectedOptionsAmount(15, E);
     EmpTester(employees[0]).employeeSignsToESOP();

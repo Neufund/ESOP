@@ -7,18 +7,16 @@ import "./Test.DummyOptionConverter.sol";
 import "./ESOP.sol";
 
 
-contract TestESOP is Test, Reporter, ESOPTypes
+contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
 {
     EmpTester emp1;
     EmpTester emp2;
-    DummyOptionsConverter converter;
     ESOP esop;
 
   function setUp() {
     emp1 = new EmpTester();
     emp2 = new EmpTester();
-    esop = new ESOP();
-    converter = new DummyOptionsConverter(address(esop));
+    esop = makeNFESOP();
     setupReporter('./solc/simulations.csv');
   }
 
@@ -49,7 +47,8 @@ contract TestESOP is Test, Reporter, ESOPTypes
     // trigger conversion event
     dn = (vdays + fdays + 5)*7;
     ct = uint32(ct + dn*1 days);
-    esop.esopConversionEvent(ct, ct + 2 weeks, converter);
+    DummyOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 weeks);
+    esop.convertESOPOptions(ct, converter);
     options = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
     ro = esop.remainingOptions(); teo = esop.totalExtraOptions();
     //@doc `uint dn`, `uint options`, `uint ro`, `uint teo`, conversion
@@ -102,7 +101,8 @@ contract TestESOP is Test, Reporter, ESOPTypes
     // trigger conversion event
     dn = (fdays)*7;
     ct = uint32(ct + dn*1 days);
-    esop.esopConversionEvent(ct, ct + 1 years, converter);
+    DummyOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 1 years);
+    esop.convertESOPOptions(ct, converter);
     for(d = 0; d < 14; d++) {
       dn = d*7;
       options = esop.calcEffectiveOptionsForEmployee(address(emp1), uint32(ct + d*(7 days)));
@@ -134,7 +134,8 @@ contract TestESOP is Test, Reporter, ESOPTypes
     // trigger conversion event
     dn = (fdays)*7;
     ct = uint32(ct + dn*1 days);
-    esop.esopConversionEvent(ct, ct + 1 years, converter);
+    DummyOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 1 years);
+    esop.convertESOPOptions(ct, converter);
     for(d = 0; d < 14; d++) {
       dn = d*7;
       options = esop.calcEffectiveOptionsForEmployee(address(emp1), uint32(ct + d*(7 days)));

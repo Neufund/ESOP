@@ -5,7 +5,7 @@ import 'dapple/reporter.sol';
 import "./Test.DummyOptionConverter.sol";
 import "./Test.Types.sol";
 
-contract TestESOP is Test, Reporter, ESOPTypes
+contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
 {
     EmpTester emp1;
     Tester emp2;
@@ -15,7 +15,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
   function setUp() {
     emp1 = new EmpTester();
     emp2 = new Tester();
-    esop = new ESOP();
+    esop = makeNFESOP();
   }
 
   function testAccess()
@@ -39,10 +39,16 @@ contract TestESOP is Test, Reporter, ESOPTypes
     // test termination upgrade to for a cause when not signed in time
   }
 
+  function testRootOfTrust()
+  {
+
+  }
+
   function testConversionStopsFadeout()
   {
     uint32 ct = esop.currentTime();
     esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 100, false);
+    return;
     emp1._target(esop);
     emp1.employeeSignsToESOP();
     // then after a year employee terminated regular
@@ -54,8 +60,8 @@ contract TestESOP is Test, Reporter, ESOPTypes
     ct += 30 days;
     esop.mockTime(ct);
     converter = new DummyOptionsConverter(address(esop), ct + 60 days);
-    uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
-    assertEq(uint(rc), 0, "esopConversionEvent");
+    uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
+    assertEq(uint(rc), 0, "convertESOPOptions");
     uint optionsAtConv = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
     uint optionsCv1m = esop.calcEffectiveOptionsForEmployee(address(emp1), ct + 30 days);
     //@info options diff should be 0 `uint optionsAtConv` `uint optionsCv1m`
@@ -73,8 +79,8 @@ contract TestESOP is Test, Reporter, ESOPTypes
     ct += 1 years;
     esop.mockTime(ct);
     converter = new DummyOptionsConverter(address(esop), ct + 2 weeks);
-    uint8 rc = uint8(esop.esopConversionEvent(ct, converter));
-    assertEq(uint(rc), 0, "esopConversionEvent");
+    uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
+    assertEq(uint(rc), 0, "convertESOPOptions");
     // get emp1 employee
     Employee memory emp;
     var sere = esop.employees().getSerializedEmployee(emp1);
@@ -94,7 +100,7 @@ contract TestESOP is Test, Reporter, ESOPTypes
     assertEq(uint(rc), 0, "employeeConvertsOptions");
     // we expect all extra options + pool options + 20% exit bonus on pool options
     uint poolopts = esop.totalOptions() - esop.remainingOptions();
-    uint expopts = 100 + poolopts + poolopts/5;
+    uint expopts = 100 + poolopts + esop.divRound(poolopts * esop.exitBonusPromille(), esop.fpScale());
     // what is converted is stored in dummy so compare
     assertEq(converter.totalConvertedOptions(), expopts);
     //@info `uint expopts` converted

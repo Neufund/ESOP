@@ -37,7 +37,7 @@ contract EmpReentry is Reporter {
 }
 
 
-contract TestOptionConverters is Test, Reporter, ESOPTypes
+contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes
 {
     EmpTester emp1;
     ESOP esop;
@@ -45,7 +45,7 @@ contract TestOptionConverters is Test, Reporter, ESOPTypes
   function setUp() {
     emp1 = new EmpTester();
     //emp2 = new Tester();
-    esop = new ESOP();
+    esop = makeNFESOP();
     emp1._target(esop);
   }
 
@@ -68,7 +68,7 @@ contract TestOptionConverters is Test, Reporter, ESOPTypes
     // convert after 3 years to erc20 token (tokenization scenario)
     ct += 3 years;
     esop.mockTime(ct);
-    rc = uint(esop.esopConversionEvent(ct, converter));
+    rc = uint(esop.convertESOPOptions(ct, converter));
     assertEq(rc, 0, "converter");
     uint32 cdead = converter.getConversionDeadline();
     //convert all users
@@ -225,7 +225,7 @@ contract TestOptionConverters is Test, Reporter, ESOPTypes
     esop.mockTime(ct + 3 years);
     uint32 deadlineDelta = 3 years + 4 weeks;
     ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta);
-    uint rc = uint(esop.esopConversionEvent(ct, converter));
+    uint rc = uint(esop.convertESOPOptions(ct, converter));
     assertEq(rc, 0, "converter");
     emp1.employeeConvertsOptions();
     emp0.employeeConvertsOptions();
