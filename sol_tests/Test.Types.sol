@@ -34,4 +34,21 @@ contract EmpTester {
   }
 }
 
+contract ESOPMaker {
+  function makeNFESOP() public returns (ESOP) {
+    RootOfTrust root = new RootOfTrust();
+    ESOP e = new ESOP(address(this), address(root));
+    root.setESOP(e);
+    //bytes32 poolEstablishmentDocIPFSHash = sha256("hereby pool #1 is established");
+    bytes memory poolEstablishmentDocIPFSHash = "qmv8ndh7ageh9b24zngaextmuhj7aiuw3scc8hkczvjkww";
+    // make CEO sign this
+    uint rc = uint(e.openESOP(1 years, 4 years, 8000, 2000, 1000, 1000000, poolEstablishmentDocIPFSHash));
+    if (rc != 0)
+      throw;
+    // pass being CEO to sender
+    e.changeCEO(msg.sender);
+    return e;
+  }
+}
+
 //contract ESOPTest is ESOP
