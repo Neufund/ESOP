@@ -3,7 +3,7 @@ import "./ESOPTypes.sol";
 
 contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
 {
-  enum ESOPState { Open, Conversion }
+  enum ESOPState { New, Open, Conversion }
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
   enum TerminationType { Regular, GoodWill, ForACause }
 
@@ -20,8 +20,12 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
   uint public newEmployeePoolPromille;
   // total options in base pool
   uint public totalOptions;
+  // ipfs hash of document establishing this ESOP
+  bytes public poolEstablishmentDocIPFSHash;
   // CEO address
   address public addressOfCEO;
+  // root of immutable root of trust pointing to given ESOP implementation
+  address public rootOfTrust;
   // scale of the promille
   uint public constant fpScale = 10000;
 
@@ -49,6 +53,12 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     _;
   }
 
+  modifier onlyESOPNew() {
+    if (esopState != ESOPState.New)
+      throw;
+    _;
+  }
+
   modifier onlyESOPOpen() {
     if (esopState != ESOPState.Open)
       throw;
@@ -69,7 +79,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
 
   function changeCEO(address newCEO)
     external
-    onlyOwner
+    onlyCEO
     notInMigration
   {
     if (newCEO != address(0)) addressOfCEO = newCEO;
@@ -166,6 +176,31 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     returnFadeoutToPool(currentTime());
   }
 
+  function openESOP(uint32 pCliffDuration, uint32 pVestingDuration, uint32 pMaxFadeoutPromille, uint32 pExitBonusPromille,
+    uint32 pNewEmployeePoolPromille, uint32 pTotalOptions, bytes pPoolEstablishmentDocIPFSHash)
+    external
+    onlyCEO
+    onlyESOPNew
+    notInMigration
+    returns (ReturnCodes)
+  {
+    // options are stored in unit32
+    if (pTotalOptions > 1000000)
+      return ReturnCodes.InvalidParameters;
+
+    cliffDuration = pCliffDuration;
+    vestingDuration = pVestingDuration;
+    maxFadeoutPromille = pMaxFadeoutPromille;
+    exitBonusPromille = pExitBonusPromille;
+    newEmployeePoolPromille = pNewEmployeePoolPromille;
+    totalOptions = pTotalOptions;
+    remainingOptions = totalOptions;
+    poolEstablishmentDocIPFSHash = pPoolEstablishmentDocIPFSHash;
+
+    esopState = ESOPState.Open;
+    return ReturnCodes.OK;
+  }
+
   function calcNewEmployeeOptions(uint remaining)
     internal
     constant
@@ -192,7 +227,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     }
     // assign options for group of size 1 obviously
     uint options = calcNewEmployeeOptions(remainingOptions);
-    if (options > 0xFFFF)
+    if (options > 0xFFFFFFFF)
       throw;
     employees.setEmployee(e, vestingStarts, timeToSign, 0, 0, uint32(options), extraOptions, EmployeeState.WaitingForSignature );
     remainingOptions -= options;
@@ -201,43 +236,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
   }
 
   // todo: implement group add someday, however func distributeAndReturnToPool gets very complicated
-  /*function calcNewEmployeeOptions(uint remaining, uint8 groupSize)
-    internal
-    constant
-    returns (uint options)
-  {
-    for(uint i=0; i<groupSize; i++) {
-      uint s = divRound(remaining * newEmployeePoolPromille, fpScale);
-      options += s;
-      remaining -= s;
-    }
-    return options/groupSize;
-  }
-
-  function addNewEmployeesToESOP(address[] emps, uint32 vestingStarts, uint32 timeToSign)
-    external
-    onlyESOPOpen
-    onlyCEO
-    returns (ReturnCodes)
-  {
-    // recover options for employees with expired signatures
-    this.removeEmployeesWithExpiredSignatures();
-    // return fade out to pool
-    this.returnFadeoutToPool();
-    // do not add twice
-    for(uint i=0; i < emps.length; i++)
-      if(employees.hasEmployee(emps[i]))
-        return ReturnCodes.InvalidEmployeeState;
-    // assign options for group of size 1 obviously
-    uint options = calcNewEmployeeOptions(remainingOptions, uint8(emps.length));
-    if (options > 0xFFFF)
-      throw;
-    for(i=0; i < emps.length; i++) {
-      employees.setEmployee(emps[i], vestingStarts, timeToSign, 0, 0, uint32(options), 0, EmployeeState.WaitingForSignature );
-      remainingOptions -= options;
-    }
-    return ReturnCodes.OK;
-  }*/
+  // todo: function calcNewEmployeeOptions(uint remaining, uint8 groupSize)
+  // todo: function addNewEmployeesToESOP(address[] emps, uint32 vestingStarts, uint32 timeToSign)
 
   function addEmployeeWithExtraOptions(address e, uint32 vestingStarts, uint32 timeToSign, uint32 extraOptions)
     external
@@ -295,31 +295,31 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     else if (emp.state != EmployeeState.Employed)
       return ReturnCodes.InvalidEmployeeState;
     // how many options returned to pool
-    uint returnedOptions = 0;
-    uint returnedExtraOptions = 0;
+    uint returnedOptions;
+    uint returnedExtraOptions;
     if (termType == TerminationType.Regular) {
       // regular termination - vesting applies
       returnedOptions = emp.options - calcVestedOptions(terminatedAt, emp.vestingStarted, emp.options);
       returnedExtraOptions = emp.extraOptions - calcVestedOptions(terminatedAt, emp.vestingStarted, emp.extraOptions);
+      employees.terminateEmployee(e, terminatedAt, terminatedAt, EmployeeState.Terminated);
     }
     else if (termType == TerminationType.ForACause) {
       // for a cause - employee is kicked out from ESOP, return all options
       returnedOptions = emp.options;
       returnedExtraOptions = emp.extraOptions;
-    }
-    // else good will - we let employee to keep all the options - already set to zero
-    // terminate employee properly
-    if (termType == TerminationType.ForACause)
       employees.removeEmployee(e);
-    else
-      employees.terminateEmployee(e, terminatedAt, terminatedAt,
-        termType == TerminationType.GoodWill ? EmployeeState.GoodWillTerminated: EmployeeState.Terminated);
+    } if (termType == TerminationType.GoodWill) {
+      // else good will - we let employee to keep all the options
+      returnedOptions = 0; // code duplicates for easier human readout
+      returnedExtraOptions = 0;
+      employees.terminateEmployee(e, terminatedAt, terminatedAt, EmployeeState.GoodWillTerminated);
+    }
     remainingOptions += distributeAndReturnToPool(returnedOptions, emp.idx);
     totalExtraOptions -= returnedExtraOptions;
     return ReturnCodes.OK;
   }
 
-  function esopConversionEvent(uint32 convertedAt, IOptionsConverter converter )
+  function convertESOPOptions(uint32 convertedAt, IOptionsConverter converter )
     external
     onlyESOPOpen
     onlyCEO
@@ -372,6 +372,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     constant
     returns (uint)
   {
+    if (t <= vestingStarts)
+      return 0;
     // apply vesting
     uint effectiveTime = t - vestingStarts;
     // if within cliff nothing is due
@@ -387,16 +389,16 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     returns (uint)
   {
     uint timefromTermination = t - terminatedAt;
+    // fadeout duration equals to employment duration
     uint fadeoutDuration = terminatedAt - vestingStarted;
-    // long return expression minimizing scaling errors
+    // minimum value of options at the end of fadeout, it is a % of all employee's options
     uint minFadeValue = divRound(options * (fpScale - maxFadeoutPromille), fpScale);
+    // however employee cannot have more than options after fadeout than he was vested at termination
+    if (minFadeValue >= vestedOptions)
+      return vestedOptions;
     return timefromTermination > fadeoutDuration ?
       minFadeValue  :
       (minFadeValue + divRound((vestedOptions - minFadeValue) * (fadeoutDuration - timefromTermination), fadeoutDuration));
-    /*uint effectiveFadeoutPromille = timefromTermination > fadeoutDuration
-      ? maxFadeoutPromille : divRound(maxFadeoutPromille*timefromTermination, fadeoutDuration);
-    // return fadeout amount
-    return divRound(options * effectiveFadeoutPromille, fpScale);*/
   }
 
   function calcEffectiveOptionsForEmployee(address e, uint32 calcAtTime)
@@ -409,7 +411,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     var sere = employees.getSerializedEmployee(e);
     Employee memory emp;
     assembly { emp := sere }
-    // no more options for converted options or when esop is not singed
+    // no options for converted options or when esop is not singed
     if (emp.state == EmployeeState.OptionsConverted || emp.state == EmployeeState.WaitingForSignature)
       return 0;
     // no options when esop is being converted and conversion deadline expired
@@ -444,22 +446,11 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
       throw;
   }
 
-
   // todo: make parameters explicit
-  function ESOP() {
-    // esopState = ESOPState.Open; // thats initial value
+  function ESOP(address ceo, address pRootOfTrust) {
+    esopState = ESOPState.New; // thats initial value
     employees = new EmployeesList();
-    cliffDuration = 1 years;
-    vestingDuration = 4 years;
-    maxFadeoutPromille = 8000;
-    exitBonusPromille = 2000;
-    newEmployeePoolPromille = 1000;
-    totalOptions = 100000;
-    remainingOptions = totalOptions;
-    addressOfCEO = owner;
-    // check invalid ESOP configurations
-    // 1. cliff must be higher than max fadout
-    //if (divRound(totalOptions*cliffDuration,vestingDuration) >= divRound(totalOptions*(fpScale - maxFadeoutPromille), fpScale))
-    //  throw;
+    addressOfCEO = ceo;
+    rootOfTrust = pRootOfTrust;
   }
 }
