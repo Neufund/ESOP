@@ -47,6 +47,23 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     return employees;
   }
 
+  function massAddEmployeesExtra(uint count, ESOP E) returns (address[], uint[])
+  {
+    uint32 ct = E.currentTime();
+    address[] memory employees = new address[](count);
+    uint[] memory emp_options = new uint[](count);
+    uint initExtra = 8000;
+    for(uint i=0; i<count; i++) {
+      emp1 = new EmpTester();
+      employees[i] = emp1;
+      emp_options[i] = initExtra;
+      E.addEmployeeWithExtraOptions(emp1, ct, ct + 2 weeks, uint32(initExtra));
+      emp1._target(E);
+      initExtra += 8000;
+    }
+    return (employees, emp_options);
+  }
+
   function checkOptionsInEmployeeList(EmployeesList employees, uint[] options)
   {
     Employee memory emp;
@@ -257,5 +274,26 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     E.removeEmployeesWithExpiredSignatures();
     // all should be back in pool
     assertEq(E.totalOptions(), E.remainingOptions() + options[0], "all back in pool");
+  }
+
+  function testRemoveSignaturesExpiredToPoolOneEmployedTerminatedExtra() logs_gas
+  {
+    ESOP E = makeNFESOP();
+    var (employees, options) = massAddEmployeesExtra(15, E);
+    EmpTester(employees[7]).employeeSignsToESOP();
+    EmpTester(employees[3]).employeeSignsToESOP();
+    //@info `uint[] options`
+    uint sumOptions = 0;
+    for(uint i=0; i<options.length; i++)
+      sumOptions += options[i];
+    assertEq(E.totalExtraOptions(), sumOptions, "fill extra pool");
+    // now expire signatures
+    uint32 ct = E.currentTime() + uint32(E.vestingDuration()/2);
+    E.mockTime(ct);
+    // terminate employee 3 at half of a vesting
+    E.terminateEmployee(employees[3], ct, 0);
+    E.removeEmployeesWithExpiredSignatures();
+    // all should be back in pool
+    assertEq(E.totalExtraOptions(), options[7] + options[3]/2+1, "all back in pool");
   }
 }
