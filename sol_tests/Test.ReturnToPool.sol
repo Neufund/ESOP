@@ -294,6 +294,6 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     E.terminateEmployee(employees[3], ct, 0);
     E.removeEmployeesWithExpiredSignatures();
     // all should be back in pool
-    assertEq(E.totalExtraOptions(), options[7] + options[3]/2+1, "all back in pool");
+    assertEq(E.totalExtraOptions(), options[7] + options[3]/2, "all back in pool");
   }
 }

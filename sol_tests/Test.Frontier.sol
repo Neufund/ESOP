@@ -18,7 +18,7 @@ contract TestFrontier is Test, ESOPMaker, Reporter, ESOPTypes
   }
 
   function testESOPInstantiation() {
-    RootOfTrust root = new RootOfTrust();
+    RoT root = new RoT();
     ESOP e = new ESOP(address(this), address(root));
     root.setESOP(e);
     bytes memory poolEstablishmentDocIPFSHash = "qmv8ndh7ageh9b24zngaextmuhj7aiuw3scc8hkczvjkww";

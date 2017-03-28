@@ -1,7 +1,9 @@
 pragma solidity ^0.4.0;
 
 import "./ESOP.sol";
+import "./RoT.sol";
 import "./ERC20OptionsConverter.sol";
+import "./ProceedsOptionsConverter.sol";
 
 contract EmpTester {
   address _t;
@@ -36,7 +38,7 @@ contract EmpTester {
 
 contract ESOPMaker {
   function makeNFESOP() public returns (ESOP) {
-    RootOfTrust root = new RootOfTrust();
+    RoT root = new RoT();
     ESOP e = new ESOP(address(this), address(root));
     root.setESOP(e);
     //bytes32 poolEstablishmentDocIPFSHash = sha256("hereby pool #1 is established");
