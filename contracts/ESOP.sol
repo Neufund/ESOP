@@ -3,6 +3,16 @@ import "./ESOPTypes.sol";
 
 contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
 {
+  // employee changed events
+  event NewEmployee(address indexed e, uint32 options, uint32 extraOptions);
+  event EmployeeSignedToESOP(address indexed e);
+  event TerminateEmployee(address indexed e, uint32 terminatedAt, TerminationType termType);
+  event EmployeeOptionsConverted(address indexed e, uint32 options);
+  // esop changed events
+  event ESOPOpened();
+  event ESOPOptionsConversionStarted(address converter, uint32 convertedAt, uint32 conversionDeadline);
+  // CEO events
+  event CEOChanged(address oldCEO, address newCEO);
   enum ESOPState { New, Open, Conversion }
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
   enum TerminationType { Regular, GoodWill, ForACause }
@@ -82,7 +92,10 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     onlyCEO
     notInMigration
   {
-    if (newCEO != address(0)) addressOfCEO = newCEO;
+    if (newCEO != address(0)) {
+      addressOfCEO = newCEO;
+      CEOChanged(msg.sender, newCEO);
+    }
   }
 
   function distributeAndReturnToPool(uint distributedOptions, uint idx)
@@ -198,6 +211,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     poolEstablishmentDocIPFSHash = pPoolEstablishmentDocIPFSHash;
 
     esopState = ESOPState.Open;
+    ESOPOpened();
     return ReturnCodes.OK;
   }
 
@@ -207,6 +221,15 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     returns (uint options)
   {
     return divRound(remaining * newEmployeePoolPromille, fpScale);
+  }
+
+  function estimateNewEmployeeOptions()
+    external
+    constant
+    returns (uint32)
+  {
+    // estimate number of options from the pool, this does not exec fadeout and does not remove unsigned employees
+    return uint32(calcNewEmployeeOptions(remainingOptions));
   }
 
   function addNewEmployeeToESOP(address e, uint32 vestingStarts, uint32 timeToSign, uint32 extraOptions, bool poolCleanup)
@@ -232,6 +255,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     employees.setEmployee(e, vestingStarts, timeToSign, 0, 0, uint32(options), extraOptions, EmployeeState.WaitingForSignature );
     remainingOptions -= options;
     totalExtraOptions += extraOptions;
+    NewEmployee(e, uint32(options), extraOptions);
     return ReturnCodes.OK;
   }
 
@@ -251,6 +275,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
       return ReturnCodes.InvalidEmployeeState;
     employees.setEmployee(e, vestingStarts, timeToSign, 0, 0, 0, extraOptions, EmployeeState.WaitingForSignature );
     totalExtraOptions += extraOptions;
+    NewEmployee(e, 0, extraOptions);
     return ReturnCodes.OK;
   }
 
@@ -274,6 +299,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
       return ReturnCodes.TooLate;
     }
     employees.changeState(msg.sender, EmployeeState.Employed);
+    EmployeeSignedToESOP(msg.sender);
     return ReturnCodes.OK;
   }
 
@@ -290,6 +316,9 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     var sere = employees.getSerializedEmployee(e);
     Employee memory emp;
     assembly { emp := sere }
+    // todo: check termination time against vestingStarted
+    if (terminatedAt < emp.vestingStarted)
+      return ReturnCodes.InvalidParameters;
     if (emp.state == EmployeeState.WaitingForSignature)
       termType = TerminationType.ForACause;
     else if (emp.state != EmployeeState.Employed)
@@ -316,6 +345,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     }
     remainingOptions += distributeAndReturnToPool(returnedOptions, emp.idx);
     totalExtraOptions -= returnedExtraOptions;
+    TerminateEmployee(e, terminatedAt, termType);
     return ReturnCodes.OK;
   }
 
@@ -341,6 +371,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     optionsConverter = converter;
     // this is very irreversible
     esopState = ESOPState.Conversion;
+    ESOPOptionsConversionStarted(address(converter), convertedAt, employeeConversionDeadline);
     return ReturnCodes.OK;
   }
 
@@ -364,6 +395,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     // call before options conversion contract to prevent re-entry
     employees.changeState(msg.sender, EmployeeState.OptionsConverted);
     optionsConverter.convertOptions(msg.sender, options);
+    EmployeeOptionsConverted(msg.sender, uint32(options));
     return ReturnCodes.OK;
   }
 
