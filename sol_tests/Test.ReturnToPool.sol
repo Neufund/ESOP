@@ -27,7 +27,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     uint remPool = E.totalOptions();
     for(uint i=0; i<count; i++)
     {
-      uint o = (remPool * E.newEmployeePoolPromille()) / E.fpScale();
+      uint o = (remPool * E.newEmployeePoolPromille()) / E.FP_SCALE();
       options[i] = o;
       remPool -= o;
     }
@@ -100,7 +100,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
     uint32 delta_t = uint32(esop.vestingDuration());
-    uint fade = esop.divRound(esop.maxFadeoutPromille() * extraOptions, esop.fpScale());
+    uint fade = esop.divRound(esop.maxFadeoutPromille() * extraOptions, esop.FP_SCALE());
     uint tot_fade;
     for(uint i=0; i<10; i++) {
       delta_t = uint32(esop.divRound(delta_t, 2));
@@ -136,7 +136,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
     uint32 delta_t = uint32(esop.vestingDuration());
-    uint fade = esop.divRound(esop.maxFadeoutPromille() * poolOptions, esop.fpScale());
+    uint fade = esop.divRound(esop.maxFadeoutPromille() * poolOptions, esop.FP_SCALE());
     uint tot_fade;
     for(uint i=0; i<10; i++) {
       delta_t = uint32(esop.divRound(delta_t, 2));
@@ -180,7 +180,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     //@info vesting should be half of options `uint vested` of `uint options[3]`
     // now modify reference list by distributing vested part
     for(uint i=4; i<7; i++) {
-      uint modopt = E.divRound(vested * E.newEmployeePoolPromille(), E.fpScale());
+      uint modopt = E.divRound(vested * E.newEmployeePoolPromille(), E.FP_SCALE());
       vested -= modopt;
       options[i] += modopt;
     }
@@ -193,7 +193,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     uint vested2 = options[1]/2;
     for(i=2; i<7; i++) {
         if (i != 3) { //skip already terminated employee
-          modopt = E.divRound(vested2 * E.newEmployeePoolPromille(), E.fpScale());
+          modopt = E.divRound(vested2 * E.newEmployeePoolPromille(), E.FP_SCALE());
           vested2 -= modopt;
           options[i] += modopt;
       }

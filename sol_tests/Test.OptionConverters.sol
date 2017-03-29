@@ -76,7 +76,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes
     emp2.employeeConvertsOptions();
     emp3.employeeConvertsOptions();
     // all options converted + exit bonus
-    assertEq(converter.totalSupply(), poolOptions + esop.divRound(poolOptions*esop.exitBonusPromille(), esop.fpScale()));
+    assertEq(converter.totalSupply(), poolOptions + esop.divRound(poolOptions*esop.exitBonusPromille(), esop.FP_SCALE()));
 
     return (emp1, emp2, emp3);
   }

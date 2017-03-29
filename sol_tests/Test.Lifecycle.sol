@@ -55,7 +55,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
     // half fadeout
     ct += uint32(esop.vestingDuration()/4);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
-    uint minFade = esop.divRound(totOptions*(esop.fpScale() - esop.maxFadeoutPromille()), esop.fpScale());
+    uint minFade = esop.divRound(totOptions*(esop.FP_SCALE() - esop.maxFadeoutPromille()), esop.FP_SCALE());
     // if minFade > vested options then vested options is the min value after fadeout (basically - no fadeout in this case)
     if (minFade >= totOptions/2)
       minFade = totOptions/2;
@@ -99,9 +99,9 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
     uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
     assertEq(uint(rc), 0, "convertESOPOptions");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
-    assertEq(options, totOptions + esop.divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.fpScale()), "exit bonus");
+    assertEq(options, totOptions + esop.divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.FP_SCALE()), "exit bonus");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 1 years);
-    assertEq(options, totOptions + esop.divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.fpScale()), "exit bonus + 1y");
+    assertEq(options, totOptions + esop.divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.FP_SCALE()), "exit bonus + 1y");
     // employee conversion
     esop.mockTime(ct + 1 weeks);
     emp1.employeeConvertsOptions();

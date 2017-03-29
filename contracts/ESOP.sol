@@ -1,8 +1,7 @@
 pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 
-contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
-{
+contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // employee changed events
   event NewEmployee(address indexed e, uint32 options, uint32 extraOptions);
   event EmployeeSignedToESOP(address indexed e);
@@ -37,7 +36,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
   // root of immutable root of trust pointing to given ESOP implementation
   address public rootOfTrust;
   // scale of the promille
-  uint public constant fpScale = 10000;
+  uint public constant FP_SCALE = 10000;
 
   // STATE
   // options that remain to be assigned
@@ -220,7 +219,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     constant
     returns (uint options)
   {
-    return divRound(remaining * newEmployeePoolPromille, fpScale);
+    return divRound(remaining * newEmployeePoolPromille, FP_SCALE);
   }
 
   function estimateNewEmployeeOptions()
@@ -424,7 +423,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     // fadeout duration equals to employment duration
     uint fadeoutDuration = terminatedAt - vestingStarted;
     // minimum value of options at the end of fadeout, it is a % of all employee's options
-    uint minFadeValue = divRound(options * (fpScale - maxFadeoutPromille), fpScale);
+    uint minFadeValue = divRound(options * (FP_SCALE - maxFadeoutPromille), FP_SCALE);
     // however employee cannot have more than options after fadeout than he was vested at termination
     if (minFadeValue >= vestedOptions)
       return vestedOptions;
@@ -468,7 +467,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math
     // exit bonus only on conversion event and for employees that are not terminated, no exception for good will termination
     // do not apply bonus for extraOptions
     uint bonus = (esopState == ESOPState.Conversion && emp.state == EmployeeState.Employed) ?
-      divRound(emp.options*vestedOptions*exitBonusPromille, fpScale*allOptions) : 0;
+      divRound(emp.options*vestedOptions*exitBonusPromille, FP_SCALE*allOptions) : 0;
     return  vestedOptions + bonus;
   }
 
