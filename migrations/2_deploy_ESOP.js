@@ -1,7 +1,7 @@
 require('babel-register');
 
-const RoT = artifacts.require("./RoT.sol");
-const ESOP = artifacts.require("./ESOP.sol");
+const RoT = artifacts.require("RoT");
+const ESOP = artifacts.require("ESOP");
 
 module.exports = function (deployer, network) {
     deployer.then( async function() {
