@@ -28,7 +28,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
     assertEq(options, 0, "on sign expiration");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 3 weeks);
     assertEq(options, 0, "after sign expiration");
-    emp1.employeeSignsToESOP();
+    assertEq(uint(emp1.employeeSignsToESOP()), 0, "sign to ESOP");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, 0, "on creation signed");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.cliffDuration())-1);
@@ -49,7 +49,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
     ct -= uint32(esop.vestingDuration()/2);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, totOptions/2, "half vesting");
-    esop.terminateEmployee(emp1, ct, 0);
+    assertEq(uint(esop.terminateEmployee(emp1, ct, 0)), 0, "terminate employee");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, totOptions/2, "half vesting term");
     // half fadeout
