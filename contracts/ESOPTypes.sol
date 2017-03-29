@@ -36,6 +36,8 @@ contract EmployeesList is ESOPTypes, Ownable
 {
   event CreateEmployee(address indexed e, uint32 options, uint32 extraOptions, uint16 idx);
   event UpdateEmployee(address indexed e, uint32 options, uint32 extraOptions, uint16 idx);
+  event ChangeEmployeeState(address indexed e, EmployeeState oldState, EmployeeState newState);
+  event RemoveEmployee(address indexed e);
   mapping (address => Employee) employees;
   // addresses in the mapping, ever
   address[] public addresses;
@@ -81,6 +83,7 @@ contract EmployeesList is ESOPTypes, Ownable
     external
     onlyOwner
   {
+    ChangeEmployeeState(e, employees[e].state, state);
     employees[e].state = state;
   }
 
@@ -93,6 +96,7 @@ contract EmployeesList is ESOPTypes, Ownable
     if (empIdx > 0) {
         delete employees[e];
         delete addresses[empIdx-1];
+        RemoveEmployee(e);
         return true;
     }
     return false;
@@ -104,9 +108,11 @@ contract EmployeesList is ESOPTypes, Ownable
   {
     // somehow this get reference to storage and optimizer does it with one SSTORE
     Employee storage employee = employees[e];
+    ChangeEmployeeState(e, employee.state, state);
     employee.state = state;
     employee.terminatedAt = terminatedAt;
     employee.fadeoutStarts = fadeoutStarts;
+    UpdateEmployee(e, employee.options, employee.extraOptions, employee.idx);
   }
 
   function getEmployee(address e)
