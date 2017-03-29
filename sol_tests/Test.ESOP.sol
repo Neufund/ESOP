@@ -44,6 +44,13 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
 
   }
 
+  function testOptionsBeforeAndAfterTermination()
+  {
+    // terminate employee
+    // options before termination as expected
+    // options after termination as expected
+  }
+
   function testConversionStopsFadeout()
   {
     uint32 ct = esop.currentTime();
