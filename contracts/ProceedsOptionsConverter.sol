@@ -2,8 +2,7 @@ pragma solidity ^0.4.0;
 
 import './ERC20OptionsConverter.sol';
 
-contract ProceedsOptionsConverter is ERC20OptionsConverter
-{
+contract ProceedsOptionsConverter is ERC20OptionsConverter {
   mapping (address => uint) internal withdrawals;
   uint[] internal payouts;
 
@@ -46,7 +45,7 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter
     return payout;
   }
 
-  function transfer(address _to, uint _value) converted public {
+  function transfer(address _to, uint _value) public converted {
     // if anything was withdrawn then block transfer to prevent multiple withdrawals
     // todo: we could allow transfer to new account (no token balance)
     // todo: we could allow transfer between account that fully withdrawn (but what's the point? -token has 0 value then)
@@ -56,7 +55,5 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter
     ERC20OptionsConverter.transfer(_to, _value);
   }
 
-  function ProceedsOptionsConverter(address esop, uint32 deadline) ERC20OptionsConverter(esop, deadline) {
-  }
+  function ProceedsOptionsConverter(address esop, uint32 deadline) ERC20OptionsConverter(esop, deadline) { }
 }
-

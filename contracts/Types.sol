@@ -19,6 +19,7 @@ contract Ownable {
   }
 }
 
+
 contract Math {
   // todo: should be a library
   function divRound(uint v, uint d) public constant returns(uint) {
@@ -38,6 +39,7 @@ contract Math {
       throw;
   }
 }
+
 
 contract TimeSource is Ownable {
   uint32 mockNow;
@@ -80,8 +82,7 @@ contract Upgradeable is Ownable {
       _;
     }
 
-    function kill() onlyOwner migrated
-    {
+    function kill() onlyOwner migrated {
       selfdestruct(owner);
     }
 

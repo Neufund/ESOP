@@ -122,8 +122,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     return distributedOptions;
   }
 
-  function removeEmployeesWithExpiredSignatures(uint32 t) internal
-  {
+  function removeEmployeesWithExpiredSignatures(uint32 t) internal {
     Employee memory emp;
     for(uint i=0; i< employees.size(); i++) {
       address ea = employees.addresses(i);
@@ -140,8 +139,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     }
   }
 
-  function returnFadeoutToPool(uint32 t) internal
-  {
+  function returnFadeoutToPool(uint32 t) internal {
     Employee memory emp;
     for(uint i=0; i< employees.size(); i++) {
       address ea = employees.addresses(i);

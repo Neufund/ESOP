@@ -1,8 +1,7 @@
 pragma solidity ^0.4.0;
 import "./Types.sol";
 
-contract ESOPTypes
-{
+contract ESOPTypes {
   // enums are numbered starting from 0. NotSet is used to check for non existing mapping
   enum EmployeeState { NotSet, WaitingForSignature, Employed, Terminated, GoodWillTerminated, OptionsConverted }
   // please note that 32 bit unsigned int is used to represent UNIX time which is enough to represent dates until Sun, 07 Feb 2106 06:28:15 GMT
@@ -32,8 +31,8 @@ contract ESOPTypes
   }
 }
 
-contract EmployeesList is ESOPTypes, Ownable
-{
+
+contract EmployeesList is ESOPTypes, Ownable {
   event CreateEmployee(address indexed e, uint32 options, uint32 extraOptions, uint16 idx);
   event UpdateEmployee(address indexed e, uint32 options, uint32 extraOptions, uint16 idx);
   event ChangeEmployeeState(address indexed e, EmployeeState oldState, EmployeeState newState);
@@ -118,19 +117,21 @@ contract EmployeesList is ESOPTypes, Ownable
   function getEmployee(address e)
     external
     constant
-    returns (uint32, uint32, uint32, uint32, uint32, uint32, EmployeeState) {
+    returns (uint32, uint32, uint32, uint32, uint32, uint32, EmployeeState)
+  {
       Employee employee = employees[e];
       if (employee.idx == 0)
         throw;
       // where is struct zip/unzip :>
       return (employee.vestingStarted, employee.timeToSign, employee.terminatedAt, employee.fadeoutStarts,
         employee.options, employee.extraOptions, employee.state);
-    }
+  }
 
    function hasEmployee(address e)
-    external
-    constant
-    returns (bool) {
+     external
+     constant
+     returns (bool)
+   {
       // this is very inefficient - whole word is loaded just to check this
       return employees[e].idx != 0;
     }
@@ -153,8 +154,8 @@ contract EmployeesList is ESOPTypes, Ownable
   }
 }
 
-contract IOptionsConverter
-{
+
+contract IOptionsConverter {
 
   modifier onlyESOP() {
     if (msg.sender != getESOP())
