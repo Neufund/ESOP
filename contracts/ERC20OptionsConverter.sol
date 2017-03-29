@@ -26,11 +26,11 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
   }
 
 
-  function getESOP() public returns (address) {
+  function getESOP() public constant returns (address) {
     return esopAddress;
   }
 
-  function getConversionDeadline() public returns(uint32) {
+  function getConversionDeadline() public constant returns(uint32) {
     return conversionDeadline;
   }
 

@@ -162,8 +162,8 @@ contract IOptionsConverter {
       throw;
     _;
   }
-  function getESOP() public returns (address);
-  function getConversionDeadline() public returns (uint32);
+  function getESOP() public constant returns (address);
+  function getConversionDeadline() public constant returns (uint32);
   // executes conversion of options for given employee and amount
   function convertOptions(address employee, uint options) onlyESOP public;
 }

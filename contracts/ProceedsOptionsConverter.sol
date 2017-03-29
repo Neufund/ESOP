@@ -22,8 +22,6 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter {
     // if all payouts for given token holder executed then exit
     if (paymentId == payouts.length)
       return 0;
-    // if non existing withdrawal, then count from 1
-    //if (paymentId == 0) paymentId = 1;
     uint payout = 0;
     for (uint i = paymentId; i<payouts.length; i++)
     {
