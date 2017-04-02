@@ -11,7 +11,7 @@ module.exports = function (deployer, network) {
             let year_ahead = Math.floor(new Date() / 1000) + 365*24*60*60;
             await deployer.deploy(ERC20OptionsConverter, ESOP.address, year_ahead);
             await deployer.deploy(ProceedsOptionsConverter, ESOP.address, year_ahead);
-            deployer.logger.log("conversion deadline is " + String(year_ahead));
+            deployer.logger.log(`conversion deadline is ${year_ahead}`);
         });
     }
 };
