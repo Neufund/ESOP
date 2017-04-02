@@ -25,6 +25,14 @@ Simulations
 ## User Interface
 
 ## Development
+solc 0.4.10
+install binary packages cpp solc from solc repo http://solidity.readthedocs.io/en/develop/installing-solidity.html to use with dapple
+upgrade truffle by modifying package.js of truffle and putting right solc version like
+```
+cd /usr/lib/node_modules/truffle
+atom package.js <- change solc version
+npm update
+```
 
 ### Running unit (solidity) tests
 Solidity tests are run with dapple.

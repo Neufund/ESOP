@@ -13,6 +13,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // CEO events
   event CEOChanged(address oldCEO, address newCEO);
   enum ESOPState { New, Open, Conversion }
+  // use retrun codes until revert opcode is implemented
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
   enum TerminationType { Regular, GoodWill, ForACause }
 
