@@ -7,11 +7,11 @@ contract DummyOptionsConverter is IOptionsConverter {
   uint32 conversionDeadline;
   uint public totalConvertedOptions;
 
-  function getESOP() public returns (address) {
+  function getESOP() public constant returns (address) {
     return esopAddress;
   }
 
-  function getConversionDeadline() public returns (uint32) {
+  function getConversionDeadline() public constant returns (uint32) {
     return conversionDeadline;
   }
 
