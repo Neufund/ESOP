@@ -412,7 +412,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       return ReturnCodes.InvalidEmployeeState;
     }
     // this is ineffective as employee data will be fetched from storage again
-    uint options = this.calcEffectiveOptionsForEmployee(msg.sender, ct);
+    uint options = calcEffectiveOptionsForEmployee(msg.sender, ct);
     // call before options conversion contract to prevent re-entry
     employees.changeState(msg.sender, EmployeeState.OptionsConverted);
     optionsConverter.convertOptions(msg.sender, options);
@@ -454,16 +454,11 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       (minFadeValue + divRound((vestedOptions - minFadeValue) * (fadeoutDuration - timefromTermination), fadeoutDuration));
   }
 
-  function calcEffectiveOptionsForEmployee(address e, uint32 calcAtTime)
-    external
+  function callEffectiveOptions(Employee memory emp, uint32 calcAtTime)
+    internal
     constant
-    hasEmployee(e)
-    notInMigration
     returns (uint)
   {
-    var sere = employees.getSerializedEmployee(e);
-    Employee memory emp;
-    assembly { emp := sere }
     // no options for converted options or when esop is not singed
     if (emp.state == EmployeeState.OptionsConverted || emp.state == EmployeeState.WaitingForSignature)
       return 0;
@@ -491,6 +486,32 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     uint bonus = (esopState == ESOPState.Conversion && emp.state == EmployeeState.Employed) ?
       divRound(emp.options*vestedOptions*exitBonusPromille, FP_SCALE*allOptions) : 0;
     return  vestedOptions + bonus;
+  }
+
+  function calcEffectiveOptionsForEmployee(address e, uint32 calcAtTime)
+    public
+    constant
+    hasEmployee(e)
+    notInMigration
+    returns (uint)
+  {
+    var sere = employees.getSerializedEmployee(e);
+    Employee memory emp;
+    assembly { emp := sere }
+    return callEffectiveOptions(emp, calcAtTime);
+  }
+
+  function simulateEffectiveOptionsForEmployee(uint32 vestingStarted, uint32 terminatedAt, uint32 options,
+    uint32 extraOptions, uint8 employeeState, uint32 calcAtTime)
+    external
+    constant
+    notInMigration
+    returns (uint)
+  {
+    Employee memory emp = Employee({vestingStarted: vestingStarted, terminatedAt: terminatedAt,
+      options: options, extraOptions: extraOptions, state: EmployeeState(employeeState),
+      timeToSign: vestingStarted+2 weeks, fadeoutStarts: terminatedAt, idx:1});
+    return callEffectiveOptions(emp, calcAtTime);
   }
 
   function()
