@@ -15,6 +15,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   enum ESOPState { New, Open, Conversion }
   // use retrun codes until revert opcode is implemented
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
+  // event raised when return code from a function is not OK, when OK is returned one of events above is raised
+  event ReturnCode(ReturnCodes rc);
   enum TerminationType { Regular, GoodWill, ForACause }
 
   //CONFIG
@@ -196,8 +198,10 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     returns (ReturnCodes)
   {
     // options are stored in unit32
-    if (pTotalOptions > 1000000)
+    if (pTotalOptions > 1000000) {
+      ReturnCode(ReturnCodes.InvalidParameters);
       return ReturnCodes.InvalidParameters;
+    }
 
     cliffDuration = pCliffDuration;
     vestingDuration = pVestingDuration;
@@ -238,8 +242,10 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     returns (ReturnCodes)
   {
     // do not add twice
-    if(employees.hasEmployee(e))
+    if(employees.hasEmployee(e)) {
+      ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
+    }
     if (poolCleanup) {
       // recover options for employees with expired signatures
       removeEmployeesWithExpiredSignatures(currentTime());
@@ -269,8 +275,10 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     returns (ReturnCodes)
   {
     // do not add twice
-    if(employees.hasEmployee(e))
+    if(employees.hasEmployee(e)) {
+      ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
+    }
     employees.setEmployee(e, vestingStarts, timeToSign, 0, 0, 0, extraOptions, EmployeeState.WaitingForSignature );
     totalExtraOptions += extraOptions;
     NewEmployee(e, 0, extraOptions);
@@ -287,13 +295,16 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     var sere = employees.getSerializedEmployee(msg.sender);
     Employee memory emp;
     assembly { emp := sere }
-    if (emp.state != EmployeeState.WaitingForSignature)
+    if (emp.state != EmployeeState.WaitingForSignature) {
+      ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
+    }
     uint32 t = currentTime();
     if (t > emp.timeToSign) {
       remainingOptions += distributeAndReturnToPool(emp.options, emp.idx);
       totalExtraOptions -= emp.extraOptions;
       employees.removeEmployee(msg.sender);
+      ReturnCode(ReturnCodes.TooLate);
       return ReturnCodes.TooLate;
     }
     employees.changeState(msg.sender, EmployeeState.Employed);
@@ -315,12 +326,16 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     Employee memory emp;
     assembly { emp := sere }
     // todo: check termination time against vestingStarted
-    if (terminatedAt < emp.vestingStarted)
+    if (terminatedAt < emp.vestingStarted) {
+      ReturnCode(ReturnCodes.InvalidParameters);
       return ReturnCodes.InvalidParameters;
+    }
     if (emp.state == EmployeeState.WaitingForSignature)
       termType = TerminationType.ForACause;
-    else if (emp.state != EmployeeState.Employed)
+    else if (emp.state != EmployeeState.Employed) {
+      ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
+    }
     // how many options returned to pool
     uint returnedOptions;
     uint returnedExtraOptions;
@@ -355,11 +370,15 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     returns (ReturnCodes)
   {
     // prevent stupid things, give at least two weeks for employees to convert
-    if (convertedAt >= converter.getConversionDeadline() || converter.getConversionDeadline() + 2 weeks < currentTime())
+    if (convertedAt >= converter.getConversionDeadline() || converter.getConversionDeadline() + 2 weeks < currentTime()) {
+      ReturnCode(ReturnCodes.TooLate);
       return ReturnCodes.TooLate;
+    }
     // convertOptions must be callable by us
-    if (converter.getESOP() != address(this))
+    if (converter.getESOP() != address(this)) {
+      ReturnCode(ReturnCodes.InvalidParameters);
       return ReturnCodes.InvalidParameters;
+    }
     // return to pool everything we can
     removeEmployeesWithExpiredSignatures(currentTime());
     returnFadeoutToPool(currentTime());
@@ -381,13 +400,17 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     returns (ReturnCodes)
   {
     uint32 ct = currentTime();
-    if (ct > employeeConversionDeadline)
+    if (ct > employeeConversionDeadline) {
+      ReturnCode(ReturnCodes.TooLate);
       return ReturnCodes.TooLate;
+    }
     Employee memory emp;
     var sere = employees.getSerializedEmployee(msg.sender);
     assembly { emp := sere }
-    if (emp.state == EmployeeState.OptionsConverted)
+    if (emp.state == EmployeeState.OptionsConverted) {
+      ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
+    }
     // this is ineffective as employee data will be fetched from storage again
     uint options = this.calcEffectiveOptionsForEmployee(msg.sender, ct);
     // call before options conversion contract to prevent re-entry
