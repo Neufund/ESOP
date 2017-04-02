@@ -20,8 +20,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
     setupReporter('./solc/simulations.csv');
   }
 
-  function simulateLifecycleSingleEmp(uint32 ct)
-  {
+  function simulateLifecycleSingleEmp(uint32 ct) {
     uint8 rc = uint8(emp1.employeeSignsToESOP());
     //@info vesting sim days `uint esop.vestingDuration()`
     uint vdays = esop.vestingDuration() / 7 days;
@@ -63,8 +62,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
     //@info converted `uint8 rc` with `uint converter.totalConvertedOptions()`
   }
 
-  function testSimulateEmployeeOnlyExtra() logs_gas()
-  {
+  function testSimulateEmployeeOnlyExtra() logs_gas() {
     uint32 ct = esop.currentTime();
     uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 10000, false));
     emp1._target(esop);
@@ -72,18 +70,15 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
     simulateLifecycleSingleEmp(ct);
   }
 
-  function testSimulateAmounts() logs_gas()
-  {
+  function testSimulateAmounts() logs_gas() {
 
   }
 
-  function testSimulateManyEmployees() logs_gas()
-  {
+  function testSimulateManyEmployees() logs_gas() {
 
   }
 
-  function testSimulateEmployeeWithEarlyExitBonus() logs_gas()
-  {
+  function testSimulateEmployeeWithEarlyExitBonus() logs_gas() {
     uint32 ct = esop.currentTime();
     uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false));
     emp1._target(esop);
@@ -115,8 +110,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
     //@info converted `uint8 rc` with `uint converter.totalConvertedOptions()`
   }
 
-  function testSimulateEmployeeWithExitBonus() logs_gas()
-  {
+  function testSimulateEmployeeWithExitBonus() logs_gas() {
     uint32 ct = esop.currentTime();
     uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false));
     emp1._target(esop);
@@ -148,13 +142,33 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
     //@info converted `uint8 rc` with `uint converter.totalConvertedOptions()`
   }
 
-  function testSimulateEmployeeOptionsWithRegTermFull() logs_gas()
-  {
+  function testSimulateEmployeeOptionsWithRegTermFull() logs_gas() {
     uint32 ct = esop.currentTime();
     uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false));
     emp1._target(esop);
     //@doc vesting until maximum and fade out in full
     simulateLifecycleSingleEmp(ct);
+  }
+
+  function testSimulateESOPWithSimulateFunction() {
+    //@doc simulate using simulate function
+    uint32 ct = esop.currentTime();
+    // get options for employee no 1
+    uint32 empopts = uint32(esop.divRound(esop.totalOptions() * esop.newEmployeePoolPromille(), esop.FP_SCALE()));
+    //@info vesting sim days `uint esop.vestingDuration()` options `uint empopts`
+    uint vdays = esop.vestingDuration() / 7 days;
+    for(uint d = 0; d < vdays + 4; d++) {
+      uint dn = d*7;
+      uint options = esop.simulateEffectiveOptionsForEmployee(ct, 0, empopts, 0, uint8(EmployeeState.Employed), uint32(ct + d*(7 days)));
+      //@doc `uint dn`, `uint options`, vesting
+    }
+    // terminate employee
+    uint32 terminatedAt = uint32(ct + (vdays+4)*(7 days));
+    for(d = 1; d < (vdays+4) + 5; d++) {
+      dn = d*7 + vdays*7;
+      options = esop.simulateEffectiveOptionsForEmployee(ct, terminatedAt, empopts, 0, uint8(EmployeeState.Terminated), uint32(ct + (vdays+4)*7 days + d*(7 days)));
+      //@doc `uint dn`, `uint options`, fadeout
+    }
   }
 
 }
