@@ -18,8 +18,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
     esop = makeNFESOP();
   }
 
-  function testAccess()
-  {
+  function testAccess() {
 
   }
 
@@ -27,20 +26,21 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
 
   }
 
-  function testChangeCEO()
-  {
-
+  function testUnsupportedFork() logs_gas {
+    // ceo can kill on unsupported fork
+    root.killOnUnsupportedFork();
+    // suicide will not work until block is mined
+    // todo: integration test
+    assertEq(root.ESOPAddress(), address(0));
   }
 
 
-  function testTermination()
-  {
+  function testTermination() {
     // all causes
     // test termination upgrade to for a cause when not signed in time
   }
 
-  function testRootOfTrust()
-  {
+  function testRootOfTrust(){
 
   }
 
@@ -55,7 +55,6 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
   {
     uint32 ct = esop.currentTime();
     esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 100, false);
-    return;
     emp1._target(esop);
     emp1.employeeSignsToESOP();
     // then after a year employee terminated regular
