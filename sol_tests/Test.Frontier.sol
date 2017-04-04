@@ -17,13 +17,4 @@ contract TestFrontier is Test, ESOPMaker, Reporter, ESOPTypes
     //emp1._target(esop);
   }
 
-  function testESOPInstantiation() {
-    RoT root = new RoT();
-    ESOP e = new ESOP(address(this), address(root));
-    root.setESOP(e);
-    bytes memory poolEstablishmentDocIPFSHash = "qmv8ndh7ageh9b24zngaextmuhj7aiuw3scc8hkczvjkww";
-    // make CEO sign this
-    uint rc = uint(e.openESOP(1 years, 4 years, 8000, 2000, 1000, 1000000, poolEstablishmentDocIPFSHash));
-    assertEq(rc, 0);
-  }
 }
