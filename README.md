@@ -45,3 +45,5 @@ ESOP.at(ESOP.address).rootOfTrust()
 ### setting up dev chain on parity and get some eth
 parity --chain dev --jsonrpc-port 8444 ui
 https://github.com/paritytech/parity/wiki/Private-development-chain
+
+### Steps to reproduce and verify bytecode deployed on mainnet
