@@ -10,8 +10,6 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // esop changed events
   event ESOPOpened();
   event ESOPOptionsConversionStarted(address converter, uint32 convertedAt, uint32 conversionDeadline);
-  // CEO events
-  event CEOChanged(address oldCEO, address newCEO);
   enum ESOPState { New, Open, Conversion }
   // use retrun codes until revert opcode is implemented
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
@@ -87,17 +85,6 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     if (addressOfCEO != msg.sender)
       throw;
     _;
-  }
-
-  function changeCEO(address newCEO)
-    external
-    onlyCEO
-    notInMigration
-  {
-    if (newCEO != address(0)) {
-      addressOfCEO = newCEO;
-      CEOChanged(msg.sender, newCEO);
-    }
   }
 
   function distributeAndReturnToPool(uint distributedOptions, uint idx)
