@@ -5,7 +5,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // employee changed events
   event NewEmployee(address indexed e, uint32 options, uint32 extraOptions);
   event EmployeeSignedToESOP(address indexed e);
-  event TerminateEmployee(address indexed e, uint32 terminatedAt, TerminationType termType);
+  event TerminateEmploy `ee(address indexed e, uint32 terminatedAt, TerminationType termType);
   event EmployeeOptionsConverted(address indexed e, uint32 options);
   // esop changed events
   event ESOPOpened();
@@ -37,6 +37,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // root of immutable root of trust pointing to given ESOP implementation
   address public rootOfTrust;
   // scale of the promille
+  /// NOTE this is pro-ten-mille
   uint public constant FP_SCALE = 10000;
 
   // STATE

@@ -34,9 +34,11 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
     return conversionDeadline;
   }
 
+  // TODO: Check if the onlyESOP works through all inheritance!!!
+  // Missing visibility declaration
   function convertOptions(address employee, uint options) onlyESOP converting public {
-    totalSupply += options;
-    balances[employee] += options;
+    totalSupply += options; // Overflow (practical)
+    balances[employee] += options; // Overflow (practical)
     Creation(employee, options);
   }
 
@@ -44,7 +46,7 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
     if (balances[msg.sender] < _value)
       throw;
     balances[msg.sender] -= _value;
-    balances[_to] += _value;
+    balances[_to] += _value; // Overflow (needs lots of tokens)
     Transfer(msg.sender, _to, _value);
   }
 
@@ -52,6 +54,8 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
     return balances[_owner];
   }
 
+  // Why payable?
+  // Missing visibility declaration
   function () payable
   {
     throw;

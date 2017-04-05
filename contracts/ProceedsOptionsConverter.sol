@@ -6,6 +6,9 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter {
   mapping (address => uint) internal withdrawals;
   uint[] internal payouts;
 
+  // Uses onlyOwner but doesn't inherit from Ownable
+  // Ownable is only here because: ProceedsOptionsConverter →
+  //   ERC20OptionsConverter → TimeSource → Ownable
   function makePayout() converted payable onlyOwner public {
     // it does not make sense to distribute less than ether
     if (msg.value < 1 ether)
@@ -26,13 +29,19 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter {
     for (uint i = paymentId; i<payouts.length; i++)
     {
       // it is up to wei resolution, no point in rounding
+      // NOTE: totalSupply and balances can change between payout() and withdraw()
+      // ----: If tokens move owner, withdrawals is reset to zero! (covered by below transfer)
+      // NOTE: safeMul throws on overflow, can lock users out of their withdrawals if balance is very high
       uint thisPayout = safeMul(payouts[i], balance) / totalSupply;
-      payout += thisPayout;
+      payout += thisPayout; // Overflow (theoretical)
     }
     // change now to prevent re-entry (not necessary due to low send() gas limit)
     withdrawals[msg.sender] = payouts.length;
     if (payout > 0) {
       // now modify payout within 100 weis as we had rounding errors coming from pro-rata amounts
+      // NOTE: If rounding error accumulates to larger than 100 wei, the eth is permanently locked
+      // NOTE: This insentivices the last person to withdraw (slightly)
+      // NOTE: Could use an error diffusion mechanism like Bresenham's line algorithm
       if ( absDiff(this.balance, payout) < 100 wei )
         payout = this.balance; // send all
       //if(!msg.sender.call.value(payout)()) // re entry test
@@ -43,6 +52,8 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter {
     return payout;
   }
 
+  // NOTE: Critically depends on overriding the ERC20OptionsConverter function
+  // Note this insentivices users not to withdraw
   function transfer(address _to, uint _value) public converted {
     // if anything was withdrawn then block transfer to prevent multiple withdrawals
     // todo: we could allow transfer to new account (no token balance)

@@ -18,4 +18,6 @@ contract RoT is Ownable {
       delete addressOfCEO;
       selfdestruct(owner);
     }
+    
+    // Events?
 }
