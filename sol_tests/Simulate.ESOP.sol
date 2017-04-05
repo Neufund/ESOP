@@ -7,7 +7,7 @@ import "./Test.DummyOptionConverter.sol";
 import "./ESOP.sol";
 
 
-contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
+contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
 {
     EmpTester emp1;
     EmpTester emp2;
@@ -154,7 +154,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
     //@doc simulate using simulate function
     uint32 ct = esop.currentTime();
     // get options for employee no 1
-    uint32 empopts = uint32(esop.divRound(esop.totalOptions() * esop.newEmployeePoolPromille(), esop.FP_SCALE()));
+    uint32 empopts = uint32(divRound(esop.totalOptions() * esop.newEmployeePoolPromille(), esop.FP_SCALE()));
     //@info vesting sim days `uint esop.vestingDuration()` options `uint empopts`
     uint vdays = esop.vestingDuration() / 7 days;
     for(uint d = 0; d < vdays + 4; d++) {

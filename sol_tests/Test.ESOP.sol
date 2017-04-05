@@ -5,7 +5,7 @@ import 'dapple/reporter.sol';
 import "./Test.DummyOptionConverter.sol";
 import "./Test.Types.sol";
 
-contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
+contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
 {
     EmpTester emp1;
     Tester emp2;
@@ -106,7 +106,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes
     assertEq(uint(rc), 0, "employeeConvertsOptions");
     // we expect all extra options + pool options + 20% exit bonus on pool options
     uint poolopts = esop.totalOptions() - esop.remainingOptions();
-    uint expopts = 100 + poolopts + esop.divRound(poolopts * esop.exitBonusPromille(), esop.FP_SCALE());
+    uint expopts = 100 + poolopts + divRound(poolopts * esop.exitBonusPromille(), esop.FP_SCALE());
     // what is converted is stored in dummy so compare
     assertEq(converter.totalConvertedOptions(), expopts);
     //@info `uint expopts` converted
