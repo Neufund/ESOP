@@ -9,7 +9,6 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
   uint public totalSupply;
 
   event Transfer(address indexed from, address indexed to, uint value);
-  event Creation(address indexed to, uint value);
 
   modifier converting() {
     if (currentTime() >= conversionDeadline)
@@ -34,19 +33,18 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
     return conversionDeadline;
   }
 
-  // TODO: Check if the onlyESOP works through all inheritance!!!
-  // Missing visibility declaration
   function convertOptions(address employee, uint options) onlyESOP converting public {
-    totalSupply += options; // Overflow (practical)
-    balances[employee] += options; // Overflow (practical)
-    Creation(employee, options);
+    // if no overflow on totalSupply, no overflows later
+    totalSupply = safeAdd(totalSupply, options);
+    balances[employee] += options;
+    Transfer(0, employee, options);
   }
 
   function transfer(address _to, uint _value) converted public {
     if (balances[msg.sender] < _value)
       throw;
     balances[msg.sender] -= _value;
-    balances[_to] += _value; // Overflow (needs lots of tokens)
+    balances[_to] += _value;
     Transfer(msg.sender, _to, _value);
   }
 
@@ -54,8 +52,6 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
     return balances[_owner];
   }
 
-  // Why payable?
-  // Missing visibility declaration
   function () payable
   {
     throw;
