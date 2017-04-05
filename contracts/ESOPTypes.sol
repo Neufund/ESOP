@@ -82,8 +82,7 @@ contract EmployeesList is ESOPTypes, Ownable {
     external
     onlyOwner
   {
-    // Does not check if e exists
-    // Does not check if state transition is valid
+    if (employees[e].idx == 0) throw;
     ChangeEmployeeState(e, employees[e].state, state);
     employees[e].state = state;
   }
@@ -107,9 +106,10 @@ contract EmployeesList is ESOPTypes, Ownable {
     external
     onlyOwner
   {
-    // Does not check if `state` arguemnt is a valid termination state
-    // somehow this get reference to storage and optimizer does it with one SSTORE
-    Employee storage employee = employees[e];
+    if (state != EmployeeState.Terminated && state != EmployeeState.GoodWillTerminated)
+        throw;
+    Employee storage employee = employees[e]; // gets reference to storage and optimizer does it with one SSTORE
+    if (employee.idx == 0) throw;
     ChangeEmployeeState(e, employee.state, state);
     employee.state = state;
     employee.terminatedAt = terminatedAt;
@@ -142,7 +142,7 @@ contract EmployeesList is ESOPTypes, Ownable {
   function getSerializedEmployee(address e)
     external
     constant
-    returns (uint[8] emp) // This constant needs to be manually updated. Can break with future Solidity.
+    returns (uint[8] emp)
   {
     Employee memory employee = employees[e];
     if (employee.idx == 0)
@@ -152,8 +152,8 @@ contract EmployeesList is ESOPTypes, Ownable {
     assembly {
       // return memory aligned struct as array of words
       // I just wonder when 'employee' memory is deallocated
+      // answer: memory is not deallocated until transaction ends
       emp := employee
-      // This depends on Solidity internals that may change in future versions.
     }
   }
 }
@@ -161,7 +161,8 @@ contract EmployeesList is ESOPTypes, Ownable {
 
 contract IOptionsConverter {
 
-  // Interface should not define functions, but this doesn't matter much
+  // modifiers are inherited, check `owned` pattern
+  //   http://solidity.readthedocs.io/en/develop/contracts.html#function-modifiers
   modifier onlyESOP() {
     if (msg.sender != getESOP())
       throw;
@@ -171,6 +172,5 @@ contract IOptionsConverter {
   function getConversionDeadline() public constant returns (uint32);
 
   // executes conversion of options for given employee and amount
-  // modifiers like `onlyESOP` are not inherited, AFAIK
   function convertOptions(address employee, uint options) onlyESOP public;
 }
