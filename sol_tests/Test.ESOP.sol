@@ -18,10 +18,6 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     esop = makeNFESOP();
   }
 
-  function testAccess() {
-
-  }
-
   function testSignTooLate() {
 
   }
@@ -35,24 +31,145 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
   }
 
 
-  function testTermination() {
-    // all causes
+  function testTerminationInGoodWill() {
+    uint32 ct = esop.currentTime();
+    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false);
+    emp1._target(esop);
+    emp1.employeeSignsToESOP();
+    uint maxopts = esop.totalOptions() - esop.remainingOptions();
+    ct += uint32(esop.vestingDuration() / 2);
+    esop.mockTime(ct);
+    // terminate in good will
+    uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 1));
+    assertEq(uint(rc), 0);
+    // this means accelerated vesting
+    uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+    assertEq(options, maxopts, "full on term");
+    // but still vesting before termination
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct - 1);
+    assertEq(options, maxopts / 2, "vested before");
+    // no fade
+    ct += uint32(esop.vestingDuration() / 2);
+    esop.mockTime(ct);
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+    assertEq(options, maxopts, "no fade");
+    // but no bonus on termination
+    converter = new DummyOptionsConverter(address(esop), ct + 60 days);
+    rc = uint8(esop.convertESOPOptions(ct, converter));
+    assertEq(uint(rc), 0, "convertESOPOptions");
+    uint optionsAtConv = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
+    // should have optons without bonus
+    assertEq(optionsAtConv, maxopts, "no bonus on conv");
+  }
+
+  function testThrowTerminationForACause() {
+    uint32 ct = esop.currentTime();
+    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false);
+    emp1._target(esop);
+    emp1.employeeSignsToESOP();
+    uint maxopts = esop.totalOptions() - esop.remainingOptions();
+    ct += uint32(esop.vestingDuration() / 2);
+    esop.mockTime(ct);
+    // terminate for a cause
+    uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 2));
+    assertEq(uint(rc), 0);
+    // this throws - user does not exist anymore
+    uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+  }
+
+  function testThrowTerminationWhenNotSigned() {
     // test termination upgrade to for a cause when not signed in time
+    uint32 ct = esop.currentTime();
+    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false);
+    emp1._target(esop);
+    uint maxopts = esop.totalOptions() - esop.remainingOptions();
+    ct += uint32(esop.vestingDuration() / 2);
+    esop.mockTime(ct);
+    // terminate in good will results in term for a cause when no signature
+    uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 1));
+    assertEq(uint(rc), 0);
+    // this throws - user does not exist anymore
+    uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
   }
 
-  function testRootOfTrust(){
-
-  }
-
-  function testOptionsBeforeAndAfterTermination()
-  {
-    // terminate employee
-    // options before termination as expected
+  function testOptionsBeforeAndAfterTermination() {
+    uint32 ct = esop.currentTime();
+    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false);
+    emp1._target(esop);
+    emp1.employeeSignsToESOP();
+    uint maxopts = esop.totalOptions() - esop.remainingOptions();
+    ct += uint32(esop.vestingDuration() / 2);
+    esop.mockTime(ct);
+    uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 0));
+    assertEq(uint(rc), 0);
+    // options before termination as expected (termination in the future)
+    uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct -1);
+    assertEq(options, divRound(maxopts, 2), "sec bef term");
     // options after termination as expected
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct +1);
+    assertEq(options, divRound(maxopts, 2), "sec after term");
+    ct -= uint32(esop.vestingDuration() / 4);
+    esop.mockTime(ct);
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+    assertEq(options, divRound(maxopts, 4), "half bef term");
   }
 
-  function testConversionStopsFadeout()
-  {
+  function testTerminationOnConversion() {
+    // this tests use case when employee does not want to work for acquirer and gets no bonus
+    uint32 ct = esop.currentTime();
+    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 10000, false);
+    emp1._target(esop);
+    emp1.employeeSignsToESOP();
+    uint maxopts = esop.totalOptions() - esop.remainingOptions() + 10000;
+    ct += uint32(esop.vestingDuration() / 2);
+    esop.mockTime(ct);
+    // terminate employee
+    rc = uint8(esop.terminateEmployee(emp1, ct, 0));
+    assertEq(uint(rc), 0);
+    // and convert at the same time
+    converter = new DummyOptionsConverter(address(esop), ct + 60 days);
+    uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
+    assertEq(uint(rc), 0, "convertESOPOptions");
+    uint optionsAtConv = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
+    // should have optons without bonus
+    assertEq(optionsAtConv, maxopts / 2, "no bonus on conv");
+    // still no bonus
+    optionsAtConv = esop.calcEffectiveOptionsForEmployee(address(emp1), ct + 1 weeks);
+    assertEq(optionsAtConv, maxopts / 2, "no bonus week later");
+    // convert and still no bonus
+    emp1.employeeConvertsOptions();
+    assertEq(converter.totalConvertedOptions(), maxopts / 2, "still no bonus");
+  }
+
+  function testOptionsBeforeEmploymentStarted() {
+    // when someone computes options before employee was even employed
+    uint32 ct = esop.currentTime();
+    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 10000, false);
+    emp1._target(esop);
+    emp1.employeeSignsToESOP();
+    uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct -1);
+    assertEq(options, 0);
+  }
+
+  function testWhenConvertedCalcOptionsBeforeConversion() {
+    // after conversion event happens, time travel before and check options
+    uint32 ct = esop.currentTime();
+    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 10000, false);
+    emp1._target(esop);
+    emp1.employeeSignsToESOP();
+    uint maxopts = esop.totalOptions() - esop.remainingOptions() + 10000;
+    ct += uint32(esop.vestingDuration() / 2);
+    esop.mockTime(ct);
+    converter = new DummyOptionsConverter(address(esop), ct + 60 days);
+    uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
+    assertEq(uint(rc), 0, "convertESOPOptions");
+    // ask just before conversion
+    uint optionsAtConv = esop.calcEffectiveOptionsForEmployee(address(emp1), ct - 1);
+    // should have vested options
+    assertEq(optionsAtConv, maxopts / 2, "vested still");
+  }
+
+  function testConversionStopsFadeout() {
     uint32 ct = esop.currentTime();
     esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 100, false);
     emp1._target(esop);
@@ -72,11 +189,9 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint optionsCv1m = esop.calcEffectiveOptionsForEmployee(address(emp1), ct + 30 days);
     //@info options diff should be 0 `uint optionsAtConv` `uint optionsCv1m`
     assertEq(optionsCv1m, optionsAtConv);
-
   }
 
-  function testEmployeeConversion() logs_gas()
-  {
+  function testEmployeeConversion() logs_gas() {
     uint32 ct = esop.currentTime();
     esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 100, false);
     emp1._target(esop);
@@ -118,8 +233,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(options, 0);
   }
 
-  function testEmployeeSimpleLifecycle() logs_gas()
-  {
+  function testEmployeeSimpleLifecycle() logs_gas() {
     uint32 ct = esop.currentTime();
     uint initialOptions = esop.remainingOptions();
     uint8 rc = uint8(esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 100, false));
