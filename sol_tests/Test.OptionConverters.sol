@@ -76,7 +76,8 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp2.employeeConvertsOptions();
     emp3.employeeConvertsOptions();
     // all options converted + exit bonus
-    assertEq(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.exitBonusPromille(), esop.FP_SCALE()));
+    if (absDiff(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.exitBonusPromille(), esop.FP_SCALE())) > 1)
+      assertEq(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.exitBonusPromille(), esop.FP_SCALE()));
 
     return (emp1, emp2, emp3);
   }
@@ -147,17 +148,20 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     //@info e1 payout `uint cb`
     assertEq(emp1.balance, cb, "e1 rv == balance");
     uint expb = divRound(7 ether * emp1b, totsupp);
-    assertEq(cb, expb, "e1 withdraw amount");
+    if (absDiff(cb, expb) > 1)
+      assertEq(cb, expb, "e1 withdraw amount");
     converter.makePayout.value(1 ether)();
     // emp2 should get share from 3 payouts
     emp2._target(converter);
     cb = emp2.withdraw();
     expb = divRound(8 ether * emp2b, totsupp);
-    assertEq(cb, expb, "e2 withdraw amount");
+    if (absDiff(cb, expb) > 1)
+      assertEq(cb, expb, "e2 withdraw amount");
     // emp1 should get share from last payout
     cb = emp1.withdraw();
     expb = divRound(1 ether * emp1b, totsupp);
-    assertEq(cb, expb, "e1 withdraw 3 payout");
+    if (absDiff(cb, expb) > 1)
+      assertEq(cb, expb, "e1 withdraw 3 payout");
     // emp should get 0
     cb = emp1.withdraw();
     assertEq(cb, 0, "e1 withdraw 0");
