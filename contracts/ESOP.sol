@@ -36,7 +36,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   address public addressOfCEO;
   // root of immutable root of trust pointing to given ESOP implementation
   address public rootOfTrust;
-  // scale of the promille
+  // scale of the emulated fixed point operations
   uint public constant FP_SCALE = 10000;
 
   // STATE

@@ -5,7 +5,7 @@ import 'dapple/reporter.sol';
 import "./Test.DummyOptionConverter.sol";
 import "./Test.Types.sol";
 
-contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
+contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
 {
     EmpTester emp1;
     //Tester emp2;
@@ -100,12 +100,12 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
     uint32 delta_t = uint32(esop.vestingDuration());
-    uint fade = esop.divRound(esop.maxFadeoutPromille() * extraOptions, esop.FP_SCALE());
+    uint fade = divRound(esop.maxFadeoutPromille() * extraOptions, esop.FP_SCALE());
     uint tot_fade;
     for(uint i=0; i<10; i++) {
-      delta_t = uint32(esop.divRound(delta_t, 2));
+      delta_t = uint32(divRound(delta_t, 2));
       term_t += delta_t;
-      fade = esop.divRound(fade, 2);
+      fade = divRound(fade, 2);
       tot_fade += fade;
       //@info iter `uint i` fade `uint fade` tot fade `uint tot_fade`
       uint copts = esop.calcEffectiveOptionsForEmployee(emp1, term_t);
@@ -136,12 +136,12 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
     uint32 delta_t = uint32(esop.vestingDuration());
-    uint fade = esop.divRound(esop.maxFadeoutPromille() * poolOptions, esop.FP_SCALE());
+    uint fade = divRound(esop.maxFadeoutPromille() * poolOptions, esop.FP_SCALE());
     uint tot_fade;
     for(uint i=0; i<10; i++) {
-      delta_t = uint32(esop.divRound(delta_t, 2));
+      delta_t = uint32(divRound(delta_t, 2));
       term_t += delta_t;
-      fade = esop.divRound(fade, 2);
+      fade = divRound(fade, 2);
       tot_fade += fade;
       //@info iter `uint i` fade `uint fade` tot fade `uint tot_fade`
       uint copts = esop.calcEffectiveOptionsForEmployee(emp1, term_t);
@@ -180,7 +180,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     //@info vesting should be half of options `uint vested` of `uint options[3]`
     // now modify reference list by distributing vested part
     for(uint i=4; i<7; i++) {
-      uint modopt = E.divRound(vested * E.newEmployeePoolPromille(), E.FP_SCALE());
+      uint modopt = divRound(vested * E.newEmployeePoolPromille(), E.FP_SCALE());
       vested -= modopt;
       options[i] += modopt;
     }
@@ -193,7 +193,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes
     uint vested2 = options[1]/2;
     for(i=2; i<7; i++) {
         if (i != 3) { //skip already terminated employee
-          modopt = E.divRound(vested2 * E.newEmployeePoolPromille(), E.FP_SCALE());
+          modopt = divRound(vested2 * E.newEmployeePoolPromille(), E.FP_SCALE());
           vested2 -= modopt;
           options[i] += modopt;
       }

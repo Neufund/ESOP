@@ -37,7 +37,7 @@ contract EmpReentry is Reporter {
 }
 
 
-contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes
+contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
 {
     EmpTester emp1;
     ESOP esop;
@@ -76,13 +76,12 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes
     emp2.employeeConvertsOptions();
     emp3.employeeConvertsOptions();
     // all options converted + exit bonus
-    assertEq(converter.totalSupply(), poolOptions + esop.divRound(poolOptions*esop.exitBonusPromille(), esop.FP_SCALE()));
+    assertEq(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.exitBonusPromille(), esop.FP_SCALE()));
 
     return (emp1, emp2, emp3);
   }
 
-  function testERC20OptionsConverterTransferBlocked()
-  {
+  function testERC20OptionsConverterTransferBlocked() {
     uint32 deadlineDelta = 3 years + 4 weeks;
     uint32 ct = esop.currentTime();
     ERC20OptionsConverter converter = new ERC20OptionsConverter(esop, ct + deadlineDelta);
@@ -122,8 +121,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes
     assertEq(converter.balanceOf(emp2), emp1b + emp2b);
   }
 
-  function testProceedsOptionsConverter()
-  {
+  function testProceedsOptionsConverter() {
     uint32 deadlineDelta = 3 years + 4 weeks;
     uint32 ct = esop.currentTime();
     ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta);
@@ -148,17 +146,17 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes
     cb = emp1.withdraw();
     //@info e1 payout `uint cb`
     assertEq(emp1.balance, cb, "e1 rv == balance");
-    uint expb = (7 ether * emp1b) / totsupp;
+    uint expb = divRound(7 ether * emp1b, totsupp);
     assertEq(cb, expb, "e1 withdraw amount");
     converter.makePayout.value(1 ether)();
     // emp2 should get share from 3 payouts
     emp2._target(converter);
     cb = emp2.withdraw();
-    expb = (8 ether * emp2b) / totsupp;
+    expb = divRound(8 ether * emp2b, totsupp);
     assertEq(cb, expb, "e2 withdraw amount");
     // emp1 should get share from last payout
     cb = emp1.withdraw();
-    expb = (1 ether * emp1b) / totsupp;
+    expb = divRound(1 ether * emp1b, totsupp);
     assertEq(cb, expb, "e1 withdraw 3 payout");
     // emp should get 0
     cb = emp1.withdraw();
@@ -173,8 +171,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes
     assertEq(converter.balance, 0, "all paid out");
   }
 
-  function testThrowProceedsWithdrawnTransferFrom()
-  {
+  function testThrowProceedsWithdrawnTransferFrom() {
     uint32 deadlineDelta = 3 years + 4 weeks;
     uint32 ct = esop.currentTime();
     ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta);
@@ -189,8 +186,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes
     ERC20OptionsConverter(emp1).transfer(emp2, emp1b);
   }
 
-  function testThrowProceedsWithdrawnTransferTo()
-  {
+  function testThrowProceedsWithdrawnTransferTo() {
     uint32 deadlineDelta = 3 years + 4 weeks;
     uint32 ct = esop.currentTime();
     ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta);
@@ -207,8 +203,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes
     ERC20OptionsConverter(emp2).transfer(emp1, emp2b);
   }
 
-  function testProceedsWithdrawalReentry()
-  {
+  function testProceedsWithdrawalReentry() {
     EmpReentry emp1 = new EmpReentry();
     EmpTester emp0 = new EmpTester();
     EmpTester empx = new EmpTester();

@@ -2,7 +2,7 @@ pragma solidity ^0.4.0;
 
 import './ERC20OptionsConverter.sol';
 
-contract ProceedsOptionsConverter is ERC20OptionsConverter {
+contract ProceedsOptionsConverter is Ownable, ERC20OptionsConverter {
   mapping (address => uint) internal withdrawals;
   uint[] internal payouts;
 
@@ -25,15 +25,20 @@ contract ProceedsOptionsConverter is ERC20OptionsConverter {
     uint payout = 0;
     for (uint i = paymentId; i<payouts.length; i++)
     {
-      // it is up to wei resolution, no point in rounding
-      uint thisPayout = safeMul(payouts[i], balance) / totalSupply;
+      // it is safe to make payouts pro-rata: (1) token supply will not change - check converted/conversion modifiers
+      // -- (2) balances will not change: check transfer override which limits transfer between accounts
+      // NOTE: safeMul throws on overflow, can lock users out of their withdrawals if balance is very high
+      // @remco I know. any suggestions? expression below gives most precision
+      uint thisPayout = divRound(safeMul(payouts[i], balance), totalSupply);
       payout += thisPayout;
     }
     // change now to prevent re-entry (not necessary due to low send() gas limit)
     withdrawals[msg.sender] = payouts.length;
     if (payout > 0) {
-      // now modify payout within 100 weis as we had rounding errors coming from pro-rata amounts
-      if ( absDiff(this.balance, payout) < 100 wei )
+      // now modify payout within 1000 weis as we had rounding errors coming from pro-rata amounts
+      // @remco maximum rounding error is (num_employees * num_payments) / 2 with the mean 0
+      // --- 1000 wei is still nothing, please explain me what problem you see here
+      if ( absDiff(this.balance, payout) < 1000 wei )
         payout = this.balance; // send all
       //if(!msg.sender.call.value(payout)()) // re entry test
       //  throw;

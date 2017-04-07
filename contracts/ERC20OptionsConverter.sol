@@ -9,7 +9,6 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
   uint public totalSupply;
 
   event Transfer(address indexed from, address indexed to, uint value);
-  event Creation(address indexed to, uint value);
 
   modifier converting() {
     if (currentTime() >= conversionDeadline)
@@ -35,9 +34,10 @@ contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
   }
 
   function convertOptions(address employee, uint options) onlyESOP converting public {
-    totalSupply += options;
+    // if no overflow on totalSupply, no overflows later
+    totalSupply = safeAdd(totalSupply, options);
     balances[employee] += options;
-    Creation(employee, options);
+    Transfer(0, employee, options);
   }
 
   function transfer(address _to, uint _value) converted public {

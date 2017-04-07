@@ -5,7 +5,7 @@ import 'dapple/reporter.sol';
 import "./Test.DummyOptionConverter.sol";
 import "./Test.Types.sol";
 
-contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
+contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
 {
     EmpTester emp1;
     //Tester emp2;
@@ -20,8 +20,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
     //converter = new DummyOptionsConverter(address(esop));
   }
 
-  function procLifecycleOptions(uint32 ct, uint totOptions)
-  {
+  function procLifecycleOptions(uint32 ct, uint totOptions) {
     uint options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, 0, "on creation");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 2 weeks);
@@ -33,7 +32,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
     assertEq(options, 0, "on creation signed");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.cliffDuration())-1);
     assertEq(options, 0, "cliff - 1s");
-    uint cliffOpts = esop.divRound(totOptions * esop.cliffDuration(), esop.vestingDuration());
+    uint cliffOpts = divRound(totOptions * esop.cliffDuration(), esop.vestingDuration());
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.cliffDuration()));
     assertEq(options, cliffOpts, "on cliff");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.cliffDuration())+1);
@@ -55,7 +54,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
     // half fadeout
     ct += uint32(esop.vestingDuration()/4);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
-    uint minFade = esop.divRound(totOptions*(esop.FP_SCALE() - esop.maxFadeoutPromille()), esop.FP_SCALE());
+    uint minFade = divRound(totOptions*(esop.FP_SCALE() - esop.maxFadeoutPromille()), esop.FP_SCALE());
     // if minFade > vested options then vested options is the min value after fadeout (basically - no fadeout in this case)
     if (minFade >= totOptions/2)
       minFade = totOptions/2;
@@ -99,9 +98,9 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes
     uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
     assertEq(uint(rc), 0, "convertESOPOptions");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
-    assertEq(options, totOptions + esop.divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.FP_SCALE()), "exit bonus");
+    assertEq(options, totOptions + divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.FP_SCALE()), "exit bonus");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 1 years);
-    assertEq(options, totOptions + esop.divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.FP_SCALE()), "exit bonus + 1y");
+    assertEq(options, totOptions + divRound((totOptions-extraOptions)*esop.exitBonusPromille(), esop.FP_SCALE()), "exit bonus + 1y");
     // employee conversion
     esop.mockTime(ct + 1 weeks);
     emp1.employeeConvertsOptions();

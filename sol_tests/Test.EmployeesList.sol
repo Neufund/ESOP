@@ -119,4 +119,24 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
 
   }
 
+  function testThrowTerminanteNonExitstingEmployee() {
+    EmployeesList l = new EmployeesList();
+    Tester emp2 = new Tester();
+    l.terminateEmployee(address(emp2), 0, 0, EmployeeState.Terminated);
+  }
+
+  function testThrowTerminateWithInvalidState() {
+    Tester emp1 = new Tester();
+    EmployeesList l = new EmployeesList();
+    uint32 ct = uint32(block.timestamp);
+    l.setEmployee(address(emp1), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 100, 200, EmployeeState.Employed);
+    l.terminateEmployee(address(emp1), 0, 0, EmployeeState.Employed);
+  }
+
+  function testThrowChangeStateNonExistingEmployee() {
+    EmployeesList l = new EmployeesList();
+    Tester emp2 = new Tester();
+    l.changeState(address(emp2), EmployeeState.Terminated);
+  }
+
 }

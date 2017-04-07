@@ -22,13 +22,13 @@ contract Ownable {
 
 contract Math {
   // todo: should be a library
-  function divRound(uint v, uint d) public constant returns(uint) {
+  function divRound(uint v, uint d) internal constant returns(uint) {
     // round up if % is half or more
-    return v/d + (v % d >= (d%2 == 1 ? d/2+1 : d/2) ? 1: 0);
+    return (v + (d/2)) / d;
   }
 
   function absDiff(uint v1, uint v2) public constant returns(uint) {
-    return v1 >= v2 ? v1 - v2 : uint(-(int(v1 - v2)));
+    return v1 > v2 ? v1 - v2 : v2 - v1;
   }
 
   function safeMul(uint a, uint b) public constant returns (uint) {
@@ -38,24 +38,28 @@ contract Math {
     else
       throw;
   }
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    if (!(c>=a && c>=b)) throw;
+    return c;
+  }
 }
 
 
-contract TimeSource is Ownable {
-  uint32 mockNow;
+contract TimeSource {
+  uint32 private mockNow;
 
   function currentTime() public constant returns (uint32) {
     // we do not support dates much into future (Sun, 07 Feb 2106 06:28:15 GMT)
     if (block.timestamp > 0xFFFFFFFF)
       throw;
-    // alow to return debug time on test nets etc.
-    if (block.number > 3316029)
-      return uint32(block.timestamp);
-    else
-      return mockNow > 0 ? mockNow : uint32(block.timestamp);
+    return mockNow > 0 ? mockNow : uint32(block.timestamp);
   }
 
-  function mockTime(uint32 t) public onlyOwner {
+  function mockTime(uint32 t) public {
+    // no mocking on mainnet
+    if (block.number > 3316029) throw;
     mockNow = t;
   }
 }
@@ -97,4 +101,6 @@ contract Upgradeable is Ownable {
     function completeMigration() public onlyOwner inMigration {
       migrationState = MigrationState.Migrated;
     }
+
+    // Events ?
 }
