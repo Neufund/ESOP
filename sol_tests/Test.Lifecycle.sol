@@ -72,7 +72,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(options, minFade, "full fadeout + 1y");
     // convert at half fadeout
     ct -= uint32(esop.vestingDuration()/4);
-    IOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
+    BaseOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
     esop.mockTime(ct);
     uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
     assertEq(uint(rc), 0, "convertESOPOptions");
@@ -93,7 +93,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     ct += uint32(esop.vestingDuration()) + 1 years;
     uint options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, totOptions, "1y after vesting");
-    IOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
+    BaseOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
     esop.mockTime(ct);
     uint8 rc = uint8(esop.convertESOPOptions(ct, converter));
     assertEq(uint(rc), 0, "convertESOPOptions");

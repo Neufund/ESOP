@@ -1,5 +1,9 @@
 pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
+import "./EmployeesList.sol";
+import "./Upgradeable.sol";
+import './BaseOptionsConverter.sol';
+
 
 contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // employee changed events
@@ -53,7 +57,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // employee conversion deadline
   uint32 public employeeConversionDeadline;
   // option conversion proxy
-  IOptionsConverter public optionsConverter;
+  BaseOptionsConverter public optionsConverter;
 
 
   modifier hasEmployee(address e) {
@@ -350,7 +354,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     return ReturnCodes.OK;
   }
 
-  function convertESOPOptions(uint32 convertedAt, IOptionsConverter converter )
+  function convertESOPOptions(uint32 convertedAt, BaseOptionsConverter converter )
     external
     onlyESOPOpen
     onlyCEO

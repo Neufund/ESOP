@@ -1,8 +1,8 @@
 pragma solidity ^0.4.0;
 
-import './ESOPTypes.sol';
+import './BaseOptionsConverter.sol';
 
-contract DummyOptionsConverter is IOptionsConverter {
+contract DummyOptionsConverter is BaseOptionsConverter {
   address esopAddress;
   uint32 conversionDeadline;
   uint public totalConvertedOptions;

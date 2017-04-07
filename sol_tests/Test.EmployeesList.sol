@@ -2,7 +2,7 @@ pragma solidity ^0.4.0;
 
 import 'dapple/test.sol';
 import 'dapple/reporter.sol';
-import "./ESOPTypes.sol";
+import "./EmployeesList.sol";
 
 contract TestEmployeesList is Test, Reporter, ESOPTypes
 {

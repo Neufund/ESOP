@@ -1,7 +1,9 @@
 pragma solidity ^0.4.0;
 import './ESOPTypes.sol';
+import './BaseOptionsConverter.sol';
 
-contract ERC20OptionsConverter is IOptionsConverter, TimeSource, Math {
+
+contract ERC20OptionsConverter is BaseOptionsConverter, TimeSource, Math {
   address esopAddress;
   uint32 conversionDeadline;
   mapping(address => uint) internal balances;
