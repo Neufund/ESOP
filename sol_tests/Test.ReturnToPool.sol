@@ -146,7 +146,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
       //@info iter `uint i` fade `uint fade` tot fade `uint tot_fade`
       uint copts = esop.calcEffectiveOptionsForEmployee(emp1, term_t);
       // there are scaling errors, until nice fixed point lib is made I will not fight that
-      if (esop.absDiff(copts, poolOptions - tot_fade) > 2)
+      if (esop.absDiff(copts, poolOptions - tot_fade) > 3)
         assertEq(copts, poolOptions - tot_fade, "tot opts - fade");
       // return fadeout
       esop.mockTime(term_t);
@@ -176,7 +176,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     E.mockTime(term_t);
     rc = uint(E.terminateEmployee(employees[3], term_t, 0));
     assertEq(rc,0);
-    uint vested = options[3]/2;
+    uint vested = divRound(options[3],2);
     //@info vesting should be half of options `uint vested` of `uint options[3]`
     // now modify reference list by distributing vested part
     for(uint i=4; i<7; i++) {
@@ -186,11 +186,12 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     }
     checkOptionsInEmployeeList(E.employees(), options);
     // now check remaining pool
-    assertEq(E.remainingOptions(), ppool + vested, "all back in pool");
+    if (absDiff(E.remainingOptions(), ppool + vested) > 1)
+      assertEq(E.remainingOptions(), ppool + vested, "all back in pool");
     // now terminate one more
     rc = uint(E.terminateEmployee(employees[1], term_t, 0));
     assertEq(rc,0);
-    uint vested2 = options[1]/2;
+    uint vested2 = divRound(options[1],2);
     for(i=2; i<7; i++) {
         if (i != 3) { //skip already terminated employee
           modopt = divRound(vested2 * E.newEmployeePoolPromille(), E.FP_SCALE());
@@ -199,7 +200,8 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
       }
     }
     checkOptionsInEmployeeList(E.employees(), options);
-    assertEq(E.remainingOptions(), ppool + vested + vested2, "all back in pool 2");
+    if (absDiff(E.remainingOptions(), ppool + vested + vested2) > 1)
+      assertEq(E.remainingOptions(), ppool + vested + vested2, "all back in pool 2");
   }
 
   function testSignaturesExpiredToPool() logs_gas
@@ -294,6 +296,6 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     E.terminateEmployee(employees[3], ct, 0);
     E.removeEmployeesWithExpiredSignatures();
     // all should be back in pool
-    assertEq(E.totalExtraOptions(), options[7] + options[3]/2, "all back in pool");
+    assertEq(E.totalExtraOptions(), options[7] + divRound(options[3],2), "all back in pool");
   }
 }
