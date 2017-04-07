@@ -51,8 +51,16 @@ contract ESOPMaker {
     root.setESOP(e, address(this));
     //bytes32 poolEstablishmentDocIPFSHash = sha256("hereby pool #1 is established");
     bytes memory poolEstablishmentDocIPFSHash = "qmv8ndh7ageh9b24zngaextmuhj7aiuw3scc8hkczvjkww";
+    // a few interesting parameter combinations
+    // e.openESOP(1 years, 4 years, 8000, 2000, 1000, 1000000, poolEstablishmentDocIPFSHash) - neufund
+    // e.openESOP(0 years, 4 years, 8000, 2000, 1000, 1000000, poolEstablishmentDocIPFSHash) - no cliff
+    // e.openESOP(0 years, 0 years, 8000, 2000, 1000, 1000000, poolEstablishmentDocIPFSHash) - no vesting
+    // e.openESOP(1 years, 4 years, 10000, 2000, 1000, 1000000, poolEstablishmentDocIPFSHash) - full fadeout
+    // e.openESOP(1 years, 4 years, 0, 2000, 1000, 1000000, poolEstablishmentDocIPFSHash) - no fadeout
+    // e.openESOP(1 years, 4 years, 8000, 0, 1000, 1000000, poolEstablishmentDocIPFSHash) - no bonus
+    // e.openESOP(1 years, 4 years, 8000, 0, 0, 0, poolEstablishmentDocIPFSHash) - no pool, just extra
     // make CEO sign this
-    uint rc = uint(e.openESOP(1 years, 4 years, 8000, 2000, 1000, 1000000, poolEstablishmentDocIPFSHash));
+    uint rc = uint(e.openESOP(1 years, 4 years, 8000, 2000, 1000, 997302, poolEstablishmentDocIPFSHash));
     if (rc != 0)
       throw;
     return e;
