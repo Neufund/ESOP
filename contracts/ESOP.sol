@@ -3,13 +3,13 @@ import "./ESOPTypes.sol";
 
 contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // employee changed events
-  event NewEmployee(address indexed e, uint32 options, uint32 extraOptions);
+  event NewEmployee(address indexed e, address ceo, uint32 options, uint32 extraOptions);
   event EmployeeSignedToESOP(address indexed e);
-  event TerminateEmployee(address indexed e, uint32 terminatedAt, TerminationType termType);
+  event TerminateEmployee(address indexed e, address ceo, uint32 terminatedAt, TerminationType termType);
   event EmployeeOptionsConverted(address indexed e, uint32 options);
   // esop changed events
-  event ESOPOpened();
-  event ESOPOptionsConversionStarted(address converter, uint32 convertedAt, uint32 conversionDeadline);
+  event ESOPOpened(address ceo);
+  event ESOPOptionsConversionStarted(address ceo, address converter, uint32 convertedAt, uint32 conversionDeadline);
   enum ESOPState { New, Open, Conversion }
   // use retrun codes until revert opcode is implemented
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
@@ -37,7 +37,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // root of immutable root of trust pointing to given ESOP implementation
   address public rootOfTrust;
   // scale of the emulated fixed point operations
-  uint public constant FP_SCALE = 10000;
+  uint constant public FP_SCALE = 10000;
 
   // STATE
   // options that remain to be assigned
@@ -185,7 +185,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     returns (ReturnCodes)
   {
     // options are stored in unit32
-    if (pTotalOptions > 1000000) {
+    if (pTotalOptions > 1000000 || pMaxFadeoutPromille > FP_SCALE || pExitBonusPromille > FP_SCALE ||
+      pNewEmployeePoolPromille > FP_SCALE) {
       ReturnCode(ReturnCodes.InvalidParameters);
       return ReturnCodes.InvalidParameters;
     }
@@ -200,7 +201,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     poolEstablishmentDocIPFSHash = pPoolEstablishmentDocIPFSHash;
 
     esopState = ESOPState.Open;
-    ESOPOpened();
+    ESOPOpened(addressOfCEO);
     return ReturnCodes.OK;
   }
 
@@ -246,7 +247,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     employees.setEmployee(e, vestingStarts, timeToSign, 0, 0, uint32(options), extraOptions, EmployeeState.WaitingForSignature );
     remainingOptions -= options;
     totalExtraOptions += extraOptions;
-    NewEmployee(e, uint32(options), extraOptions);
+    NewEmployee(e, addressOfCEO, uint32(options), extraOptions);
     return ReturnCodes.OK;
   }
 
@@ -268,7 +269,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     }
     employees.setEmployee(e, vestingStarts, timeToSign, 0, 0, 0, extraOptions, EmployeeState.WaitingForSignature );
     totalExtraOptions += extraOptions;
-    NewEmployee(e, 0, extraOptions);
+    NewEmployee(e, addressOfCEO, 0, extraOptions);
     return ReturnCodes.OK;
   }
 
@@ -345,7 +346,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     }
     remainingOptions += distributeAndReturnToPool(returnedOptions, emp.idx);
     totalExtraOptions -= returnedExtraOptions;
-    TerminateEmployee(e, terminatedAt, termType);
+    TerminateEmployee(e, addressOfCEO, terminatedAt, termType);
     return ReturnCodes.OK;
   }
 
@@ -375,7 +376,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     optionsConverter = converter;
     // this is very irreversible
     esopState = ESOPState.Conversion;
-    ESOPOptionsConversionStarted(address(converter), convertedAt, employeeConversionDeadline);
+    ESOPOptionsConversionStarted(addressOfCEO, address(converter), convertedAt, employeeConversionDeadline);
     return ReturnCodes.OK;
   }
 
@@ -428,6 +429,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     constant
     returns (uint)
   {
+    if (t < terminatedAt)
+      return vestedOptions;
     uint timefromTermination = t - terminatedAt;
     // fadeout duration equals to employment duration
     uint fadeoutDuration = terminatedAt - vestingStarted;
@@ -450,27 +453,31 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     if (emp.state == EmployeeState.OptionsConverted || emp.state == EmployeeState.WaitingForSignature)
       return 0;
     // no options when esop is being converted and conversion deadline expired
-    if (esopState == ESOPState.Conversion && calcAtTime > employeeConversionDeadline)
+    bool isESOPConverted = esopState == ESOPState.Conversion && calcAtTime >= conversionEventTime; // this function time-travels
+    if (isESOPConverted && calcAtTime > employeeConversionDeadline)
       return 0;
     uint allOptions = emp.options + emp.extraOptions;
     // employee with no options
-    if (allOptions == 0)
-        return 0;
-    // if conversion event was triggered OR employee was terminated in good will then vesting does not apply and full amount is due
-    // otherwise calc vested options. for terminated employee use termination date to compute vesting, otherwise use 'now'
-    bool skipVesting = (esopState == ESOPState.Conversion && emp.state == EmployeeState.Employed)
-      || emp.state == EmployeeState.GoodWillTerminated;
-    uint vestedOptions = skipVesting ?  allOptions:
-      calcVestedOptions(emp.state == EmployeeState.Terminated ? emp.terminatedAt : calcAtTime, emp.vestingStarted, allOptions);
+    if (allOptions == 0) return 0;
+    // if emp is terminated but we calc options before term, simulate employed again
+    if (calcAtTime < emp.terminatedAt && emp.terminatedAt > 0)
+      emp.state = EmployeeState.Employed;
+    uint vestedOptions = allOptions;
+    bool accelerateVesting = (isESOPConverted && emp.state == EmployeeState.Employed) || emp.state == EmployeeState.GoodWillTerminated;
+    if (!accelerateVesting) {
+      // choose vesting time for terminated employee to be termination event time IF not after calculation date
+      vestedOptions = calcVestedOptions(emp.state == EmployeeState.Terminated ? emp.terminatedAt : calcAtTime,
+        emp.vestingStarted, allOptions);
+    }
     // calc fadeout for terminated employees
-    // use conversion event time to compute fadeout to stop fadeout when exit
     if (emp.state == EmployeeState.Terminated) {
-      vestedOptions = calcFadeout(esopState == ESOPState.Conversion ? conversionEventTime : calcAtTime,
+      // use conversion event time to compute fadeout to stop fadeout on conversion IF not after conversion date
+      vestedOptions = calcFadeout(isESOPConverted ? conversionEventTime : calcAtTime,
         emp.vestingStarted, emp.terminatedAt, allOptions, vestedOptions);
     }
     // exit bonus only on conversion event and for employees that are not terminated, no exception for good will termination
     // do not apply bonus for extraOptions
-    uint bonus = (esopState == ESOPState.Conversion && emp.state == EmployeeState.Employed) ?
+    uint bonus = (isESOPConverted && emp.state == EmployeeState.Employed) ?
       divRound(emp.options*vestedOptions*exitBonusPromille, FP_SCALE*allOptions) : 0;
     return  vestedOptions + bonus;
   }
