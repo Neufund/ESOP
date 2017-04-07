@@ -47,18 +47,18 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     // terminate in half vesting
     ct -= uint32(esop.vestingDuration()/2);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
-    assertEq(options, totOptions/2, "half vesting");
+    assertEq(options, divRound(totOptions,2), "half vesting");
     assertEq(uint(esop.terminateEmployee(emp1, ct, 0)), 0, "terminate employee");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
-    assertEq(options, totOptions/2, "half vesting term");
+    assertEq(options, divRound(totOptions,2), "half vesting term");
     // half fadeout
     ct += uint32(esop.vestingDuration()/4);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     uint minFade = divRound(totOptions*(esop.FP_SCALE() - esop.maxFadeoutPromille()), esop.FP_SCALE());
     // if minFade > vested options then vested options is the min value after fadeout (basically - no fadeout in this case)
-    if (minFade >= totOptions/2)
+    if (minFade >= divRound(totOptions,2))
       minFade = totOptions/2;
-    uint halfFade = minFade + (totOptions/2 - minFade)/2;
+    uint halfFade = minFade + divRound((divRound(totOptions,2) - minFade),2);
     assertEq(options, halfFade, "half fadeout");
     // full fadout
     ct += uint32(esop.vestingDuration()/4);
