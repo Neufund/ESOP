@@ -16,7 +16,7 @@ contract EmployeesList is ESOPTypes, Ownable {
 
 
   function setEmployee(address e, uint32 issueDate, uint32 timeToSign, uint32 terminatedAt, uint32 fadeoutStarts,
-    uint32 poolOptions, uint32 extraOptions, EmployeeState state)
+    uint32 poolOptions, uint32 extraOptions, uint32 suspendedAt, EmployeeState state)
     external
     onlyOwner
     returns (bool isNew)
@@ -42,6 +42,7 @@ contract EmployeesList is ESOPTypes, Ownable {
         fadeoutStarts: fadeoutStarts,
         poolOptions: poolOptions,
         extraOptions: extraOptions,
+        suspendedAt: suspendedAt,
         state: state,
         idx: empIdx
       });
@@ -54,6 +55,15 @@ contract EmployeesList is ESOPTypes, Ownable {
     if (employees[e].idx == 0) throw;
     ChangeEmployeeState(e, employees[e].state, state);
     employees[e].state = state;
+  }
+
+  function setFadeoutStarts(address e, uint32 fadeoutStarts)
+    external
+    onlyOwner
+  {
+    if (employees[e].idx == 0) throw;
+    UpdateEmployee(e, employees[e].poolOptions, employees[e].extraOptions, employees[e].idx);
+    employees[e].fadeoutStarts = fadeoutStarts;
   }
 
   function removeEmployee(address e)
@@ -71,7 +81,7 @@ contract EmployeesList is ESOPTypes, Ownable {
     return false;
   }
 
-  function terminateEmployee(address e, uint32 terminatedAt, uint32 fadeoutStarts, EmployeeState state)
+  function terminateEmployee(address e, uint32 issueDate, uint32 terminatedAt, uint32 fadeoutStarts, EmployeeState state)
     external
     onlyOwner
   {
@@ -81,22 +91,24 @@ contract EmployeesList is ESOPTypes, Ownable {
     if (employee.idx == 0) throw;
     ChangeEmployeeState(e, employee.state, state);
     employee.state = state;
+    employee.issueDate = issueDate;
     employee.terminatedAt = terminatedAt;
     employee.fadeoutStarts = fadeoutStarts;
+    employee.suspendedAt = 0;
     UpdateEmployee(e, employee.poolOptions, employee.extraOptions, employee.idx);
   }
 
   function getEmployee(address e)
     external
     constant
-    returns (uint32, uint32, uint32, uint32, uint32, uint32, EmployeeState)
+    returns (uint32, uint32, uint32, uint32, uint32, uint32, uint32, EmployeeState)
   {
       Employee employee = employees[e];
       if (employee.idx == 0)
         throw;
       // where is struct zip/unzip :>
       return (employee.issueDate, employee.timeToSign, employee.terminatedAt, employee.fadeoutStarts,
-        employee.poolOptions, employee.extraOptions, employee.state);
+        employee.poolOptions, employee.extraOptions, employee.suspendedAt, employee.state);
   }
 
    function hasEmployee(address e)
@@ -111,7 +123,7 @@ contract EmployeesList is ESOPTypes, Ownable {
   function getSerializedEmployee(address e)
     external
     constant
-    returns (uint[8] emp)
+    returns (uint[9] emp)
   {
     Employee memory employee = employees[e];
     if (employee.idx == 0)

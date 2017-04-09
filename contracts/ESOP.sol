@@ -8,7 +8,9 @@ import './BaseOptionsConverter.sol';
 contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // employee changed events
   event ESOPOffered(address indexed employee, address company, uint32 poolOptions, uint32 extraOptions);
-  event EmployeeSignedToESOP(address indexed e);
+  event EmployeeSignedToESOP(address indexed employee);
+  event SuspendEmployee(address indexed employee, uint32 suspendedAt);
+  event ContinueSuspendedEmployee(address indexed employee, uint32 continuedAt, uint32 suspendedPeriod);
   event TerminateEmployee(address indexed employee, address company, uint32 terminatedAt, TerminationType termType);
   event EmployeeOptionsExercised(address indexed employee, uint32 poolOptions);
   // esop changed events
@@ -40,6 +42,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   address public companyAddress;
   // root of immutable root of trust pointing to given ESOP implementation
   address public rootOfTrust;
+  // options strike price
+  uint constant public strikePrice = 1;
   // scale of the emulated fixed point operations
   uint constant public FP_SCALE = 10000;
 
@@ -107,7 +111,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
           uint newoptions = calcNewEmployeePoolOptions(distributedOptions);
           emp.poolOptions += uint32(newoptions);
           distributedOptions -= uint32(newoptions);
-          employees.setEmployee(ea, emp.issueDate, emp.timeToSign, emp.terminatedAt, emp.fadeoutStarts, emp.poolOptions, emp.extraOptions, emp.state);
+          employees.setEmployee(ea, emp.issueDate, emp.timeToSign, emp.terminatedAt, emp.fadeoutStarts, emp.poolOptions,
+            emp.extraOptions, emp.suspendedAt, emp.state);
         }
       }
     }
@@ -147,8 +152,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
           uint returnedExtraOptions = calcFadeout(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions) -
             calcFadeout(t, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions);
           if (returnedPoolOptions > 0 || returnedExtraOptions > 0) {
-            employees.setEmployee(employees.addresses(i), emp.issueDate, emp.timeToSign, emp.terminatedAt, t,
-              emp.poolOptions, emp.extraOptions, EmployeeState.Terminated);
+            employees.setFadeoutStarts(ea, t);
             // options from fadeout are not distributed to other employees but returned to pool
             remainingPoolOptions += returnedPoolOptions;
             // we maintain extraPool for easier statistics
@@ -246,7 +250,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     uint poolOptions = calcNewEmployeePoolOptions(remainingPoolOptions);
     if (poolOptions > 0xFFFFFFFF)
       throw;
-    employees.setEmployee(e, issueDate, timeToSign, 0, 0, uint32(poolOptions), extraOptions, EmployeeState.WaitingForSignature );
+    employees.setEmployee(e, issueDate, timeToSign, 0, 0, uint32(poolOptions), extraOptions, 0, EmployeeState.WaitingForSignature );
     remainingPoolOptions -= poolOptions;
     totalExtraOptions += extraOptions;
     ESOPOffered(e, companyAddress, uint32(poolOptions), extraOptions);
@@ -269,7 +273,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
     }
-    employees.setEmployee(e, issueDate, timeToSign, 0, 0, 0, extraOptions, EmployeeState.WaitingForSignature );
+    employees.setEmployee(e, issueDate, timeToSign, 0, 0, 0, extraOptions, 0, EmployeeState.WaitingForSignature );
     totalExtraOptions += extraOptions;
     ESOPOffered(e, companyAddress, 0, extraOptions);
     return ReturnCodes.OK;
@@ -302,6 +306,54 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     return ReturnCodes.OK;
   }
 
+  function suspendEmployee(address e, uint32 suspendedAt)
+    external
+    onlyESOPOpen
+    onlyCompany
+    hasEmployee(e)
+    notInMigration
+    returns (ReturnCodes)
+  {
+    var sere = employees.getSerializedEmployee(e);
+    Employee memory emp;
+    assembly { emp := sere }
+    if (emp.state != EmployeeState.Employed) {
+      ReturnCode(ReturnCodes.InvalidEmployeeState);
+      return ReturnCodes.InvalidEmployeeState;
+    }
+    employees.setEmployee(e, emp.issueDate, emp.timeToSign, emp.terminatedAt,
+      emp.fadeoutStarts, emp.poolOptions, emp.extraOptions, suspendedAt, emp.state);
+    SuspendEmployee(e, suspendedAt);
+    return ReturnCodes.OK;
+  }
+
+  function continueSuspendedEmployee(address e, uint32 continueAt)
+    external
+    onlyESOPOpen
+    onlyCompany
+    hasEmployee(e)
+    notInMigration
+    returns (ReturnCodes)
+  {
+    var sere = employees.getSerializedEmployee(e);
+    Employee memory emp;
+    assembly { emp := sere }
+    if (emp.state != EmployeeState.Employed) {
+      ReturnCode(ReturnCodes.InvalidEmployeeState);
+      return ReturnCodes.InvalidEmployeeState;
+    }
+    if (emp.suspendedAt > continueAt) {
+      ReturnCode(ReturnCodes.TooLate);
+      return ReturnCodes.TooLate;
+    }
+    uint32 suspendedPeriod = continueAt - emp.suspendedAt;
+    // move everything by suspension period by changing issueDate
+    employees.setEmployee(e, emp.issueDate + suspendedPeriod, emp.timeToSign, emp.terminatedAt,
+      emp.fadeoutStarts, emp.poolOptions, emp.extraOptions, 0, emp.state);
+    ContinueSuspendedEmployee(e, continueAt, suspendedPeriod);
+    return ReturnCodes.OK;
+  }
+
   function terminateEmployee(address e, uint32 terminatedAt, uint8 terminationType)
     external
     onlyESOPOpen
@@ -330,10 +382,13 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     uint returnedOptions;
     uint returnedExtraOptions;
     if (termType == TerminationType.Regular) {
-      // regular termination - vesting applies
+      // regular termination, compute suspension
+      if (emp.suspendedAt > 0 && emp.suspendedAt < terminatedAt)
+        emp.issueDate += terminatedAt - emp.suspendedAt;
+      // vesting applies
       returnedOptions = emp.poolOptions - calcVestedOptions(terminatedAt, emp.issueDate, emp.poolOptions);
       returnedExtraOptions = emp.extraOptions - calcVestedOptions(terminatedAt, emp.issueDate, emp.extraOptions);
-      employees.terminateEmployee(e, terminatedAt, terminatedAt, EmployeeState.Terminated);
+      employees.terminateEmployee(e, emp.issueDate, terminatedAt, terminatedAt, EmployeeState.Terminated);
     }
     else if (termType == TerminationType.ForACause) {
       // for a cause - employee is kicked out from ESOP, return all poolOptions
@@ -344,7 +399,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       // else good will - we let employee to keep all the options
       returnedOptions = 0; // code duplicates for easier human readout
       returnedExtraOptions = 0;
-      employees.terminateEmployee(e, terminatedAt, terminatedAt, EmployeeState.GoodWillTerminated);
+      employees.terminateEmployee(e, emp.issueDate, terminatedAt, terminatedAt, EmployeeState.GoodWillTerminated);
     }
     remainingPoolOptions += distributeAndReturnToPool(returnedOptions, emp.idx);
     totalExtraOptions -= returnedExtraOptions;
@@ -468,8 +523,9 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     bool accelerateVesting = (isESOPConverted && emp.state == EmployeeState.Employed) || emp.state == EmployeeState.GoodWillTerminated;
     if (!accelerateVesting) {
       // choose vesting time for terminated employee to be termination event time IF not after calculation date
-      vestedOptions = calcVestedOptions(emp.state == EmployeeState.Terminated ? emp.terminatedAt : calcAtTime,
-        emp.issueDate, issuedOptions);
+      uint32 calcVestingAt = emp.state == EmployeeState.Terminated ? emp.terminatedAt :
+        (emp.suspendedAt > 0 && emp.suspendedAt < calcAtTime ? emp.suspendedAt : calcAtTime);
+      vestedOptions = calcVestedOptions(calcVestingAt, emp.issueDate, issuedOptions);
     }
     // calc fadeout for terminated employees
     if (emp.state == EmployeeState.Terminated) {
@@ -498,7 +554,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   }
 
   function simulateEffectiveOptionsForEmployee(uint32 issueDate, uint32 terminatedAt, uint32 poolOptions,
-    uint32 extraOptions, uint8 employeeState, uint32 calcAtTime)
+    uint32 extraOptions, uint32 suspendedAt, uint8 employeeState, uint32 calcAtTime)
     external
     constant
     notInMigration
@@ -506,7 +562,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   {
     Employee memory emp = Employee({issueDate: issueDate, terminatedAt: terminatedAt,
       poolOptions: poolOptions, extraOptions: extraOptions, state: EmployeeState(employeeState),
-      timeToSign: issueDate+2 weeks, fadeoutStarts: terminatedAt, idx:1});
+      timeToSign: issueDate+2 weeks, fadeoutStarts: terminatedAt, suspendedAt: suspendedAt,
+      idx:1});
     return callEffectiveOptions(emp, calcAtTime);
   }
 

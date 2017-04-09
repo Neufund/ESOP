@@ -20,13 +20,13 @@ contract ESOPTypes {
       uint32 poolOptions;
       // extra options employee gets (neufund will not this option)
       uint32 extraOptions;
-      // size of the group of the employees that were added together
-      // uint8 groupSize;
+      // time at which employee got suspended, 0 - not suspended
+      uint32 suspendedAt;
       // what is employee current status, takes 8 bit in storage
       EmployeeState state;
       // index in iterable mapping
       uint16 idx;
       // reserve until full 256 bit word
-      //uint56 reserved;
+      //uint24 reserved;
   }
 }
