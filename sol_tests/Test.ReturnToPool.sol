@@ -24,7 +24,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
   {
     // calculate option amount for 'count' employees
     uint[] memory options = new uint[](count);
-    uint remPool = E.totalOptions();
+    uint remPool = E.totalPoolOptions();
     for(uint i=0; i<count; i++)
     {
       uint o = (remPool * E.newEmployeePoolPromille()) / E.FP_SCALE();
@@ -41,7 +41,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     for(uint i=0; i<count; i++) {
       emp1 = new EmpTester();
       employees[i] = emp1;
-      E.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false);
+      E.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
       emp1._target(E);
     }
     return employees;
@@ -57,7 +57,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
       emp1 = new EmpTester();
       employees[i] = emp1;
       emp_options[i] = initExtra;
-      E.addEmployeeWithExtraOptions(emp1, ct, ct + 2 weeks, uint32(initExtra));
+      E.offerOptionsToEmployeeOnlyExtra(emp1, ct, ct + 2 weeks, uint32(initExtra));
       emp1._target(E);
       initExtra += 8000;
     }
@@ -75,9 +75,9 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
       if (ea != 0) { // address(0) is deleted employee
         var sere = employees.getSerializedEmployee(ea);
         assembly { emp := sere }
-        //@info `uint emp.options` `uint options[j]`
-        if (esop.absDiff(emp.options, options[j]) > 1)
-          assertEq(uint(emp.options), options[j], "optcheck options");
+        //@info `uint emp.poolOptions` `uint options[j]`
+        if (esop.absDiff(emp.poolOptions, options[j]) > 1)
+          assertEq(uint(emp.poolOptions), options[j], "optcheck options");
         j++;
       }
       else {
@@ -91,15 +91,15 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
   {
     uint32 ct = esop.currentTime();
     uint extraOptions = 10000;
-    esop.addEmployeeWithExtraOptions(emp1, ct, ct + 2 weeks, uint32(extraOptions));
+    esop.offerOptionsToEmployeeOnlyExtra(emp1, ct, ct + 2 weeks, uint32(extraOptions));
     uint rc = uint(emp1.employeeSignsToESOP());
     assertEq(rc, 0);
     // employee leaves on vesting end day
-    uint32 term_t = ct+uint32(esop.vestingDuration());
+    uint32 term_t = ct+uint32(esop.vestingPeriod());
     esop.mockTime(term_t);
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
-    uint32 delta_t = uint32(esop.vestingDuration());
+    uint32 delta_t = uint32(esop.vestingPeriod());
     uint fade = divRound(esop.maxFadeoutPromille() * extraOptions, esop.FP_SCALE());
     uint tot_fade;
     for(uint i=0; i<10; i++) {
@@ -126,16 +126,16 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
   function testFadeoutToPool()
   {
     uint32 ct = esop.currentTime();
-    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false);
-    uint poolOptions = esop.totalOptions() - esop.remainingOptions();
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
+    uint poolOptions = esop.totalPoolOptions() - esop.remainingPoolOptions();
     uint rc = uint(emp1.employeeSignsToESOP());
     assertEq(rc, 0);
     // employee leaves on vesting end day
-    uint32 term_t = ct+uint32(esop.vestingDuration());
+    uint32 term_t = ct+uint32(esop.vestingPeriod());
     esop.mockTime(term_t);
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
-    uint32 delta_t = uint32(esop.vestingDuration());
+    uint32 delta_t = uint32(esop.vestingPeriod());
     uint fade = divRound(esop.maxFadeoutPromille() * poolOptions, esop.FP_SCALE());
     uint tot_fade;
     for(uint i=0; i<10; i++) {
@@ -150,10 +150,10 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
         assertEq(copts, poolOptions - tot_fade, "tot opts - fade");
       // return fadeout
       esop.mockTime(term_t);
-      rc = esop.remainingOptions();
+      rc = esop.remainingPoolOptions();
       esop.returnFadeoutToPool();
-      if (esop.absDiff(esop.remainingOptions() - rc, fade) > 2)
-        assertEq(esop.remainingOptions() - rc, fade, "pool eqs fade");
+      if (esop.absDiff(esop.remainingPoolOptions() - rc, fade) > 2)
+        assertEq(esop.remainingPoolOptions() - rc, fade, "pool eqs fade");
       // also check if still the same options are calculated on termination
     }
     // check both extra and normal pool
@@ -170,9 +170,9 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(rc, 0);
     rc = uint(EmpTester(employees[1]).employeeSignsToESOP());
     assertEq(rc, 0);
-    uint ppool = E.remainingOptions();
+    uint ppool = E.remainingPoolOptions();
     // terminate exactly half way so half options are returned
-    uint32 term_t = ct+uint32(E.vestingDuration()/2);
+    uint32 term_t = ct+uint32(E.vestingPeriod()/2);
     E.mockTime(term_t);
     rc = uint(E.terminateEmployee(employees[3], term_t, 0));
     assertEq(rc,0);
@@ -186,8 +186,8 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     }
     checkOptionsInEmployeeList(E.employees(), options);
     // now check remaining pool
-    if (absDiff(E.remainingOptions(), ppool + vested) > 1)
-      assertEq(E.remainingOptions(), ppool + vested, "all back in pool");
+    if (absDiff(E.remainingPoolOptions(), ppool + vested) > 1)
+      assertEq(E.remainingPoolOptions(), ppool + vested, "all back in pool");
     // now terminate one more
     rc = uint(E.terminateEmployee(employees[1], term_t, 0));
     assertEq(rc,0);
@@ -200,8 +200,8 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
       }
     }
     checkOptionsInEmployeeList(E.employees(), options);
-    if (absDiff(E.remainingOptions(), ppool + vested + vested2) > 1)
-      assertEq(E.remainingOptions(), ppool + vested + vested2, "all back in pool 2");
+    if (absDiff(E.remainingPoolOptions(), ppool + vested + vested2) > 1)
+      assertEq(E.remainingPoolOptions(), ppool + vested + vested2, "all back in pool 2");
   }
 
   function testSignaturesExpiredToPool() logs_gas
@@ -241,7 +241,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     Employee memory emp;
     var sere = E.employees().getSerializedEmployee(employees[5]);
     assembly { emp := sere }
-    assertEq(E.totalOptions(), E.remainingOptions() + emp.options, "all back in pool");
+    assertEq(E.totalPoolOptions(), E.remainingPoolOptions() + emp.poolOptions, "all back in pool");
   }
 
   function testRemoveSignaturesExpiredToPool() logs_gas
@@ -257,7 +257,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     E.mockTime(ct+4 weeks);
     E.removeEmployeesWithExpiredSignatures();
     // all should be back in pool
-    assertEq(E.totalOptions(), E.remainingOptions(), "all back in pool");
+    assertEq(E.totalPoolOptions(), E.remainingPoolOptions(), "all back in pool");
   }
 
   function testRemoveSignaturesExpiredToPoolOneEmployed() logs_gas
@@ -275,7 +275,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     E.mockTime(ct+4 weeks);
     E.removeEmployeesWithExpiredSignatures();
     // all should be back in pool
-    assertEq(E.totalOptions(), E.remainingOptions() + options[0], "all back in pool");
+    assertEq(E.totalPoolOptions(), E.remainingPoolOptions() + options[0], "all back in pool");
   }
 
   function testRemoveSignaturesExpiredToPoolOneEmployedTerminatedExtra() logs_gas
@@ -290,7 +290,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
       sumOptions += options[i];
     assertEq(E.totalExtraOptions(), sumOptions, "fill extra pool");
     // now expire signatures
-    uint32 ct = E.currentTime() + uint32(E.vestingDuration()/2);
+    uint32 ct = E.currentTime() + uint32(E.vestingPeriod()/2);
     E.mockTime(ct);
     // terminate employee 3 at half of a vesting
     E.terminateEmployee(employees[3], ct, 0);

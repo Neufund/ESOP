@@ -82,11 +82,11 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
     var sere = l.getSerializedEmployee(address(emp1));
     assembly { emp := sere }
     // now compare all fields
-    assertEq(uint(emp.vestingStarted), uint(ct));
+    assertEq(uint(emp.issueDate), uint(ct));
     assertEq(uint(emp.timeToSign), uint(ct + 2 weeks));
     assertEq(uint(emp.terminatedAt), uint(ct + 3 weeks));
     assertEq(uint(emp.fadeoutStarts), uint(ct + 4 weeks));
-    assertEq(uint(emp.options), 100);
+    assertEq(uint(emp.poolOptions), 100);
     assertEq(uint(emp.extraOptions), 200);
     assertEq(uint(emp.state), uint(EmployeeState.Employed));
     // modify
@@ -97,15 +97,15 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
     assertEq(uint(emp.fadeoutStarts), uint(ct + 2 years));
     assertEq(uint(emp.state), uint(EmployeeState.Terminated));
     // change state
-    l.changeState(address(emp1), EmployeeState.OptionsConverted);
+    l.changeState(address(emp1), EmployeeState.OptionsExercised);
     sere = l.getSerializedEmployee(address(emp1));
     assembly { emp := sere }
-    assertEq(uint(emp.state), uint(EmployeeState.OptionsConverted));
+    assertEq(uint(emp.state), uint(EmployeeState.OptionsExercised));
     // direct mod
     l.setEmployee(address(emp1), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 1000, 2000, EmployeeState.Employed);
     sere = l.getSerializedEmployee(address(emp1));
     assembly { emp := sere }
-    assertEq(uint(emp.options), 1000);
+    assertEq(uint(emp.poolOptions), 1000);
     assertEq(uint(emp.extraOptions), 2000);
   }
 

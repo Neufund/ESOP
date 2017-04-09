@@ -5,7 +5,7 @@
 ## Actors and Their Lifecycles
 
 **Admin**
-**CEO**
+**company**
 **Employee**
 
 **Option Pools**

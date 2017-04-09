@@ -10,8 +10,8 @@ contract BaseOptionsConverter {
     _;
   }
   function getESOP() public constant returns (address);
-  function getConversionDeadline() public constant returns (uint32);
+  function getExerciseDeadline() public constant returns (uint32);
 
-  // executes conversion of options for given employee and amount
-  function convertOptions(address employee, uint options) onlyESOP public;
+  // exercise of options for given employee and amount
+  function exerciseOptions(address employee, uint options) onlyESOP public;
 }

@@ -2,8 +2,8 @@ pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 
 contract EmployeesList is ESOPTypes, Ownable {
-  event CreateEmployee(address indexed e, uint32 options, uint32 extraOptions, uint16 idx);
-  event UpdateEmployee(address indexed e, uint32 options, uint32 extraOptions, uint16 idx);
+  event CreateEmployee(address indexed e, uint32 poolOptions, uint32 extraOptions, uint16 idx);
+  event UpdateEmployee(address indexed e, uint32 poolOptions, uint32 extraOptions, uint16 idx);
   event ChangeEmployeeState(address indexed e, EmployeeState oldState, EmployeeState newState);
   event RemoveEmployee(address indexed e);
   mapping (address => Employee) employees;
@@ -15,8 +15,8 @@ contract EmployeesList is ESOPTypes, Ownable {
   }
 
 
-  function setEmployee(address e, uint32 vestingStarted, uint32 timeToSign, uint32 terminatedAt, uint32 fadeoutStarts,
-    uint32 options, uint32 extraOptions, EmployeeState state)
+  function setEmployee(address e, uint32 issueDate, uint32 timeToSign, uint32 terminatedAt, uint32 fadeoutStarts,
+    uint32 poolOptions, uint32 extraOptions, EmployeeState state)
     external
     onlyOwner
     returns (bool isNew)
@@ -30,17 +30,17 @@ contract EmployeesList is ESOPTypes, Ownable {
       isNew = true;
       empIdx = uint16(size + 1);
       addresses.push(e);
-      CreateEmployee(e, options, extraOptions, empIdx);
+      CreateEmployee(e, poolOptions, extraOptions, empIdx);
     } else {
       isNew = false;
-      UpdateEmployee(e, options, extraOptions, empIdx);
+      UpdateEmployee(e, poolOptions, extraOptions, empIdx);
     }
     employees[e] = Employee({
-        vestingStarted: vestingStarted,
+        issueDate: issueDate,
         timeToSign: timeToSign,
         terminatedAt: terminatedAt,
         fadeoutStarts: fadeoutStarts,
-        options: options,
+        poolOptions: poolOptions,
         extraOptions: extraOptions,
         state: state,
         idx: empIdx
@@ -83,7 +83,7 @@ contract EmployeesList is ESOPTypes, Ownable {
     employee.state = state;
     employee.terminatedAt = terminatedAt;
     employee.fadeoutStarts = fadeoutStarts;
-    UpdateEmployee(e, employee.options, employee.extraOptions, employee.idx);
+    UpdateEmployee(e, employee.poolOptions, employee.extraOptions, employee.idx);
   }
 
   function getEmployee(address e)
@@ -95,8 +95,8 @@ contract EmployeesList is ESOPTypes, Ownable {
       if (employee.idx == 0)
         throw;
       // where is struct zip/unzip :>
-      return (employee.vestingStarted, employee.timeToSign, employee.terminatedAt, employee.fadeoutStarts,
-        employee.options, employee.extraOptions, employee.state);
+      return (employee.issueDate, employee.timeToSign, employee.terminatedAt, employee.fadeoutStarts,
+        employee.poolOptions, employee.extraOptions, employee.state);
   }
 
    function hasEmployee(address e)

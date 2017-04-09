@@ -23,8 +23,8 @@ contract EmpReentry is Reporter {
     }
   }
 
-  function employeeConvertsOptions() returns (uint8){
-      return uint8(ESOP(_t).employeeConvertsOptions());
+  function employeeExerciseOptions() returns (uint8){
+      return uint8(ESOP(_t).employeeExerciseOptions());
   }
 
   function employeeSignsToESOP() returns (uint8){
@@ -52,12 +52,12 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
   function procERC20OptionsConverter(ERC20OptionsConverter converter, uint32 ct)
     returns (EmpTester, EmpTester, EmpTester)
   {
-    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false);
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
     EmpTester emp2 = new EmpTester();
-    esop.addNewEmployeeToESOP(emp2, ct, ct + 2 weeks, 0, false);
+    esop.offerOptionsToEmployee(emp2, ct, ct + 2 weeks, 0, false);
     EmpTester emp3 = new EmpTester();
-    esop.addNewEmployeeToESOP(emp3, ct, ct + 2 weeks, 0, false);
-    uint poolOptions = esop.totalOptions() - esop.remainingOptions();
+    esop.offerOptionsToEmployee(emp3, ct, ct + 2 weeks, 0, false);
+    uint poolOptions = esop.totalPoolOptions() - esop.remainingPoolOptions();
     emp1._target(esop);
     emp2._target(esop);
     emp3._target(esop);
@@ -68,16 +68,16 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     // convert after 3 years to erc20 token (tokenization scenario)
     ct += 3 years;
     esop.mockTime(ct);
-    rc = uint(esop.convertESOPOptions(ct, converter));
+    rc = uint(esop.offerOptionsConversion(ct, converter));
     assertEq(rc, 0, "converter");
-    uint32 cdead = converter.getConversionDeadline();
+    uint32 cdead = converter.getExerciseDeadline();
     //convert all users
-    emp1.employeeConvertsOptions();
-    emp2.employeeConvertsOptions();
-    emp3.employeeConvertsOptions();
+    emp1.employeeExerciseOptions();
+    emp2.employeeExerciseOptions();
+    emp3.employeeExerciseOptions();
     // all options converted + exit bonus
-    if (absDiff(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.exitBonusPromille(), esop.FP_SCALE())) > 1)
-      assertEq(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.exitBonusPromille(), esop.FP_SCALE()));
+    if (absDiff(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.bonusOptionsPromille(), esop.FP_SCALE())) > 1)
+      assertEq(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.bonusOptionsPromille(), esop.FP_SCALE()));
 
     return (emp1, emp2, emp3);
   }
@@ -212,9 +212,9 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     EmpTester emp0 = new EmpTester();
     EmpTester empx = new EmpTester();
     uint32 ct = esop.currentTime();
-    esop.addNewEmployeeToESOP(emp0, ct, ct + 2 weeks, 0, false);
-    esop.addNewEmployeeToESOP(empx, ct, ct + 2 weeks, 0, false);
-    esop.addNewEmployeeToESOP(emp1, ct, ct + 2 weeks, 0, false);
+    esop.offerOptionsToEmployee(emp0, ct, ct + 2 weeks, 0, false);
+    esop.offerOptionsToEmployee(empx, ct, ct + 2 weeks, 0, false);
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
     emp1._target(esop);
     emp1.employeeSignsToESOP();
     emp0._target(esop);
@@ -224,11 +224,11 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     esop.mockTime(ct + 3 years);
     uint32 deadlineDelta = 3 years + 4 weeks;
     ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta);
-    uint rc = uint(esop.convertESOPOptions(ct, converter));
+    uint rc = uint(esop.offerOptionsConversion(ct, converter));
     assertEq(rc, 0, "converter");
-    emp1.employeeConvertsOptions();
-    emp0.employeeConvertsOptions();
-    empx.employeeConvertsOptions();
+    emp1.employeeExerciseOptions();
+    emp0.employeeExerciseOptions();
+    empx.employeeExerciseOptions();
     converter.mockTime(ct + deadlineDelta);
     // now emp1 tries to withdraw multiple times
     uint emp1b = converter.balanceOf(emp1);

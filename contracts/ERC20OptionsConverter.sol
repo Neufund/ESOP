@@ -31,11 +31,11 @@ contract ERC20OptionsConverter is BaseOptionsConverter, TimeSource, Math {
     return esopAddress;
   }
 
-  function getConversionDeadline() public constant returns(uint32) {
+  function getExerciseDeadline() public constant returns(uint32) {
     return conversionDeadline;
   }
 
-  function convertOptions(address employee, uint options) onlyESOP converting public {
+  function exerciseOptions(address employee, uint options) onlyESOP converting public {
     // if no overflow on totalSupply, no overflows later
     totalSupply = safeAdd(totalSupply, options);
     balances[employee] += options;

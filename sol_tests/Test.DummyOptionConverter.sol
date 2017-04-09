@@ -11,11 +11,11 @@ contract DummyOptionsConverter is BaseOptionsConverter {
     return esopAddress;
   }
 
-  function getConversionDeadline() public constant returns (uint32) {
+  function getExerciseDeadline() public constant returns (uint32) {
     return conversionDeadline;
   }
 
-  function convertOptions(address employee, uint options) onlyESOP public {
+  function exerciseOptions(address employee, uint options) onlyESOP public {
     totalConvertedOptions += options;
   }
 
