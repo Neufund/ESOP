@@ -114,6 +114,55 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(options, divRound(maxopts, 4), "half bef term");
   }
 
+  function testSuspendEmployee() {
+    uint32 ct = esop.currentTime();
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
+    emp1._target(esop);
+    emp1.employeeSignsToESOP();
+    // suspend after 2 years
+    uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
+    ct += uint32(esop.vestingPeriod() / 2);
+    esop.mockTime(ct);
+    uint8 rc = uint8(esop.suspendEmployee(emp1, ct));
+    assertEq(uint(rc), 0);
+    // when suspended value after 2 years is kept
+    uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+    assertEq(options, divRound(maxopts, 2), "on suspension");
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct - uint32(esop.vestingPeriod() / 8));
+    assertEq(options, divRound(3 * maxopts, 8), "before suspension");
+    ct += uint32(esop.vestingPeriod() / 4);
+    esop.mockTime(ct);
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+    assertEq(options, divRound(maxopts, 2), "on suspension + 1y");
+    // continue employment
+    rc = uint8(esop.continueSuspendedEmployee(emp1, ct));
+    assertEq(uint(rc), 0);
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+    assertEq(options, divRound(maxopts, 2), "continue");
+    ct += uint32(esop.vestingPeriod() / 4);
+    esop.mockTime(ct);
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+    assertEq(options, divRound(3 * maxopts, 4), "continue + 1y");
+    // suspend again
+    rc = uint8(esop.suspendEmployee(emp1, ct));
+    assertEq(uint(rc), 0);
+    ct += uint32(esop.vestingPeriod() / 4);
+    esop.mockTime(ct);
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+    assertEq(options, divRound(3 * maxopts, 4), "2 susp + 1y");
+    // terminate
+    rc = uint8(esop.terminateEmployee(emp1, ct, 0));
+    assertEq(uint(rc), 0);
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
+    assertEq(options, divRound(3 * maxopts, 4), "2 susp + term");
+    // suspended before termination
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct - uint32(esop.vestingPeriod() / 8));
+    assertEq(options, divRound(5 * maxopts, 8), "2 susp + term + before");
+    // term is term
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct + uint32(esop.vestingPeriod() / 8));
+    assertEq(options, divRound(3 * maxopts, 4), "2 susp + term + after");
+  }
+
   function testTerminationOnConversion() {
     // this tests use case when employee does not want to work for acquirer and gets no bonus
     uint32 ct = esop.currentTime();
