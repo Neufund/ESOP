@@ -12,11 +12,13 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     EmpTester emp1;
     EmpTester emp2;
     ESOP esop;
+    uint32 globct;
 
   function setUp() {
     emp1 = new EmpTester();
     emp2 = new EmpTester();
     esop = makeNFESOP();
+    globct = esop.currentTime();
     setupReporter('./solc/simulations.csv');
   }
 
@@ -151,24 +153,22 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
   }
 
   function testSimulateESOPWithSimulateFunction() {
-    //@doc simulate using simulate function
-    uint32 ct = esop.currentTime();
-    // get options for employee no 1
-    uint32 empopts = uint32(divRound(esop.totalPoolOptions() * esop.newEmployeePoolPromille(), esop.FP_SCALE()));
-    //@info vesting sim days `uint esop.vestingPeriod()` options `uint empopts`
     uint vdays = esop.vestingPeriod() / 7 days;
+    uint32 terminatedAt = uint32(globct + (vdays+4)*(7 days));
+    //@doc simulate using simulate function
+    uint32 empopts = uint32(divRound(esop.totalPoolOptions() * esop.newEmployeePoolPromille(), esop.FP_SCALE()));
+
     for(uint d = 0; d < vdays + 4; d++) {
       uint dn = d*7;
-      uint options = esop.simulateEffectiveOptionsForEmployee(ct, 0, empopts, 0, uint8(EmployeeState.Employed), uint32(ct + d*(7 days)));
+      uint options = esop.simulateEffectiveOptionsForEmployee(globct, 0, empopts, 0, 0,
+        uint8(EmployeeState.Employed), uint32(globct + d*(7 days)));
       //@doc `uint dn`, `uint options`, vesting
     }
-    // terminate employee
-    uint32 terminatedAt = uint32(ct + (vdays+4)*(7 days));
     for(d = 1; d < (vdays+4) + 5; d++) {
       dn = d*7 + vdays*7;
-      options = esop.simulateEffectiveOptionsForEmployee(ct, terminatedAt, empopts, 0, uint8(EmployeeState.Terminated), uint32(ct + (vdays+4)*7 days + d*(7 days)));
+      options = esop.simulateEffectiveOptionsForEmployee(globct, terminatedAt, empopts, 0,
+        uint8(EmployeeState.Terminated), 0, uint32(globct + (vdays+4)*7 days + d*(7 days)));
       //@doc `uint dn`, `uint options`, fadeout
     }
   }
-
 }
