@@ -46,6 +46,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   uint constant public strikePrice = 1;
   // scale of the emulated fixed point operations
   uint constant public FP_SCALE = 10000;
+  // default period for employee signature
+  uint32 constant public waitForSignPeriod = 2 weeks;
 
   // STATE
   // poolOptions that remain to be assigned
@@ -241,6 +243,10 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
     }
+    if (timeToSign < currentTime() + waitForSignPeriod) {
+      ReturnCode(ReturnCodes.TooLate);
+      return ReturnCodes.TooLate;
+    }
     if (poolCleanup) {
       // recover poolOptions for employees with expired signatures
       removeEmployeesWithExpiredSignatures(currentTime());
@@ -410,7 +416,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     returns (ReturnCodes)
   {
     // prevent stupid things, give at least two weeks for employees to convert
-    if (convertedAt >= converter.getExerciseDeadline() || converter.getExerciseDeadline() + 2 weeks < currentTime()) {
+    if (convertedAt >= converter.getExerciseDeadline() ||
+      converter.getExerciseDeadline() + waitForSignPeriod < currentTime()) {
       ReturnCode(ReturnCodes.TooLate);
       return ReturnCodes.TooLate;
     }
