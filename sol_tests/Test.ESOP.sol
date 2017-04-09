@@ -46,14 +46,14 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
   }
 
   function testThrowTerminationWhenNotSigned() {
-    // test termination upgrade to for a cause when not signed in time
+    // test termination upgrade to bad leaver when not signed in time
     uint32 ct = esop.currentTime();
     esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
     emp1._target(esop);
     uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
     ct += uint32(esop.vestingPeriod() / 2);
     esop.mockTime(ct);
-    // terminate will upgrade to term bad leave when no signature
+    // terminate will upgrade to term bad leaver when no signature
     uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 0));
     assertEq(uint(rc), 0);
     // this throws - user does not exist anymore

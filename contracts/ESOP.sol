@@ -21,7 +21,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
   // event raised when return code from a function is not OK, when OK is returned one of events above is raised
   event ReturnCode(ReturnCodes rc);
-  enum TerminationType { Regular, ForACause }
+  enum TerminationType { Regular, BadLeaver }
 
   //CONFIG
   // cliff duration in seconds
@@ -373,7 +373,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       return ReturnCodes.InvalidParameters;
     }
     if (emp.state == EmployeeState.WaitingForSignature)
-      termType = TerminationType.ForACause;
+      termType = TerminationType.BadLeaver;
     else if (emp.state != EmployeeState.Employed) {
       ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
@@ -390,8 +390,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       returnedExtraOptions = emp.extraOptions - calcVestedOptions(terminatedAt, emp.issueDate, emp.extraOptions);
       employees.terminateEmployee(e, emp.issueDate, terminatedAt, terminatedAt, EmployeeState.Terminated);
     }
-    else if (termType == TerminationType.ForACause) {
-      // for a cause - employee is kicked out from ESOP, return all poolOptions
+    else if (termType == TerminationType.BadLeaver) {
+      // bad leaver - employee is kicked out from ESOP, return all poolOptions
       returnedOptions = emp.poolOptions;
       returnedExtraOptions = emp.extraOptions;
       employees.removeEmployee(e);
