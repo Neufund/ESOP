@@ -21,7 +21,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
   // event raised when return code from a function is not OK, when OK is returned one of events above is raised
   event ReturnCode(ReturnCodes rc);
-  enum TerminationType { Regular, GoodWill, ForACause }
+  enum TerminationType { Regular, ForACause }
 
   //CONFIG
   // cliff duration in seconds
@@ -395,11 +395,6 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       returnedOptions = emp.poolOptions;
       returnedExtraOptions = emp.extraOptions;
       employees.removeEmployee(e);
-    } if (termType == TerminationType.GoodWill) {
-      // else good will - we let employee to keep all the options
-      returnedOptions = 0; // code duplicates for easier human readout
-      returnedExtraOptions = 0;
-      employees.terminateEmployee(e, emp.issueDate, terminatedAt, terminatedAt, EmployeeState.GoodWillTerminated);
     }
     remainingPoolOptions += distributeAndReturnToPool(returnedOptions, emp.idx);
     totalExtraOptions -= returnedExtraOptions;
@@ -520,7 +515,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     if (calcAtTime < emp.terminatedAt && emp.terminatedAt > 0)
       emp.state = EmployeeState.Employed;
     uint vestedOptions = issuedOptions;
-    bool accelerateVesting = (isESOPConverted && emp.state == EmployeeState.Employed) || emp.state == EmployeeState.GoodWillTerminated;
+    bool accelerateVesting = isESOPConverted && emp.state == EmployeeState.Employed;
     if (!accelerateVesting) {
       // choose vesting time for terminated employee to be termination event time IF not after calculation date
       uint32 calcVestingAt = emp.state == EmployeeState.Terminated ? emp.terminatedAt :

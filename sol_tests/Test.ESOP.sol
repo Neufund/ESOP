@@ -30,8 +30,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(root.ESOPAddress(), address(0));
   }
 
-
-  function testTerminationInGoodWill() {
+  function testThrowTerminationBadLeaver() {
     uint32 ct = esop.currentTime();
     esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
     emp1._target(esop);
@@ -39,39 +38,8 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
     ct += uint32(esop.vestingPeriod() / 2);
     esop.mockTime(ct);
-    // terminate in good will
+    // terminate bad leaver
     uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 1));
-    assertEq(uint(rc), 0);
-    // this means accelerated vesting
-    uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
-    assertEq(options, maxopts, "full on term");
-    // but still vesting before termination
-    options = esop.calcEffectiveOptionsForEmployee(emp1, ct - 1);
-    assertEq(options, maxopts / 2, "vested before");
-    // no fade
-    ct += uint32(esop.vestingPeriod() / 2);
-    esop.mockTime(ct);
-    options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
-    assertEq(options, maxopts, "no fade");
-    // but no bonus on termination
-    converter = new DummyOptionsConverter(address(esop), ct + 60 days);
-    rc = uint8(esop.offerOptionsConversion(ct, converter));
-    assertEq(uint(rc), 0, "offerOptionsConversion");
-    uint optionsAtConv = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
-    // should have optons without bonus
-    assertEq(optionsAtConv, maxopts, "no bonus on conv");
-  }
-
-  function testThrowTerminationForACause() {
-    uint32 ct = esop.currentTime();
-    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
-    emp1._target(esop);
-    emp1.employeeSignsToESOP();
-    uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
-    ct += uint32(esop.vestingPeriod() / 2);
-    esop.mockTime(ct);
-    // terminate for a cause
-    uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 2));
     assertEq(uint(rc), 0);
     // this throws - user does not exist anymore
     uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
@@ -85,8 +53,8 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
     ct += uint32(esop.vestingPeriod() / 2);
     esop.mockTime(ct);
-    // terminate in good will results in term for a cause when no signature
-    uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 1));
+    // terminate will upgrade to term bad leave when no signature
+    uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 0));
     assertEq(uint(rc), 0);
     // this throws - user does not exist anymore
     uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
@@ -290,9 +258,9 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1._target(esop);
     rc = emp1.employeeSignsToESOP();
     assertEq(uint(rc), 0);
-    // terminated for a cause
+    // terminated bad leaver
     esop.mockTime(ct + 3 weeks);
-    rc = uint8(esop.terminateEmployee(emp1, ct + 3 weeks, 2));
+    rc = uint8(esop.terminateEmployee(emp1, ct + 3 weeks, 1));
     assertEq(uint(rc), 0);
     assertEq(initialOptions, esop.remainingPoolOptions());
   }

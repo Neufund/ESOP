@@ -3,7 +3,7 @@ import "./Types.sol";
 
 contract ESOPTypes {
   // enums are numbered starting from 0. NotSet is used to check for non existing mapping
-  enum EmployeeState { NotSet, WaitingForSignature, Employed, Terminated, GoodWillTerminated, OptionsExercised }
+  enum EmployeeState { NotSet, WaitingForSignature, Employed, Terminated, OptionsExercised }
   // please note that 32 bit unsigned int is used to represent UNIX time which is enough to represent dates until Sun, 07 Feb 2106 06:28:15 GMT
   // storage access is optimized so struct layout is important
   struct Employee {

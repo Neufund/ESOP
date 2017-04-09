@@ -85,7 +85,7 @@ contract EmployeesList is ESOPTypes, Ownable {
     external
     onlyOwner
   {
-    if (state != EmployeeState.Terminated && state != EmployeeState.GoodWillTerminated)
+    if (state != EmployeeState.Terminated)
         throw;
     Employee employee = employees[e]; // gets reference to storage and optimizer does it with one SSTORE
     if (employee.idx == 0) throw;
