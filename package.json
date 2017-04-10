@@ -1,0 +1,23 @@
+{
+  "name": "esop",
+  "version": "1.0.0",
+  "description": "## What is ESOP and why we do it?",
+  "main": "truffle.js",
+  "dependencies": {
+    "babel-register": "^6.24.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Neufund/ESOP.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Neufund/ESOP/issues"
+  },
+  "homepage": "https://github.com/Neufund/ESOP#readme"
+}
