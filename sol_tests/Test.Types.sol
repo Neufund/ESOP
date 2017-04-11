@@ -35,10 +35,11 @@ contract EmpTester {
     return ProceedsOptionsConverter(_t).withdraw();
   }
 
-  function openESOP(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pMaxFadeoutPromille, uint32 pbonusOptionsPromille,
-    uint32 pNewEmployeePoolPromille, uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash) returns (uint8) {
-      return uint8(ESOP(_t).openESOP(pcliffPeriod, pvestingPeriod, pMaxFadeoutPromille, pbonusOptionsPromille, pNewEmployeePoolPromille,
-        ptotalPoolOptions, pESOPLegalWrapperIPFSHash));
+  /*uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pMaxFadeoutPromille, uint32 pbonusOptionsPromille,
+    uint32 pNewEmployeePoolPromille
+    pcliffPeriod, pvestingPeriod, pMaxFadeoutPromille, pbonusOptionsPromille, pNewEmployeePoolPromille*/
+  function openESOP(OptionsCalculator pOptionsCalculator, EmployeesList pEmployeesList, uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash) returns (uint8) {
+      return uint8(ESOP(_t).openESOP(pOptionsCalculator, pEmployeesList, ptotalPoolOptions, pESOPLegalWrapperIPFSHash));
     }
 }
 
@@ -52,15 +53,18 @@ contract ESOPMaker {
     //bytes32 ESOPLegalWrapperIPFSHash = sha256("hereby pool #1 is established");
     bytes memory ESOPLegalWrapperIPFSHash = "qmv8ndh7ageh9b24zngaextmuhj7aiuw3scc8hkczvjkww";
     // a few interesting parameter combinations
-    // e.openESOP(1 years, 4 years, 8000, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - neufund
-    // e.openESOP(0 years, 4 years, 8000, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no cliff
-    // e.openESOP(0 years, 0 years, 8000, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no vesting
-    // e.openESOP(1 years, 4 years, 10000, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - full fadeout
-    // e.openESOP(1 years, 4 years, 0, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no fadeout
-    // e.openESOP(1 years, 4 years, 8000, 0, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no bonus
-    // e.openESOP(1 years, 4 years, 8000, 0, 0, 0, ESOPLegalWrapperIPFSHash) - no pool, just extra
+    // e.openESOP(1 years, 4 years, 2000, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - neufund
+    // e.openESOP(0 years, 4 years, 2000, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no cliff
+    // e.openESOP(0 years, 0 years, 2000, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no vesting
+    // e.openESOP(1 years, 4 years, 0, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - full fadeout
+    // e.openESOP(1 years, 4 years, 10000, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no fadeout
+    // e.openESOP(1 years, 4 years, 2000, 0, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no bonus
+    // e.openESOP(1 years, 4 years, 2000, 0, 0, 0, ESOPLegalWrapperIPFSHash) - no pool, just extra
     // make company sign this
-    uint rc = uint(e.openESOP(1 years, 4 years, 8000, 2000, 1000, 997302, ESOPLegalWrapperIPFSHash));
+    OptionsCalculator optcalc = new OptionsCalculator(1 years, 4 years, 2000, 2000, 1000);
+    EmployeesList emplist = new EmployeesList();
+    emplist.transferOwnership(e);
+    uint rc = uint(e.openESOP(optcalc, emplist, 997302, ESOPLegalWrapperIPFSHash));
     if (rc != 0)
       throw;
     return e;
