@@ -29,4 +29,27 @@ contract ESOPTypes {
       // reserve until full 256 bit word
       //uint24 reserved;
   }
+
+  function serializeEmployee(Employee memory employee)
+    internal
+    constant
+    returns(uint[9] emp)
+    {
+      // guess what: struct layout in memory is aligned to word (256 bits)
+      // struct in storage is byte aligned
+      assembly {
+        // return memory aligned struct as array of words
+        // I just wonder when 'employee' memory is deallocated
+        // answer: memory is not deallocated until transaction ends
+        emp := employee
+      }
+    }
+
+    function deserializeEmployee(uint[9] serializedEmployee)
+      internal
+      constant
+      returns (Employee memory emp)
+    {
+        assembly { emp := serializedEmployee }
+    }
 }
