@@ -1,6 +1,7 @@
 pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 import "./EmployeesList.sol";
+import "./OptionsCalculator.sol";
 import "./Upgradeable.sol";
 import './BaseOptionsConverter.sol';
 
@@ -24,16 +25,17 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   enum TerminationType { Regular, BadLeaver }
 
   //CONFIG
+  OptionsCalculator public optionsCalculator;
   // cliff duration in seconds
-  uint public cliffPeriod;
+  function cliffPeriod() public constant returns(uint) { return optionsCalculator.cliffPeriod(); }
   // vesting duration in seconds
-  uint public vestingPeriod;
+  function vestingPeriod() public constant returns(uint) { return optionsCalculator.vestingPeriod(); }
   // maximum promille that can fade out
-  uint public maxFadeoutPromille;
+  function maxFadeoutPromille() public constant returns(uint) { return optionsCalculator.maxFadeoutPromille(); }
   // exit bonus promille
-  uint public bonusOptionsPromille;
+  function bonusOptionsPromille() public constant returns(uint) { return optionsCalculator.bonusOptionsPromille(); }
   // per mille of unassigned poolOptions that new employee gets
-  uint public newEmployeePoolPromille;
+  function newEmployeePoolPromille() public constant returns(uint) { return optionsCalculator.newEmployeePoolPromille(); }
   // total poolOptions in The Pool
   uint public totalPoolOptions;
   // ipfs hash of document establishing this ESOP
@@ -44,8 +46,6 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   address public rootOfTrust;
   // options strike price
   uint constant public strikePrice = 1;
-  // scale of the emulated fixed point operations
-  uint constant public FP_SCALE = 10000;
   // default period for employee signature
   uint32 constant public waitForSignPeriod = 2 weeks;
 
@@ -106,11 +106,10 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     for(uint i=idx; i< employees.size(); i++) {
       address ea = employees.addresses(i);
       if (ea != 0) { // address(0) is deleted employee
-        var sere = employees.getSerializedEmployee(ea);
-        assembly { emp := sere }
+        emp = deserializeEmployee(employees.getSerializedEmployee(ea));
         // skip employees with no poolOptions and terminated employees
         if( emp.poolOptions > 0 && ( emp.state == EmployeeState.WaitingForSignature || emp.state == EmployeeState.Employed) ) {
-          uint newoptions = calcNewEmployeePoolOptions(distributedOptions);
+          uint newoptions = optionsCalculator.calcNewEmployeePoolOptions(distributedOptions);
           emp.poolOptions += uint32(newoptions);
           distributedOptions -= uint32(newoptions);
           employees.setEmployee(ea, emp.issueDate, emp.timeToSign, emp.terminatedAt, emp.fadeoutStarts, emp.poolOptions,
@@ -126,8 +125,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     for(uint i=0; i< employees.size(); i++) {
       address ea = employees.addresses(i);
       if (ea != 0) { // address(0) is deleted employee
-        var sere = employees.getSerializedEmployee(ea);
-        assembly { emp := sere }
+        emp = deserializeEmployee(employees.getSerializedEmployee(ea));
         if (t > emp.timeToSign && emp.state == EmployeeState.WaitingForSignature) {
           remainingPoolOptions += distributeAndReturnToPool(emp.poolOptions, i+1);
           totalExtraOptions -= emp.extraOptions;
@@ -143,16 +141,15 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     for(uint i=0; i< employees.size(); i++) {
       address ea = employees.addresses(i);
       if (ea != 0) { // address(0) is deleted employee
-        var sere = employees.getSerializedEmployee(ea);
-        assembly { emp := sere }
+        emp = deserializeEmployee(employees.getSerializedEmployee(ea));
         // only terminated with not returned to pool
         if (emp.state == EmployeeState.Terminated && t != emp.fadeoutStarts) {
-          uint vestedOptions = calcVestedOptions(emp.terminatedAt, emp.issueDate, emp.poolOptions);
-          uint returnedPoolOptions = calcFadeout(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions) -
-            calcFadeout(t, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions);
-          uint vestedExtraOptions = calcVestedOptions(emp.terminatedAt, emp.issueDate, emp.extraOptions);
-          uint returnedExtraOptions = calcFadeout(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions) -
-            calcFadeout(t, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions);
+          uint vestedOptions = optionsCalculator.calculateVestedOptions(emp.terminatedAt, emp.issueDate, emp.poolOptions);
+          uint returnedPoolOptions = optionsCalculator.calculateFadeout(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions) -
+            optionsCalculator.calculateFadeout(t, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions);
+          uint vestedExtraOptions = optionsCalculator.calculateVestedOptions(emp.terminatedAt, emp.issueDate, emp.extraOptions);
+          uint returnedExtraOptions = optionsCalculator.calculateFadeout(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions) -
+            optionsCalculator.calculateFadeout(t, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions);
           if (returnedPoolOptions > 0 || returnedExtraOptions > 0) {
             employees.setFadeoutStarts(ea, t);
             // options from fadeout are not distributed to other employees but returned to pool
@@ -185,8 +182,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     returnFadeoutToPool(currentTime());
   }
 
-  function openESOP(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pResidualAmountPromille, uint32 pbonusOptionsPromille,
-    uint32 pNewEmployeePoolPromille, uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash)
+  function openESOP(OptionsCalculator pOptionsCalculator, EmployeesList pEmployeesList, uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash)
     external
     onlyCompany
     onlyESOPNew
@@ -194,17 +190,16 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     returns (ReturnCodes)
   {
     // options are stored in unit32
-    if (ptotalPoolOptions > 1000000 || pResidualAmountPromille > FP_SCALE || pbonusOptionsPromille > FP_SCALE ||
-      pNewEmployeePoolPromille > FP_SCALE) {
+    if (ptotalPoolOptions > 1000000 ||
+      pOptionsCalculator.maxFadeoutPromille() > FP_SCALE || pOptionsCalculator.bonusOptionsPromille() > FP_SCALE ||
+      pOptionsCalculator.newEmployeePoolPromille() > FP_SCALE) {
       ReturnCode(ReturnCodes.InvalidParameters);
       return ReturnCodes.InvalidParameters;
     }
 
-    cliffPeriod = pcliffPeriod;
-    vestingPeriod = pvestingPeriod;
-    maxFadeoutPromille = FP_SCALE - pResidualAmountPromille;
-    bonusOptionsPromille = pbonusOptionsPromille;
-    newEmployeePoolPromille = pNewEmployeePoolPromille;
+    employees = pEmployeesList;
+    optionsCalculator = pOptionsCalculator; //new OptionsCalculator(pcliffPeriod, pVestingPeriod, pResidualAmountPromille, pbonusOptionsPromille,
+      //pNewEmployeePoolPromille);
     totalPoolOptions = ptotalPoolOptions;
     remainingPoolOptions = totalPoolOptions;
     ESOPLegalWrapperIPFSHash = pESOPLegalWrapperIPFSHash;
@@ -214,21 +209,13 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     return ReturnCodes.OK;
   }
 
-  function calcNewEmployeePoolOptions(uint remaining)
-    internal
-    constant
-    returns (uint poolOptions)
-  {
-    return divRound(remaining * newEmployeePoolPromille, FP_SCALE);
-  }
-
   function estimateNewEmployeePoolOptions()
     external
     constant
     returns (uint32)
   {
     // estimate number of poolOptions from the pool, this does not exec fadeout and does not remove unsigned employees
-    return uint32(calcNewEmployeePoolOptions(remainingPoolOptions));
+    return uint32(optionsCalculator.calcNewEmployeePoolOptions(remainingPoolOptions));
   }
 
   function offerOptionsToEmployee(address e, uint32 issueDate, uint32 timeToSign, uint32 extraOptions, bool poolCleanup)
@@ -253,7 +240,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       // return fade out to pool
       returnFadeoutToPool(currentTime());
     }
-    uint poolOptions = calcNewEmployeePoolOptions(remainingPoolOptions);
+    uint poolOptions = optionsCalculator.calcNewEmployeePoolOptions(remainingPoolOptions);
     if (poolOptions > 0xFFFFFFFF)
       throw;
     employees.setEmployee(e, issueDate, timeToSign, 0, 0, uint32(poolOptions), extraOptions, 0, EmployeeState.WaitingForSignature );
@@ -292,9 +279,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     notInMigration
     returns (ReturnCodes)
   {
-    var sere = employees.getSerializedEmployee(msg.sender);
-    Employee memory emp;
-    assembly { emp := sere }
+    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(msg.sender));
     if (emp.state != EmployeeState.WaitingForSignature) {
       ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
@@ -320,9 +305,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     notInMigration
     returns (ReturnCodes)
   {
-    var sere = employees.getSerializedEmployee(e);
-    Employee memory emp;
-    assembly { emp := sere }
+    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(e));
     if (emp.state != EmployeeState.Employed) {
       ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
@@ -341,9 +324,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     notInMigration
     returns (ReturnCodes)
   {
-    var sere = employees.getSerializedEmployee(e);
-    Employee memory emp;
-    assembly { emp := sere }
+    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(e));
     if (emp.state != EmployeeState.Employed) {
       ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
@@ -370,9 +351,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   {
     // terminates an employee
     TerminationType termType = TerminationType(terminationType);
-    var sere = employees.getSerializedEmployee(e);
-    Employee memory emp;
-    assembly { emp := sere }
+    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(e));
     // todo: check termination time against issueDate
     if (terminatedAt < emp.issueDate) {
       ReturnCode(ReturnCodes.InvalidParameters);
@@ -392,8 +371,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       if (emp.suspendedAt > 0 && emp.suspendedAt < terminatedAt)
         emp.issueDate += terminatedAt - emp.suspendedAt;
       // vesting applies
-      returnedOptions = emp.poolOptions - calcVestedOptions(terminatedAt, emp.issueDate, emp.poolOptions);
-      returnedExtraOptions = emp.extraOptions - calcVestedOptions(terminatedAt, emp.issueDate, emp.extraOptions);
+      returnedOptions = emp.poolOptions - optionsCalculator.calculateVestedOptions(terminatedAt, emp.issueDate, emp.poolOptions);
+      returnedExtraOptions = emp.extraOptions - optionsCalculator.calculateVestedOptions(terminatedAt, emp.issueDate, emp.extraOptions);
       employees.terminateEmployee(e, emp.issueDate, terminatedAt, terminatedAt, EmployeeState.Terminated);
     }
     else if (termType == TerminationType.BadLeaver) {
@@ -451,9 +430,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       ReturnCode(ReturnCodes.TooLate);
       return ReturnCodes.TooLate;
     }
-    Employee memory emp;
-    var sere = employees.getSerializedEmployee(msg.sender);
-    assembly { emp := sere }
+    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(msg.sender));
     if (emp.state == EmployeeState.OptionsExercised) {
       ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
@@ -467,81 +444,6 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     return ReturnCodes.OK;
   }
 
-  function calcVestedOptions(uint t, uint vestingStarts, uint options)
-    internal
-    constant
-    returns (uint)
-  {
-    if (t <= vestingStarts)
-      return 0;
-    // apply vesting
-    uint effectiveTime = t - vestingStarts;
-    // if within cliff nothing is due
-    if (effectiveTime < cliffPeriod)
-      return 0;
-    else
-      return  effectiveTime < vestingPeriod ? divRound(options * effectiveTime, vestingPeriod) : options;
-  }
-
-  function calcFadeout(uint32 t, uint32 issueDate, uint32 terminatedAt, uint options, uint vestedOptions)
-    internal
-    constant
-    returns (uint)
-  {
-    if (t < terminatedAt)
-      return vestedOptions;
-    uint timefromTermination = t - terminatedAt;
-    // fadeout duration equals to employment duration
-    uint employmentPeriod = terminatedAt - issueDate;
-    // minimum value of options at the end of fadeout, it is a % of all employee's options
-    uint minFadeValue = divRound(options * (FP_SCALE - maxFadeoutPromille), FP_SCALE);
-    // however employee cannot have more than options after fadeout than he was vested at termination
-    if (minFadeValue >= vestedOptions)
-      return vestedOptions;
-    return timefromTermination > employmentPeriod ?
-      minFadeValue  :
-      (minFadeValue + divRound((vestedOptions - minFadeValue) * (employmentPeriod - timefromTermination), employmentPeriod));
-  }
-
-  function callEffectiveOptions(Employee memory emp, uint32 calcAtTime)
-    internal
-    constant
-    returns (uint)
-  {
-    // no options for converted options or when esop is not singed
-    if (emp.state == EmployeeState.OptionsExercised || emp.state == EmployeeState.WaitingForSignature)
-      return 0;
-    // no options when esop is being converted and conversion deadline expired
-    bool isESOPConverted = esopState == ESOPState.Conversion && calcAtTime >= conversionOfferedAt; // this function time-travels
-    if (isESOPConverted && calcAtTime > exerciseOptionsDeadline)
-      return 0;
-    uint issuedOptions = emp.poolOptions + emp.extraOptions;
-    // employee with no options
-    if (issuedOptions == 0) return 0;
-    // if emp is terminated but we calc options before term, simulate employed again
-    if (calcAtTime < emp.terminatedAt && emp.terminatedAt > 0)
-      emp.state = EmployeeState.Employed;
-    uint vestedOptions = issuedOptions;
-    bool accelerateVesting = isESOPConverted && emp.state == EmployeeState.Employed;
-    if (!accelerateVesting) {
-      // choose vesting time for terminated employee to be termination event time IF not after calculation date
-      uint32 calcVestingAt = emp.state == EmployeeState.Terminated ? emp.terminatedAt :
-        (emp.suspendedAt > 0 && emp.suspendedAt < calcAtTime ? emp.suspendedAt : calcAtTime);
-      vestedOptions = calcVestedOptions(calcVestingAt, emp.issueDate, issuedOptions);
-    }
-    // calc fadeout for terminated employees
-    if (emp.state == EmployeeState.Terminated) {
-      // use conversion event time to compute fadeout to stop fadeout on conversion IF not after conversion date
-      vestedOptions = calcFadeout(isESOPConverted ? conversionOfferedAt : calcAtTime,
-        emp.issueDate, emp.terminatedAt, issuedOptions, vestedOptions);
-    }
-    // exit bonus only on conversion event and for employees that are not terminated, no exception for good will termination
-    // do not apply bonus for extraOptions
-    uint bonus = (isESOPConverted && emp.state == EmployeeState.Employed) ?
-      divRound(emp.poolOptions*vestedOptions*bonusOptionsPromille, FP_SCALE*issuedOptions) : 0;
-    return  vestedOptions + bonus;
-  }
-
   function calcEffectiveOptionsForEmployee(address e, uint32 calcAtTime)
     public
     constant
@@ -549,24 +451,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     notInMigration
     returns (uint)
   {
-    var sere = employees.getSerializedEmployee(e);
-    Employee memory emp;
-    assembly { emp := sere }
-    return callEffectiveOptions(emp, calcAtTime);
-  }
-
-  function simulateEffectiveOptionsForEmployee(uint32 issueDate, uint32 terminatedAt, uint32 poolOptions,
-    uint32 extraOptions, uint32 suspendedAt, uint8 employeeState, uint32 calcAtTime)
-    external
-    constant
-    notInMigration
-    returns (uint)
-  {
-    Employee memory emp = Employee({issueDate: issueDate, terminatedAt: terminatedAt,
-      poolOptions: poolOptions, extraOptions: extraOptions, state: EmployeeState(employeeState),
-      timeToSign: issueDate+2 weeks, fadeoutStarts: terminatedAt, suspendedAt: suspendedAt,
-      idx:1});
-    return callEffectiveOptions(emp, calcAtTime);
+    return optionsCalculator.calculateOptions(employees.getSerializedEmployee(e), calcAtTime, conversionOfferedAt,
+      exerciseOptionsDeadline);
   }
 
   function()
@@ -578,7 +464,6 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   // todo: make parameters explicit
   function ESOP(address company, address pRootOfTrust) {
     esopState = ESOPState.New; // thats initial value
-    employees = new EmployeesList();
     companyAddress = company;
     rootOfTrust = pRootOfTrust;
   }
