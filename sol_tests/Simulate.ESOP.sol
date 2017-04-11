@@ -160,14 +160,14 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
 
     for(uint d = 0; d < vdays + 4; d++) {
       uint dn = d*7;
-      uint options = esop.simulateEffectiveOptionsForEmployee(globct, 0, empopts, 0, 0,
+      uint options = esop.optionsCalculator().simulateOptions(globct, 0, empopts, 0, 0,
         uint8(EmployeeState.Employed), uint32(globct + d*(7 days)));
       //@doc `uint dn`, `uint options`, vesting
     }
     for(d = 1; d < (vdays+4) + 5; d++) {
       dn = d*7 + vdays*7;
-      options = esop.simulateEffectiveOptionsForEmployee(globct, terminatedAt, empopts, 0,
-        uint8(EmployeeState.Terminated), 0, uint32(globct + (vdays+4)*7 days + d*(7 days)));
+      options = esop.optionsCalculator().simulateOptions(globct, terminatedAt, empopts, 0, 0,
+        uint8(EmployeeState.Terminated), uint32(globct + (vdays+4)*7 days + d*(7 days)));
       //@doc `uint dn`, `uint options`, fadeout
     }
   }
