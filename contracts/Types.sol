@@ -21,6 +21,9 @@ contract Ownable {
 
 
 contract Math {
+  // scale of the emulated fixed point operations
+  uint constant public FP_SCALE = 10000;
+
   // todo: should be a library
   function divRound(uint v, uint d) internal constant returns(uint) {
     // round up if % is half or more
