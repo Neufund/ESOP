@@ -30,14 +30,14 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(uint(emp1.employeeSignsToESOP()), 0, "sign to ESOP");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, 0, "on creation signed");
-    options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.cliffPeriod())-1);
+    options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.optionsCalculator().cliffPeriod())-1);
     assertEq(options, 0, "cliff - 1s");
-    uint cliffOpts = divRound(totOptions * esop.cliffPeriod(), esop.vestingPeriod());
-    options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.cliffPeriod()));
+    uint cliffOpts = divRound(totOptions * esop.optionsCalculator().cliffPeriod(), esop.optionsCalculator().vestingPeriod());
+    options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.optionsCalculator().cliffPeriod()));
     assertEq(options, cliffOpts, "on cliff");
-    options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.cliffPeriod())+1);
+    options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+uint32(esop.optionsCalculator().cliffPeriod())+1);
     assertEq(options, cliffOpts, "on cliff + 1s");
-    ct += uint32(esop.vestingPeriod());
+    ct += uint32(esop.optionsCalculator().vestingPeriod());
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct-1);
     assertEq(options, totOptions, "vesting end - 1s");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
@@ -45,23 +45,23 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct+1);
     assertEq(options, totOptions, "vesting end + 1s");
     // terminate in half vesting
-    ct -= uint32(esop.vestingPeriod()/2);
+    ct -= uint32(esop.optionsCalculator().vestingPeriod()/2);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, divRound(totOptions,2), "half vesting");
     assertEq(uint(esop.terminateEmployee(emp1, ct, 0)), 0, "terminate employee");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, divRound(totOptions,2), "half vesting term");
     // half fadeout
-    ct += uint32(esop.vestingPeriod()/4);
+    ct += uint32(esop.optionsCalculator().vestingPeriod()/4);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
-    uint minFade = divRound(totOptions*(esop.FP_SCALE() - esop.maxFadeoutPromille()), esop.FP_SCALE());
+    uint minFade = divRound(totOptions*(esop.FP_SCALE() - esop.optionsCalculator().maxFadeoutPromille()), esop.FP_SCALE());
     // if minFade > vested options then vested options is the min value after fadeout (basically - no fadeout in this case)
     if (minFade >= divRound(totOptions,2))
       minFade = totOptions/2;
     uint halfFade = minFade + divRound((divRound(totOptions,2) - minFade),2);
     assertEq(options, halfFade, "half fadeout");
     // full fadout
-    ct += uint32(esop.vestingPeriod()/4);
+    ct += uint32(esop.optionsCalculator().vestingPeriod()/4);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct - 1);
     assertEq(options, minFade, "full fadeout - 1s");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
@@ -71,7 +71,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 1 years);
     assertEq(options, minFade, "full fadeout + 1y");
     // convert at half fadeout
-    ct -= uint32(esop.vestingPeriod()/4);
+    ct -= uint32(esop.optionsCalculator().vestingPeriod()/4);
     BaseOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
     esop.mockTime(ct);
     uint8 rc = uint8(esop.offerOptionsConversion(converter));
@@ -90,7 +90,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
   function procLifecycleJustBonus(uint32 ct, uint totOptions, uint extraOptions)
   {
     emp1.employeeSignsToESOP();
-    ct += uint32(esop.vestingPeriod()) + 1 years;
+    ct += uint32(esop.optionsCalculator().vestingPeriod()) + 1 years;
     uint options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, totOptions, "1y after vesting");
     BaseOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
@@ -98,9 +98,9 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint8 rc = uint8(esop.offerOptionsConversion(converter));
     assertEq(uint(rc), 0, "offerOptionsConversion");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
-    assertEq(options, totOptions + divRound((totOptions-extraOptions)*esop.bonusOptionsPromille(), esop.FP_SCALE()), "exit bonus");
+    assertEq(options, totOptions + divRound((totOptions-extraOptions)*esop.optionsCalculator().bonusOptionsPromille(), esop.FP_SCALE()), "exit bonus");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 1 years);
-    assertEq(options, totOptions + divRound((totOptions-extraOptions)*esop.bonusOptionsPromille(), esop.FP_SCALE()), "exit bonus + 1y");
+    assertEq(options, totOptions + divRound((totOptions-extraOptions)*esop.optionsCalculator().bonusOptionsPromille(), esop.FP_SCALE()), "exit bonus + 1y");
     // employee conversion
     esop.mockTime(ct + 1 weeks);
     emp1.employeeExerciseOptions(true);

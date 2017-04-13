@@ -27,7 +27,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint remPool = E.totalPoolOptions();
     for(uint i=0; i<count; i++)
     {
-      uint o = (remPool * E.newEmployeePoolPromille()) / E.FP_SCALE();
+      uint o = (remPool * E.optionsCalculator().newEmployeePoolPromille()) / E.FP_SCALE();
       options[i] = o;
       remPool -= o;
     }
@@ -94,12 +94,12 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint rc = uint(emp1.employeeSignsToESOP());
     assertEq(rc, 0);
     // employee leaves on vesting end day
-    uint32 term_t = ct+uint32(esop.vestingPeriod());
+    uint32 term_t = ct+uint32(esop.optionsCalculator().vestingPeriod());
     esop.mockTime(term_t);
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
-    uint32 delta_t = uint32(esop.vestingPeriod());
-    uint fade = divRound(esop.maxFadeoutPromille() * extraOptions, esop.FP_SCALE());
+    uint32 delta_t = uint32(esop.optionsCalculator().vestingPeriod());
+    uint fade = divRound(esop.optionsCalculator().maxFadeoutPromille() * extraOptions, esop.FP_SCALE());
     uint tot_fade;
     for(uint i=0; i<10; i++) {
       delta_t = uint32(divRound(delta_t, 2));
@@ -130,12 +130,12 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint rc = uint(emp1.employeeSignsToESOP());
     assertEq(rc, 0);
     // employee leaves on vesting end day
-    uint32 term_t = ct+uint32(esop.vestingPeriod());
+    uint32 term_t = ct+uint32(esop.optionsCalculator().vestingPeriod());
     esop.mockTime(term_t);
     rc = uint(esop.terminateEmployee(emp1, term_t, 0));
     assertEq(rc,0);
-    uint32 delta_t = uint32(esop.vestingPeriod());
-    uint fade = divRound(esop.maxFadeoutPromille() * poolOptions, esop.FP_SCALE());
+    uint32 delta_t = uint32(esop.optionsCalculator().vestingPeriod());
+    uint fade = divRound(esop.optionsCalculator().maxFadeoutPromille() * poolOptions, esop.FP_SCALE());
     uint tot_fade;
     for(uint i=0; i<10; i++) {
       delta_t = uint32(divRound(delta_t, 2));
@@ -171,7 +171,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(rc, 0);
     uint ppool = E.remainingPoolOptions();
     // terminate exactly half way so half options are returned
-    uint32 term_t = ct+uint32(E.vestingPeriod()/2);
+    uint32 term_t = ct+uint32(E.optionsCalculator().vestingPeriod()/2);
     E.mockTime(term_t);
     rc = uint(E.terminateEmployee(employees[3], term_t, 0));
     assertEq(rc,0);
@@ -179,7 +179,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     //@info vesting should be half of options `uint vested` of `uint options[3]`
     // now modify reference list by distributing vested part
     for(uint i=4; i<7; i++) {
-      uint modopt = divRound(vested * E.newEmployeePoolPromille(), E.FP_SCALE());
+      uint modopt = divRound(vested * E.optionsCalculator().newEmployeePoolPromille(), E.FP_SCALE());
       vested -= modopt;
       options[i] += modopt;
     }
@@ -193,7 +193,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint vested2 = divRound(options[1],2);
     for(i=2; i<7; i++) {
         if (i != 3) { //skip already terminated employee
-          modopt = divRound(vested2 * E.newEmployeePoolPromille(), E.FP_SCALE());
+          modopt = divRound(vested2 * E.optionsCalculator().newEmployeePoolPromille(), E.FP_SCALE());
           vested2 -= modopt;
           options[i] += modopt;
       }
@@ -287,7 +287,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
       sumOptions += options[i];
     assertEq(E.totalExtraOptions(), sumOptions, "fill extra pool");
     // now expire signatures
-    uint32 ct = E.currentTime() + uint32(E.vestingPeriod()/2);
+    uint32 ct = E.currentTime() + uint32(E.optionsCalculator().vestingPeriod()/2);
     E.mockTime(ct);
     // terminate employee 3 at half of a vesting
     E.terminateEmployee(employees[3], ct, 0);

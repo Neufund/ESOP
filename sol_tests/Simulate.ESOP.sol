@@ -24,8 +24,8 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
 
   function simulateLifecycleSingleEmp(uint32 ct) {
     uint8 rc = uint8(emp1.employeeSignsToESOP());
-    //@info vesting sim days `uint esop.vestingPeriod()`
-    uint vdays = esop.vestingPeriod() / 7 days;
+    //@info vesting sim days `uint esop.optionsCalculator().vestingPeriod()`
+    uint vdays = esop.optionsCalculator().vestingPeriod() / 7 days;
     //@info vesting sim weeks `uint vdays`
     uint ro;
     uint teo;
@@ -86,8 +86,8 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint8 rc = uint8(esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false));
     emp1._target(esop);
     emp1.employeeSignsToESOP();
-    //@info vesting sim days `uint esop.vestingPeriod()`
-    uint vdays = (esop.vestingPeriod() - 2 years) / 7 days;
+    //@info vesting sim days `uint esop.optionsCalculator().vestingPeriod()`
+    uint vdays = (esop.optionsCalculator().vestingPeriod() - 2 years) / 7 days;
     //@info vesting sim weeks `uint vdays`
     //@doc early exit with bonus
     for(uint d = 0; d < vdays + 4; d++) {
@@ -119,8 +119,8 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint8 rc = uint8(esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false));
     emp1._target(esop);
     rc = emp1.employeeSignsToESOP();
-    //@info vesting sim days `uint esop.vestingPeriod()`
-    uint vdays = (esop.vestingPeriod() + 1 years) / 7 days;
+    //@info vesting sim days `uint esop.optionsCalculator().vestingPeriod()`
+    uint vdays = (esop.optionsCalculator().vestingPeriod() + 1 years) / 7 days;
     //@info vesting sim weeks `uint vdays`
     //@doc vesting until maximum then conversion with exit bonus
     for(uint d = 0; d < vdays + 4; d++) {
@@ -156,10 +156,10 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
   }
 
   function testSimulateESOPWithSimulateFunction() {
-    uint vdays = esop.vestingPeriod() / 7 days;
+    uint vdays = esop.optionsCalculator().vestingPeriod() / 7 days;
     uint32 terminatedAt = uint32(globct + (vdays+4)*(7 days));
     //@doc simulate using simulate function
-    uint32 empopts = uint32(divRound(esop.totalPoolOptions() * esop.newEmployeePoolPromille(), esop.FP_SCALE()));
+    uint32 empopts = uint32(divRound(esop.totalPoolOptions() * esop.optionsCalculator().newEmployeePoolPromille(), esop.FP_SCALE()));
 
     for(uint d = 0; d < vdays + 4; d++) {
       uint dn = d*7;

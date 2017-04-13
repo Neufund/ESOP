@@ -76,8 +76,8 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp2.employeeExerciseOptions(true);
     emp3.employeeExerciseOptions(true);
     // all options converted + exit bonus
-    if (absDiff(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.bonusOptionsPromille(), esop.FP_SCALE())) > 1)
-      assertEq(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.bonusOptionsPromille(), esop.FP_SCALE()));
+    if (absDiff(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.optionsCalculator().bonusOptionsPromille(), esop.FP_SCALE())) > 1)
+      assertEq(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.optionsCalculator().bonusOptionsPromille(), esop.FP_SCALE()));
 
     return (emp1, emp2, emp3);
   }

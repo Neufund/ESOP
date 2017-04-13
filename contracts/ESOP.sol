@@ -27,15 +27,15 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   //CONFIG
   OptionsCalculator public optionsCalculator;
   // cliff duration in seconds
-  function cliffPeriod() public constant returns(uint) { return optionsCalculator.cliffPeriod(); }
+  // function cliffPeriod() public constant returns(uint) { return optionsCalculator.optionsCalculator().cliffPeriod(); }
   // vesting duration in seconds
-  function vestingPeriod() public constant returns(uint) { return optionsCalculator.vestingPeriod(); }
+  // function vestingPeriod() public constant returns(uint) { return optionsCalculator.optionsCalculator().vestingPeriod(); }
   // maximum promille that can fade out
-  function maxFadeoutPromille() public constant returns(uint) { return optionsCalculator.maxFadeoutPromille(); }
+  // function maxFadeoutPromille() public constant returns(uint) { return optionsCalculator.optionsCalculator().maxFadeoutPromille(); }
   // exit bonus promille
-  function bonusOptionsPromille() public constant returns(uint) { return optionsCalculator.bonusOptionsPromille(); }
+  // function bonusOptionsPromille() public constant returns(uint) { return optionsCalculator.optionsCalculator().bonusOptionsPromille(); }
   // per mille of unassigned poolOptions that new employee gets
-  function newEmployeePoolPromille() public constant returns(uint) { return optionsCalculator.newEmployeePoolPromille(); }
+  // function newEmployeePoolPromille() public constant returns(uint) { return optionsCalculator.optionsCalculator().newEmployeePoolPromille(); }
   // total poolOptions in The Pool
   uint public totalPoolOptions;
   // ipfs hash of document establishing this ESOP
@@ -297,7 +297,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     return ReturnCodes.OK;
   }
 
-  function suspendEmployee(address e, uint32 suspendedAt)
+  function toggleEmployeeSuspension(address e, uint32 toggledAt)
     external
     onlyESOPOpen
     onlyCompany
@@ -309,35 +309,24 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     if (emp.state != EmployeeState.Employed) {
       ReturnCode(ReturnCodes.InvalidEmployeeState);
       return ReturnCodes.InvalidEmployeeState;
+    }
+    if (emp.suspendedAt == 0) {
+      //suspend action
+      emp.suspendedAt = toggledAt;
+      SuspendEmployee(e, toggledAt);
+    } else {
+      if (emp.suspendedAt > toggledAt) {
+        ReturnCode(ReturnCodes.TooLate);
+        return ReturnCodes.TooLate;
+      }
+      uint32 suspendedPeriod = toggledAt - emp.suspendedAt;
+      // move everything by suspension period by changing issueDate
+      emp.issueDate += suspendedPeriod;
+      emp.suspendedAt = 0;
+      ContinueSuspendedEmployee(e, toggledAt, suspendedPeriod);
     }
     employees.setEmployee(e, emp.issueDate, emp.timeToSign, emp.terminatedAt,
-      emp.fadeoutStarts, emp.poolOptions, emp.extraOptions, suspendedAt, emp.state);
-    SuspendEmployee(e, suspendedAt);
-    return ReturnCodes.OK;
-  }
-
-  function continueSuspendedEmployee(address e, uint32 continueAt)
-    external
-    onlyESOPOpen
-    onlyCompany
-    hasEmployee(e)
-    notInMigration
-    returns (ReturnCodes)
-  {
-    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(e));
-    if (emp.state != EmployeeState.Employed) {
-      ReturnCode(ReturnCodes.InvalidEmployeeState);
-      return ReturnCodes.InvalidEmployeeState;
-    }
-    if (emp.suspendedAt > continueAt) {
-      ReturnCode(ReturnCodes.TooLate);
-      return ReturnCodes.TooLate;
-    }
-    uint32 suspendedPeriod = continueAt - emp.suspendedAt;
-    // move everything by suspension period by changing issueDate
-    employees.setEmployee(e, emp.issueDate + suspendedPeriod, emp.timeToSign, emp.terminatedAt,
-      emp.fadeoutStarts, emp.poolOptions, emp.extraOptions, 0, emp.state);
-    ContinueSuspendedEmployee(e, continueAt, suspendedPeriod);
+      emp.fadeoutStarts, emp.poolOptions, emp.extraOptions, emp.suspendedAt, emp.state);
     return ReturnCodes.OK;
   }
 

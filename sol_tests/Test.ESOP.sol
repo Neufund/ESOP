@@ -36,7 +36,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1._target(esop);
     emp1.employeeSignsToESOP();
     uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
-    ct += uint32(esop.vestingPeriod() / 2);
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
     esop.mockTime(ct);
     // terminate bad leaver
     uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 1));
@@ -51,7 +51,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
     emp1._target(esop);
     uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
-    ct += uint32(esop.vestingPeriod() / 2);
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
     esop.mockTime(ct);
     // terminate will upgrade to term bad leaver when no signature
     uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 0));
@@ -66,7 +66,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1._target(esop);
     emp1.employeeSignsToESOP();
     uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
-    ct += uint32(esop.vestingPeriod() / 2);
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
     esop.mockTime(ct);
     uint8 rc = uint8(esop.terminateEmployee(emp1, ct, 0));
     assertEq(uint(rc), 0);
@@ -76,7 +76,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     // options after termination as expected
     options = esop.calcEffectiveOptionsForEmployee(emp1, ct +1);
     assertEq(options, divRound(maxopts, 2), "sec after term");
-    ct -= uint32(esop.vestingPeriod() / 4);
+    ct -= uint32(esop.optionsCalculator().vestingPeriod() / 4);
     esop.mockTime(ct);
     options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, divRound(maxopts, 4), "half bef term");
@@ -90,31 +90,31 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1.employeeSignsToESOP();
     // suspend after 2 years
     uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
-    ct += uint32(esop.vestingPeriod() / 2);
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
     esop.mockTime(ct);
-    uint8 rc = uint8(esop.suspendEmployee(emp1, ct));
+    uint8 rc = uint8(esop.toggleEmployeeSuspension(emp1, ct));
     assertEq(uint(rc), 0);
     // when suspended value after 2 years is kept
     uint options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, divRound(maxopts, 2), "on suspension");
-    options = esop.calcEffectiveOptionsForEmployee(emp1, ct - uint32(esop.vestingPeriod() / 8));
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct - uint32(esop.optionsCalculator().vestingPeriod() / 8));
     assertEq(options, divRound(3 * maxopts, 8), "before suspension");
-    uint32 suspensionPeriod = uint32(esop.vestingPeriod() / 4);
+    uint32 suspensionPeriod = uint32(esop.optionsCalculator().vestingPeriod() / 4);
     ct += suspensionPeriod;
     esop.mockTime(ct);
     options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, divRound(maxopts, 2), "on suspension + 1y");
     // continue employment
-    rc = uint8(esop.continueSuspendedEmployee(emp1, ct));
+    rc = uint8(esop.toggleEmployeeSuspension(emp1, ct));
     assertEq(uint(rc), 0);
     options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, divRound(maxopts, 2), "continue");
-    ct += uint32(esop.vestingPeriod() / 4);
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 4);
     esop.mockTime(ct);
     options = esop.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, divRound(3 * maxopts, 4), "continue + 1y");
     // suspend again
-    rc = uint8(esop.suspendEmployee(emp1, ct));
+    rc = uint8(esop.toggleEmployeeSuspension(emp1, ct));
     assertEq(uint(rc), 0);
     ct += suspensionPeriod;
     esop.mockTime(ct);
@@ -127,19 +127,19 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     //@info options on term `uint options` term_t `uint32 ct` issue_t `uint32 issueDate`
     assertEq(options, divRound(3 * maxopts, 4), "2 susp + term");
     // suspended after term with normal fadeout, check issueDate mod below!
-    uint fadeout = esop.optionsCalculator().applyFadeoutToOptions(ct + uint32(esop.vestingPeriod() / 8),
+    uint fadeout = esop.optionsCalculator().applyFadeoutToOptions(ct + uint32(esop.optionsCalculator().vestingPeriod() / 8),
       issueDate + 2*suspensionPeriod, ct, maxopts, options);
-    options = esop.calcEffectiveOptionsForEmployee(emp1, ct + uint32(esop.vestingPeriod() / 8));
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct + uint32(esop.optionsCalculator().vestingPeriod() / 8));
     assertEq(options, fadeout, "2 susp + term + fadeout");
     // suspended before termination
-    options = esop.calcEffectiveOptionsForEmployee(emp1, ct - uint32(esop.vestingPeriod() / 8));
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct - uint32(esop.optionsCalculator().vestingPeriod() / 8));
     assertEq(options, divRound(5 * maxopts, 8), "2 susp + term + before");
     // exercise options at termination time with 1 year exercise period
     DummyOptionsConverter converter = new DummyOptionsConverter(esop, ct + 1 years);
     rc = uint8(esop.offerOptionsConversion(converter));
     assertEq(uint(rc), 0, "converter");
     // no fadeout - keep options
-    options = esop.calcEffectiveOptionsForEmployee(emp1, ct + uint32(esop.vestingPeriod() / 8));
+    options = esop.calcEffectiveOptionsForEmployee(emp1, ct + uint32(esop.optionsCalculator().vestingPeriod() / 8));
     assertEq(options, divRound(3 * maxopts, 4), "2 susp + term + conv + after");
   }
 
@@ -150,7 +150,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1._target(esop);
     emp1.employeeSignsToESOP();
     uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions() + 10000;
-    ct += uint32(esop.vestingPeriod() / 2);
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
     esop.mockTime(ct);
     // terminate employee
     rc = uint8(esop.terminateEmployee(emp1, ct, 0));
@@ -187,7 +187,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1._target(esop);
     emp1.employeeSignsToESOP();
     uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions() + 10000;
-    ct += uint32(esop.vestingPeriod() / 2);
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
     esop.mockTime(ct);
     converter = new DummyOptionsConverter(address(esop), ct + 60 days);
     uint8 rc = uint8(esop.offerOptionsConversion(converter));
@@ -254,7 +254,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(uint(rc), 0, "employeeExerciseOptions");
     // we expect all extra options + pool options + 20% exit bonus on pool options
     uint poolopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
-    uint expopts = 100 + poolopts + divRound(poolopts * esop.bonusOptionsPromille(), esop.FP_SCALE());
+    uint expopts = 100 + poolopts + divRound(poolopts * esop.optionsCalculator().bonusOptionsPromille(), esop.FP_SCALE());
     // what is converted is stored in dummy so compare
     assertEq(converter.totalConvertedOptions(), expopts);
     //@info `uint expopts` converted
