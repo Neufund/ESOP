@@ -13,13 +13,13 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
   event SuspendEmployee(address indexed employee, uint32 suspendedAt);
   event ContinueSuspendedEmployee(address indexed employee, uint32 continuedAt, uint32 suspendedPeriod);
   event TerminateEmployee(address indexed employee, address company, uint32 terminatedAt, TerminationType termType);
-  event EmployeeOptionsExercised(address indexed employee, uint32 poolOptions);
+  event EmployeeOptionsExercised(address indexed employee, address exercisedFor, uint32 poolOptions, bool disableAcceleratedVesting);
   // esop changed events
   event ESOPOpened(address company);
-  event OptionsConversionOffered(address company, address converter, uint32 convertedAt, uint32 conversionDeadline);
+  event OptionsConversionOffered(address company, address converter, uint32 convertedAt, uint32 exercisePeriodDeadline);
   enum ESOPState { New, Open, Conversion }
   // use retrun codes until revert opcode is implemented
-  enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters  }
+  enum ReturnCodes { OK, InvalidEmployeeState, TooLate, InvalidParameters, TooEarly  }
   // event raised when return code from a function is not OK, when OK is returned one of events above is raised
   event ReturnCode(ReturnCodes rc);
   enum TerminationType { Regular, BadLeaver }
@@ -145,11 +145,11 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
         // only terminated with not returned to pool
         if (emp.state == EmployeeState.Terminated && t != emp.fadeoutStarts) {
           uint vestedOptions = optionsCalculator.calculateVestedOptions(emp.terminatedAt, emp.issueDate, emp.poolOptions);
-          uint returnedPoolOptions = optionsCalculator.calculateFadeout(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions) -
-            optionsCalculator.calculateFadeout(t, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions);
+          uint returnedPoolOptions = optionsCalculator.applyFadeoutToOptions(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions) -
+            optionsCalculator.applyFadeoutToOptions(t, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions);
           uint vestedExtraOptions = optionsCalculator.calculateVestedOptions(emp.terminatedAt, emp.issueDate, emp.extraOptions);
-          uint returnedExtraOptions = optionsCalculator.calculateFadeout(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions) -
-            optionsCalculator.calculateFadeout(t, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions);
+          uint returnedExtraOptions = optionsCalculator.applyFadeoutToOptions(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions) -
+            optionsCalculator.applyFadeoutToOptions(t, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions);
           if (returnedPoolOptions > 0 || returnedExtraOptions > 0) {
             employees.setFadeoutStarts(ea, t);
             // options from fadeout are not distributed to other employees but returned to pool
@@ -387,16 +387,20 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     return ReturnCodes.OK;
   }
 
-  function offerOptionsConversion(uint32 convertedAt, BaseOptionsConverter converter )
+  function cancelTerminatedEmployeeOptions() {
+    // company may cancel options of terminated employee during first 6 months after termination
+  }
+
+  function offerOptionsConversion(BaseOptionsConverter converter )
     external
     onlyESOPOpen
     onlyCompany
     notInMigration
     returns (ReturnCodes)
   {
-    // prevent stupid things, give at least two weeks for employees to convert
-    if (convertedAt >= converter.getExerciseDeadline() ||
-      converter.getExerciseDeadline() + waitForSignPeriod < currentTime()) {
+    uint32 offerMadeAt = currentTime();
+    //
+    if (converter.getExercisePeriodDeadline() - offerMadeAt < waitForSignPeriod) {
       ReturnCode(ReturnCodes.TooLate);
       return ReturnCodes.TooLate;
     }
@@ -409,16 +413,43 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     removeEmployeesWithExpiredSignatures(currentTime());
     returnFadeoutToPool(currentTime());
     // from now vesting and fadeout stops, no new employees may be added
-    conversionOfferedAt = convertedAt;
-    exerciseOptionsDeadline = converter.getExerciseDeadline();
+    conversionOfferedAt = offerMadeAt;
+    exerciseOptionsDeadline = converter.getExercisePeriodDeadline();
     optionsConverter = converter;
     // this is very irreversible
     esopState = ESOPState.Conversion;
-    OptionsConversionOffered(companyAddress, address(converter), convertedAt, exerciseOptionsDeadline);
+    OptionsConversionOffered(companyAddress, address(converter), offerMadeAt, exerciseOptionsDeadline);
     return ReturnCodes.OK;
   }
 
-  function employeeExerciseOptions()
+  function exerciseOptionsInternal(uint32 calcAtTime, address employee, address exerciseFor,
+    bool disableAcceleratedVesting)
+    internal
+    returns (ReturnCodes)
+  {
+    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(employee));
+    if (emp.state == EmployeeState.OptionsExercised) {
+      ReturnCode(ReturnCodes.InvalidEmployeeState);
+      return ReturnCodes.InvalidEmployeeState;
+    }
+    // terminate user with accelerated vesting disabled
+    if (disableAcceleratedVesting) {
+      emp.state = EmployeeState.Terminated;
+      emp.terminatedAt = calcAtTime;
+    }
+    // if we are burning options then send 0
+    uint options = 0;
+    if (exerciseFor != address(0))
+      options = optionsCalculator.calculateOptions(serializeEmployee(emp), calcAtTime, conversionOfferedAt);
+    // call before options conversion contract to prevent re-entry
+    employees.changeState(employee, EmployeeState.OptionsExercised);
+    // exercise options in the name of employee and assign those to exerciseFor
+    optionsConverter.exerciseOptions(exerciseFor, options, !disableAcceleratedVesting);
+    EmployeeOptionsExercised(employee, exerciseFor, uint32(options), !disableAcceleratedVesting);
+    return ReturnCodes.OK;
+  }
+
+  function employeeExerciseOptions(bool agreeToAcceleratedVestingBonusConditions)
     external
     onlyESOPConversion
     hasEmployee(msg.sender)
@@ -430,19 +461,44 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
       ReturnCode(ReturnCodes.TooLate);
       return ReturnCodes.TooLate;
     }
-    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(msg.sender));
-    if (emp.state == EmployeeState.OptionsExercised) {
-      ReturnCode(ReturnCodes.InvalidEmployeeState);
-      return ReturnCodes.InvalidEmployeeState;
-    }
-    // this is ineffective as employee data will be fetched from storage again
-    uint options = calcEffectiveOptionsForEmployee(msg.sender, ct);
-    // call before options conversion contract to prevent re-entry
-    employees.changeState(msg.sender, EmployeeState.OptionsExercised);
-    optionsConverter.exerciseOptions(msg.sender, options);
-    EmployeeOptionsExercised(msg.sender, uint32(options));
-    return ReturnCodes.OK;
+    return exerciseOptionsInternal(ct, msg.sender, msg.sender, !agreeToAcceleratedVestingBonusConditions);
   }
+
+  function employeeDenyExerciseOptions()
+  external
+    onlyESOPConversion
+    hasEmployee(msg.sender)
+    notInMigration
+    returns (ReturnCodes)
+  {
+    uint32 ct = currentTime();
+    if (ct > exerciseOptionsDeadline) {
+      ReturnCode(ReturnCodes.TooLate);
+      return ReturnCodes.TooLate;
+    }
+    // burn the options by sending to 0
+    return exerciseOptionsInternal(ct, msg.sender, address(0), true);
+  }
+
+  function exerciseExpiredEmployeeOptions(address employee, bool disableAcceleratedVesting)
+    external
+    onlyESOPConversion
+    onlyCompany
+    notInMigration
+  returns (ReturnCodes)
+  {
+    // company can convert options for any employee that did not converted (after deadline)
+    uint32 ct = currentTime();
+    if (ct <= exerciseOptionsDeadline) {
+      ReturnCode(ReturnCodes.TooEarly);
+      return ReturnCodes.TooEarly;
+    }
+    return exerciseOptionsInternal(ct, employee, companyAddress, disableAcceleratedVesting);
+  }
+
+  /*function employeeMigratesToNewESOP(ESOPMigration migration) {
+    // employee may migrate to new ESOP contract with different rules
+  }*/
 
   function calcEffectiveOptionsForEmployee(address e, uint32 calcAtTime)
     public
@@ -451,8 +507,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource, Math {
     notInMigration
     returns (uint)
   {
-    return optionsCalculator.calculateOptions(employees.getSerializedEmployee(e), calcAtTime, conversionOfferedAt,
-      exerciseOptionsDeadline);
+    return optionsCalculator.calculateOptions(employees.getSerializedEmployee(e), calcAtTime, conversionOfferedAt);
   }
 
   function()
