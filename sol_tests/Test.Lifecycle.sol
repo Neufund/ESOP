@@ -74,7 +74,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     ct -= uint32(esop.vestingPeriod()/4);
     BaseOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
     esop.mockTime(ct);
-    uint8 rc = uint8(esop.offerOptionsConversion(ct, converter));
+    uint8 rc = uint8(esop.offerOptionsConversion(converter));
     assertEq(uint(rc), 0, "offerOptionsConversion");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, halfFade, "half fade conversion");
@@ -82,7 +82,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(options, halfFade, "half fade conversion + 1y");
     // employee conversion
     esop.mockTime(ct + 1 weeks);
-    emp1.employeeExerciseOptions();
+    emp1.employeeExerciseOptions(true);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 1 years);
     assertEq(options, 0, "employee converted options");
   }
@@ -95,7 +95,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(options, totOptions, "1y after vesting");
     BaseOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 years);
     esop.mockTime(ct);
-    uint8 rc = uint8(esop.offerOptionsConversion(ct, converter));
+    uint8 rc = uint8(esop.offerOptionsConversion(converter));
     assertEq(uint(rc), 0, "offerOptionsConversion");
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct);
     assertEq(options, totOptions + divRound((totOptions-extraOptions)*esop.bonusOptionsPromille(), esop.FP_SCALE()), "exit bonus");
@@ -103,7 +103,7 @@ contract TestLifecycle is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(options, totOptions + divRound((totOptions-extraOptions)*esop.bonusOptionsPromille(), esop.FP_SCALE()), "exit bonus + 1y");
     // employee conversion
     esop.mockTime(ct + 1 weeks);
-    emp1.employeeExerciseOptions();
+    emp1.employeeExerciseOptions(true);
     options = emp1.calcEffectiveOptionsForEmployee(emp1, ct + 1 years);
     assertEq(options, 0, "employee converted options");
   }

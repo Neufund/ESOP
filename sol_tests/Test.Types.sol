@@ -19,8 +19,8 @@ contract EmpTester {
     return _t.call(signature, a, v);
   }
 
-  function employeeExerciseOptions() returns (uint8){
-      return uint8(ESOP(_t).employeeExerciseOptions());
+  function employeeExerciseOptions(bool agreeToAccelConditions) returns (uint8){
+      return uint8(ESOP(_t).employeeExerciseOptions(agreeToAccelConditions));
   }
 
   function employeeSignsToESOP() returns (uint8){

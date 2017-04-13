@@ -43,12 +43,9 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
     assertEq(l.hasEmployee(address(emp1)), true);
     assertEq(l.addresses(1), address(emp2));
     // test if indexes match
-    Employee memory emp;
-    var sere = l.getSerializedEmployee(address(emp1));
-    assembly { emp := sere }
+    Employee memory emp = deserializeEmployee(l.getSerializedEmployee(address(emp1)));
     assertEq(uint(emp.idx-1), 0, "employee 1 indexes must match");
-    sere = l.getSerializedEmployee(address(emp2));
-    assembly { emp := sere }
+    emp = deserializeEmployee(l.getSerializedEmployee(address(emp2)));
     assertEq(uint(emp.idx-1), 1, "employee 2 indexes must match");
 
     bool isRem = l.removeEmployee(address(emp2));
@@ -68,8 +65,7 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
     // test indexes again by adding user that was just deleted
     isNew = l.setEmployee(address(emp2), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 100, 0, 0, EmployeeState.Employed);
     assertEq(isNew, true);
-    sere = l.getSerializedEmployee(address(emp2));
-    assembly { emp := sere }
+    emp = deserializeEmployee(l.getSerializedEmployee(address(emp2)));
     assertEq(uint(emp.idx-1), 2, "employee 2a indexes must match");
   }
 
@@ -78,9 +74,7 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
     EmployeesList l = new EmployeesList();
     uint32 ct = uint32(block.timestamp);
     l.setEmployee(address(emp1), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 100, 200, 32987, EmployeeState.Employed);
-    Employee memory emp;
-    var sere = l.getSerializedEmployee(address(emp1));
-    assembly { emp := sere }
+    Employee memory emp = deserializeEmployee(l.getSerializedEmployee(address(emp1)));
     // now compare all fields
     assertEq(uint(emp.issueDate), uint(ct));
     assertEq(uint(emp.timeToSign), uint(ct + 2 weeks));
@@ -92,27 +86,23 @@ contract TestEmployeesList is Test, Reporter, ESOPTypes
     assertEq(uint(emp.state), uint(EmployeeState.Employed));
     // modify
     l.terminateEmployee(address(emp1), emp.issueDate, ct + 1 years, ct + 2 years, EmployeeState.Terminated);
-    sere = l.getSerializedEmployee(address(emp1));
-    assembly { emp := sere }
+    emp = deserializeEmployee(l.getSerializedEmployee(address(emp1)));
     assertEq(uint(emp.terminatedAt), uint(ct + 1 years));
     assertEq(uint(emp.fadeoutStarts), uint(ct + 2 years));
     assertEq(uint(emp.state), uint(EmployeeState.Terminated));
     // change state
     l.changeState(address(emp1), EmployeeState.OptionsExercised);
-    sere = l.getSerializedEmployee(address(emp1));
-    assembly { emp := sere }
+    emp = deserializeEmployee(l.getSerializedEmployee(address(emp1)));
     assertEq(uint(emp.state), uint(EmployeeState.OptionsExercised));
     // direct mod
     l.setEmployee(address(emp1), ct, ct + 2 weeks, ct + 3 weeks, ct + 4 weeks, 1000, 2000, 761867, EmployeeState.Employed);
-    sere = l.getSerializedEmployee(address(emp1));
-    assembly { emp := sere }
+    emp = deserializeEmployee(l.getSerializedEmployee(address(emp1)));
     assertEq(uint(emp.poolOptions), 1000);
     assertEq(uint(emp.extraOptions), 2000);
     assertEq(uint(emp.suspendedAt), 761867);
     // directly write fadeout time
     l.setFadeoutStarts(address(emp1), ct + 7 weeks);
-    sere = l.getSerializedEmployee(address(emp1));
-    assembly { emp := sere }
+    emp = deserializeEmployee(l.getSerializedEmployee(address(emp1)));
     assertEq(uint(emp.fadeoutStarts), uint(ct + 7 weeks));
   }
 

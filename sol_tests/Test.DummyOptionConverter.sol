@@ -4,23 +4,23 @@ import './BaseOptionsConverter.sol';
 
 contract DummyOptionsConverter is BaseOptionsConverter {
   address esopAddress;
-  uint32 conversionDeadline;
+  uint32 exercisePeriodDeadline;
   uint public totalConvertedOptions;
 
   function getESOP() public constant returns (address) {
     return esopAddress;
   }
 
-  function getExerciseDeadline() public constant returns (uint32) {
-    return conversionDeadline;
+  function getExercisePeriodDeadline() public constant returns (uint32) {
+    return exercisePeriodDeadline;
   }
 
-  function exerciseOptions(address employee, uint options) onlyESOP public {
+  function exerciseOptions(address employee, uint options, bool acceptAdditionalConditions) onlyESOP public {
     totalConvertedOptions += options;
   }
 
-  function DummyOptionsConverter(address esop, uint32 deadline) {
+  function DummyOptionsConverter(address esop, uint32 exerciseDeadline) {
     esopAddress = esop;
-    conversionDeadline = deadline;
+    exercisePeriodDeadline = exerciseDeadline;
   }
 }

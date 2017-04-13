@@ -23,8 +23,8 @@ contract EmpReentry is Reporter {
     }
   }
 
-  function employeeExerciseOptions() returns (uint8){
-      return uint8(ESOP(_t).employeeExerciseOptions());
+  function employeeExerciseOptions(bool agreeToAccelConditions) returns (uint8){
+      return uint8(ESOP(_t).employeeExerciseOptions(agreeToAccelConditions));
   }
 
   function employeeSignsToESOP() returns (uint8){
@@ -68,13 +68,13 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     // convert after 3 years to erc20 token (tokenization scenario)
     ct += 3 years;
     esop.mockTime(ct);
-    rc = uint(esop.offerOptionsConversion(ct, converter));
+    rc = uint(esop.offerOptionsConversion(converter));
     assertEq(rc, 0, "converter");
-    uint32 cdead = converter.getExerciseDeadline();
+    uint32 cdead = converter.getExercisePeriodDeadline();
     //convert all users
-    emp1.employeeExerciseOptions();
-    emp2.employeeExerciseOptions();
-    emp3.employeeExerciseOptions();
+    emp1.employeeExerciseOptions(true);
+    emp2.employeeExerciseOptions(true);
+    emp3.employeeExerciseOptions(true);
     // all options converted + exit bonus
     if (absDiff(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.bonusOptionsPromille(), esop.FP_SCALE())) > 1)
       assertEq(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.bonusOptionsPromille(), esop.FP_SCALE()));
@@ -85,7 +85,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
   function testERC20OptionsConverterTransferBlocked() {
     uint32 deadlineDelta = 3 years + 4 weeks;
     uint32 ct = esop.currentTime();
-    ERC20OptionsConverter converter = new ERC20OptionsConverter(esop, ct + deadlineDelta);
+    ERC20OptionsConverter converter = new ERC20OptionsConverter(esop, ct + deadlineDelta, ct + 2*deadlineDelta);
     var (emp1, emp2, emp3) = procERC20OptionsConverter(converter, ct);
     // transfer function should be blocked
     uint emp1b = converter.balanceOf(emp1);
@@ -107,7 +107,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
   function testERC20OptionsConverter() {
     uint32 deadlineDelta = 3 years + 4 weeks;
     uint32 ct = esop.currentTime();
-    ERC20OptionsConverter converter = new ERC20OptionsConverter(esop, ct + deadlineDelta);
+    ERC20OptionsConverter converter = new ERC20OptionsConverter(esop, ct + deadlineDelta, ct + 2*deadlineDelta);
     var (emp1, emp2, emp3) = procERC20OptionsConverter(converter, ct);
     // transfer function should be blocked
     uint emp1b = converter.balanceOf(emp1);
@@ -115,19 +115,24 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     if (emp1b == 0 || emp2b == 0)
       fail();
     emp1._target(converter);
-    ct += deadlineDelta;
+    // move to a moment when options are released
+    ct += 2*deadlineDelta;
     converter.mockTime(ct);
     ERC20OptionsConverter(emp1).transfer(emp2, emp1b);
     assertEq(converter.balanceOf(emp1), 0);
     assertEq(converter.balanceOf(emp2), emp1b + emp2b);
   }
 
+  function testERC20OptionsConverterOptionsRejected() {
+
+  }
+
   function testProceedsOptionsConverter() {
     uint32 deadlineDelta = 3 years + 4 weeks;
     uint32 ct = esop.currentTime();
-    ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta);
+    ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta, ct + 2*deadlineDelta);
     var (emp1, emp2, emp3) = procERC20OptionsConverter(converter, ct);
-    ct += deadlineDelta;
+    ct += 2*deadlineDelta;
     converter.mockTime(ct);
     uint emp1b = converter.balanceOf(emp1);
     uint emp2b = converter.balanceOf(emp2);
@@ -178,7 +183,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
   function testThrowProceedsWithdrawnTransferFrom() {
     uint32 deadlineDelta = 3 years + 4 weeks;
     uint32 ct = esop.currentTime();
-    ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta);
+    ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta, ct + 2*deadlineDelta);
     var (emp1, emp2, emp3) = procERC20OptionsConverter(converter, ct);
     ct += deadlineDelta;
     converter.mockTime(ct);
@@ -193,7 +198,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
   function testThrowProceedsWithdrawnTransferTo() {
     uint32 deadlineDelta = 3 years + 4 weeks;
     uint32 ct = esop.currentTime();
-    ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta);
+    ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta, ct + 2*deadlineDelta);
     var (emp1, emp2, emp3) = procERC20OptionsConverter(converter, ct);
     ct += deadlineDelta;
     converter.mockTime(ct);
@@ -223,13 +228,13 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     empx.employeeSignsToESOP();
     esop.mockTime(ct + 3 years);
     uint32 deadlineDelta = 3 years + 4 weeks;
-    ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta);
-    uint rc = uint(esop.offerOptionsConversion(ct, converter));
+    ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta, ct + 2*deadlineDelta);
+    uint rc = uint(esop.offerOptionsConversion(converter));
     assertEq(rc, 0, "converter");
-    emp1.employeeExerciseOptions();
-    emp0.employeeExerciseOptions();
-    empx.employeeExerciseOptions();
-    converter.mockTime(ct + deadlineDelta);
+    emp1.employeeExerciseOptions(true);
+    emp0.employeeExerciseOptions(true);
+    empx.employeeExerciseOptions(true);
+    converter.mockTime(ct + 2*deadlineDelta);
     // now emp1 tries to withdraw multiple times
     uint emp1b = converter.balanceOf(emp1);
     converter.makePayout.value(5 ether)();

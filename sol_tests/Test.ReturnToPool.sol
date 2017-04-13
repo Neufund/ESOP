@@ -73,8 +73,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
     for(uint i=0; i< size; i++) {
       address ea = employees.addresses(i);
       if (ea != 0) { // address(0) is deleted employee
-        var sere = employees.getSerializedEmployee(ea);
-        assembly { emp := sere }
+        emp = deserializeEmployee(employees.getSerializedEmployee(address(ea)));
         //@info `uint emp.poolOptions` `uint options[j]`
         if (esop.absDiff(emp.poolOptions, options[j]) > 1)
           assertEq(uint(emp.poolOptions), options[j], "optcheck options");
@@ -238,9 +237,7 @@ contract TestReturnToPool is Test, ESOPMaker, Reporter, ESOPTypes, Math
       }
     }
     // all should be back in pool - employeed employee options
-    Employee memory emp;
-    var sere = E.employees().getSerializedEmployee(employees[5]);
-    assembly { emp := sere }
+    Employee memory emp = deserializeEmployee(E.employees().getSerializedEmployee(employees[5]));
     assertEq(E.totalPoolOptions(), E.remainingPoolOptions() + emp.poolOptions, "all back in pool");
   }
 

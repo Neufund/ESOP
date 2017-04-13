@@ -49,7 +49,8 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     dn = (vdays + fdays + 5)*7;
     ct = uint32(ct + dn*1 days);
     DummyOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 2 weeks);
-    esop.offerOptionsConversion(ct, converter);
+    esop.mockTime(ct);
+    esop.offerOptionsConversion(converter);
     options = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
     ro = esop.remainingPoolOptions(); teo = esop.totalExtraOptions();
     //@doc `uint dn`, `uint options`, `uint ro`, `uint teo`, conversion
@@ -60,7 +61,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     //@doc -
     // convert options, but first manipulate time
     esop.mockTime(ct);
-    rc = uint8(emp1.employeeExerciseOptions());
+    rc = uint8(emp1.employeeExerciseOptions(true));
     //@info converted `uint8 rc` with `uint converter.totalConvertedOptions()`
   }
 
@@ -99,7 +100,8 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     dn = (fdays)*7;
     ct = uint32(ct + dn*1 days);
     DummyOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 1 years);
-    esop.offerOptionsConversion(ct, converter);
+    esop.mockTime(ct);
+    esop.offerOptionsConversion(converter);
     for(d = 0; d < 14; d++) {
       dn = d*7;
       options = esop.calcEffectiveOptionsForEmployee(address(emp1), uint32(ct + d*(7 days)));
@@ -108,7 +110,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     //@doc -
     // convert options, but first manipulate time
     esop.mockTime(ct);
-    emp1.employeeExerciseOptions();
+    emp1.employeeExerciseOptions(true);
     //@info converted `uint8 rc` with `uint converter.totalConvertedOptions()`
   }
 
@@ -131,7 +133,8 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     dn = (fdays)*7;
     ct = uint32(ct + dn*1 days);
     DummyOptionsConverter converter = new DummyOptionsConverter(address(esop), ct + 1 years);
-    esop.offerOptionsConversion(ct, converter);
+    esop.mockTime(ct);
+    esop.offerOptionsConversion(converter);
     for(d = 0; d < 14; d++) {
       dn = d*7;
       options = esop.calcEffectiveOptionsForEmployee(address(emp1), uint32(ct + d*(7 days)));
@@ -140,7 +143,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     //@doc -
     // convert options, but first manipulate time
     esop.mockTime(ct);
-    rc = uint8(emp1.employeeExerciseOptions());
+    rc = uint8(emp1.employeeExerciseOptions(true));
     //@info converted `uint8 rc` with `uint converter.totalConvertedOptions()`
   }
 
