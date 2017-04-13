@@ -9,9 +9,12 @@ contract BaseOptionsConverter {
       throw;
     _;
   }
+
+  // returns ESOP address which is a sole executor of exerciseOptions function
   function getESOP() public constant returns (address);
-  function getExerciseDeadline() public constant returns (uint32);
+  // deadline for employees to exercise options
+  function getExercisePeriodDeadline() public constant returns (uint32);
 
   // exercise of options for given employee and amount
-  function exerciseOptions(address employee, uint options) onlyESOP public;
+  function exerciseOptions(address employee, uint options, bool agreeToAcceleratedVestingBonusConditions) onlyESOP public;
 }
