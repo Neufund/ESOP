@@ -57,5 +57,6 @@ contract ProceedsOptionsConverter is Ownable, ERC20OptionsConverter {
     ERC20OptionsConverter.transfer(_to, _value);
   }
 
-  function ProceedsOptionsConverter(address esop, uint32 deadline) ERC20OptionsConverter(esop, deadline) { }
+  function ProceedsOptionsConverter(address esop, uint32 exerciseDeadline, uint32 conversionDeadline)
+    ERC20OptionsConverter(esop, exerciseDeadline, conversionDeadline) { }
 }
