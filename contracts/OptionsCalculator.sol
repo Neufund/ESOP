@@ -1,7 +1,7 @@
 pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 
-
+// todo: this should be a library
 contract OptionsCalculator is Math, ESOPTypes {
   // cliff duration in seconds
   uint public cliffPeriod;
@@ -38,7 +38,7 @@ contract OptionsCalculator is Math, ESOPTypes {
       return  effectiveTime < vestingPeriod ? divRound(options * effectiveTime, vestingPeriod) : options;
   }
 
-  function calculateFadeout(uint32 t, uint32 issueDate, uint32 terminatedAt, uint options, uint vestedOptions)
+  function applyFadeoutToOptions(uint32 t, uint32 issueDate, uint32 terminatedAt, uint options, uint vestedOptions)
     public
     constant
     returns (uint)
@@ -58,7 +58,7 @@ contract OptionsCalculator is Math, ESOPTypes {
       (minFadeValue + divRound((vestedOptions - minFadeValue) * (employmentPeriod - timefromTermination), employmentPeriod));
   }
 
-  function calculateOptions(uint[9] employee, uint32 calcAtTime, uint32 conversionOfferedAt, uint32 exerciseOptionsDeadline)
+  function calculateOptions(uint[9] employee, uint32 calcAtTime, uint32 conversionOfferedAt)
     public
     constant
     returns (uint)
@@ -68,9 +68,7 @@ contract OptionsCalculator is Math, ESOPTypes {
     if (emp.state == EmployeeState.OptionsExercised || emp.state == EmployeeState.WaitingForSignature)
       return 0;
     // no options when esop is being converted and conversion deadline expired
-    bool isESOPConverted = conversionOfferedAt > 0 && calcAtTime >= conversionOfferedAt; // this function time-travels esopState == ESOPState.Conversion
-    if (isESOPConverted && calcAtTime > exerciseOptionsDeadline)
-      return 0;
+    bool isESOPConverted = conversionOfferedAt > 0 && calcAtTime >= conversionOfferedAt; // this function time-travels
     uint issuedOptions = emp.poolOptions + emp.extraOptions;
     // employee with no options
     if (issuedOptions == 0) return 0;
@@ -88,10 +86,10 @@ contract OptionsCalculator is Math, ESOPTypes {
     // calc fadeout for terminated employees
     if (emp.state == EmployeeState.Terminated) {
       // use conversion event time to compute fadeout to stop fadeout on conversion IF not after conversion date
-      vestedOptions = calculateFadeout(isESOPConverted ? conversionOfferedAt : calcAtTime,
+      vestedOptions = applyFadeoutToOptions(isESOPConverted ? conversionOfferedAt : calcAtTime,
         emp.issueDate, emp.terminatedAt, issuedOptions, vestedOptions);
     }
-    // exit bonus only on conversion event and for employees that are not terminated, no exception for good will termination
+    // exit bonus only on conversion event and for employees that still employed
     // do not apply bonus for extraOptions
     uint bonus = (isESOPConverted && emp.state == EmployeeState.Employed) ?
       divRound(emp.poolOptions*vestedOptions*bonusOptionsPromille, FP_SCALE*issuedOptions) : 0;
@@ -108,7 +106,7 @@ contract OptionsCalculator is Math, ESOPTypes {
       poolOptions: poolOptions, extraOptions: extraOptions, state: EmployeeState(employeeState),
       timeToSign: issueDate+2 weeks, fadeoutStarts: terminatedAt, suspendedAt: suspendedAt,
       idx:1});
-    return calculateOptions(serializeEmployee(emp), calcAtTime, 0, 0);
+    return calculateOptions(serializeEmployee(emp), calcAtTime, 0);
   }
 
   function OptionsCalculator(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pResidualAmountPromille,
