@@ -16,7 +16,7 @@ module.exports = function (deployer, network, accounts) {
             // function openESOP(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pMaxFadeoutPromille, uint32 pbonusOptionsPromille,
             //    uint32 pNewEmployeePoolPromille, uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash)
             var ipfsHash = new Buffer("QmRsjnNkEpnDdmYB7wMR7FSy1eGZ12pDuhST3iNLJTzAXF", 'ascii');
-            await deployer.deploy(CALCULATOR, 1 * years, 4 * years, 8000, 2000, 1000);
+            await deployer.deploy(CALCULATOR, 1 * years, 4 * years, 8000, 2000, 1000, 500);
             let optcals = await CALCULATOR.deployed();
             await deployer.deploy(EMPLIST);
             let emplist = await EMPLIST.deployed();
