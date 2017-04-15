@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 cd contracts
-solc --abi --optimize --bin --overwrite *.sol -o ../solc
+solc --abi --optimize --bin --asm --overwrite *.sol -o ../solc
