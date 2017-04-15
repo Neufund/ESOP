@@ -155,7 +155,8 @@ contract OptionsCalculator is Math, ESOPTypes {
   function OptionsCalculator(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pResidualAmountPromille,
     uint32 pbonusOptionsPromille, uint32 pNewEmployeePoolPromille, uint32 pOptionsPerShare) {
 
-    if (maxFadeoutPromille > FP_SCALE || bonusOptionsPromille > FP_SCALE || newEmployeePoolPromille > FP_SCALE)
+    if (maxFadeoutPromille > FP_SCALE || bonusOptionsPromille > FP_SCALE || newEmployeePoolPromille > FP_SCALE ||
+      pOptionsPerShare == 0)
       throw;
     cliffPeriod = pcliffPeriod;
     vestingPeriod = pvestingPeriod;
