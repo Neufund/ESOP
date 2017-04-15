@@ -2,12 +2,12 @@ pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 import "./EmployeesList.sol";
 import "./OptionsCalculator.sol";
-import "./Upgradeable.sol";
+import "./CodeUpdateable.sol";
 import './BaseOptionsConverter.sol';
 import './ESOPMigration.sol';
 
 
-contract ESOP is ESOPTypes, Upgradeable, TimeSource {
+contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
   // employee changed events
   event ESOPOffered(address indexed employee, address company, uint32 poolOptions, uint32 extraOptions);
   event EmployeeSignedToESOP(address indexed employee);
@@ -114,7 +114,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
 
   function removeEmployeesWithExpiredSignaturesAndReturnFadeout()
     onlyESOPOpen
-    notInMigration
+    isCurrentCode
     public
   {
     // removes employees that didn't sign and sends their poolOptions back to the pool
@@ -153,7 +153,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     external
     onlyCompany
     onlyESOPNew
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     // options are stored in unit32
@@ -176,7 +176,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     external
     onlyESOPOpen
     onlyCompany
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     // do not add twice
@@ -209,7 +209,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     external
     onlyESOPOpen
     onlyCompany
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     // do not add twice
@@ -226,7 +226,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     external
     hasEmployee(msg.sender)
     onlyESOPOpen
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     Employee memory emp = _loademp(msg.sender);
@@ -250,7 +250,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     onlyESOPOpen
     onlyCompany
     hasEmployee(e)
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     Employee memory emp = _loademp(e);
@@ -281,7 +281,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     onlyESOPOpen
     onlyCompany
     hasEmployee(e)
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     // terminates an employee
@@ -324,7 +324,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     external
     onlyESOPOpen
     onlyCompany
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     uint32 offerMadeAt = currentTime();
@@ -374,7 +374,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     external
     onlyESOPConversion
     hasEmployee(msg.sender)
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     uint32 ct = currentTime();
@@ -388,7 +388,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     external
     onlyESOPConversion
     hasEmployee(msg.sender)
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     uint32 ct = currentTime();
@@ -404,7 +404,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     onlyESOPConversion
     onlyCompany
     hasEmployee(e)
-    notInMigration
+    isCurrentCode
   returns (ReturnCodes)
   {
     // company can convert options for any employee that did not converted (after deadline)
@@ -420,7 +420,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     onlyESOPOpen
     hasEmployee(employee)
     onlyCompany
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     // only employed and terminated users may migrate
@@ -436,7 +436,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     external
     onlyESOPOpen
     hasEmployee(msg.sender)
-    notInMigration
+    isCurrentCode
     returns (ReturnCodes)
   {
     // employee may migrate to new ESOP contract with different rules
@@ -470,7 +470,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     public
     constant
     hasEmployee(e)
-    notInMigration
+    isCurrentCode
     returns (uint)
   {
     return optionsCalculator.calculateOptions(employees.getSerializedEmployee(e), calcAtTime, conversionOfferedAt);

@@ -1,43 +1,41 @@
 pragma solidity ^0.4.0;
 import "./Types.sol";
 
-contract Upgradeable is Ownable {
-    // allows to stop operations and upgrade
-    enum MigrationState { Operational, OngoingMigration, Migrated}
-    MigrationState public migrationState;
+contract CodeUpdateable is Ownable {
+    // allows to stop operations and migrate data to different contract
+    enum CodeUpdateState { CurrentCode, OngoingUpdate, CodeUpdated}
+    CodeUpdateState public codeUpdateState;
 
-    modifier notInMigration() {
-      if (migrationState != MigrationState.Operational)
+    modifier isCurrentCode() {
+      if (codeUpdateState != CodeUpdateState.CurrentCode)
         throw;
       _;
     }
 
-    modifier inMigration() {
-      if (migrationState != MigrationState.OngoingMigration)
+    modifier inCodeUpdate() {
+      if (codeUpdateState != CodeUpdateState.OngoingUpdate)
         throw;
       _;
     }
-    modifier migrated() {
-      if (migrationState != MigrationState.Migrated)
+    modifier codeUpdated() {
+      if (codeUpdateState != CodeUpdateState.CodeUpdated)
         throw;
       _;
     }
 
-    function kill() onlyOwner migrated {
+    function kill() onlyOwner codeUpdated {
       selfdestruct(owner);
     }
 
-    function beginMigration() public onlyOwner notInMigration {
-        migrationState = MigrationState.OngoingMigration;
+    function beginCodeUpdate() public onlyOwner isCurrentCode {
+      codeUpdateState = CodeUpdateState.OngoingUpdate;
     }
 
-    function cancelMigration() public onlyOwner inMigration {
-      migrationState = MigrationState.Operational;
+    function cancelCodeUpdate() public onlyOwner inCodeUpdate {
+      codeUpdateState = CodeUpdateState.CurrentCode;
     }
 
-    function completeMigration() public onlyOwner inMigration {
-      migrationState = MigrationState.Migrated;
+    function completeCodeUpdate() public onlyOwner inCodeUpdate {
+      codeUpdateState = CodeUpdateState.CodeUpdated;
     }
-
-    // Events ?
 }
