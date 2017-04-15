@@ -1,7 +1,6 @@
 pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 
-// todo: this should be a library
 contract OptionsCalculator is Math, ESOPTypes {
   // cliff duration in seconds
   uint public cliffPeriod;
@@ -13,13 +12,17 @@ contract OptionsCalculator is Math, ESOPTypes {
   uint public bonusOptionsPromille;
   // per mille of unassigned poolOptions that new employee gets
   uint public newEmployeePoolPromille;
+  // options per share
+  uint public optionsPerShare;
+  // options strike price
+  uint constant public strikePrice = 1;
 
-  function calcNewEmployeePoolOptions(uint optionsInPool)
+  function calcNewEmployeePoolOptions(uint remainingPoolOptions)
     public
     constant
     returns (uint)
   {
-    return divRound(optionsInPool * newEmployeePoolPromille, FP_SCALE);
+    return divRound(remainingPoolOptions * newEmployeePoolPromille, FP_SCALE);
   }
 
   function calculateVestedOptions(uint t, uint vestingStarts, uint options)
@@ -58,20 +61,20 @@ contract OptionsCalculator is Math, ESOPTypes {
       (minFadeValue + divRound((vestedOptions - minFadeValue) * (employmentPeriod - timefromTermination), employmentPeriod));
   }
 
-  function calculateOptions(uint[9] employee, uint32 calcAtTime, uint32 conversionOfferedAt)
+  function calculateOptionsComponents(uint[9] employee, uint32 calcAtTime, uint32 conversionOfferedAt)
     public
     constant
-    returns (uint)
+    returns (uint, uint, uint)
   {
     Employee memory emp = deserializeEmployee(employee);
     // no options for converted options or when esop is not singed
     if (emp.state == EmployeeState.OptionsExercised || emp.state == EmployeeState.WaitingForSignature)
-      return 0;
+      return (0,0,0);
     // no options when esop is being converted and conversion deadline expired
     bool isESOPConverted = conversionOfferedAt > 0 && calcAtTime >= conversionOfferedAt; // this function time-travels
     uint issuedOptions = emp.poolOptions + emp.extraOptions;
     // employee with no options
-    if (issuedOptions == 0) return 0;
+    if (issuedOptions == 0) return (0,0,0);
     // if emp is terminated but we calc options before term, simulate employed again
     if (calcAtTime < emp.terminatedAt && emp.terminatedAt > 0)
       emp.state = EmployeeState.Employed;
@@ -89,11 +92,51 @@ contract OptionsCalculator is Math, ESOPTypes {
       vestedOptions = applyFadeoutToOptions(isESOPConverted ? conversionOfferedAt : calcAtTime,
         emp.issueDate, emp.terminatedAt, issuedOptions, vestedOptions);
     }
+    var (vestedPoolOptions, vestedExtraOptions) = extractVestedOptionsComponents(emp.poolOptions, emp.extraOptions, vestedOptions);
+    // if (vestedPoolOptions + vestedExtraOptions != vestedOptions) throw;
     // exit bonus only on conversion event and for employees that still employed
     // do not apply bonus for extraOptions
     uint bonus = (isESOPConverted && emp.state == EmployeeState.Employed) ?
-      divRound(emp.poolOptions*vestedOptions*bonusOptionsPromille, FP_SCALE*issuedOptions) : 0;
-    return  vestedOptions + bonus;
+      divRound(vestedPoolOptions*bonusOptionsPromille, FP_SCALE) : 0;
+    return  (vestedPoolOptions, vestedExtraOptions, bonus);
+  }
+
+  function calculateOptions(uint[9] employee, uint32 calcAtTime, uint32 conversionOfferedAt)
+    public
+    constant
+    returns (uint)
+  {
+    var (vestedPoolOptions, vestedExtraOptions, bonus) = calculateOptionsComponents(employee, calcAtTime, conversionOfferedAt);
+    return vestedPoolOptions + vestedExtraOptions + bonus;
+  }
+
+  function extractVestedOptionsComponents(uint issuedPoolOptions, uint issuedExtraOptions, uint vestedOptions)
+    public
+    constant
+    returns (uint, uint)
+  {
+    // breaks down vested options into pool options and extra options components
+    if (issuedExtraOptions == 0)
+      return (vestedOptions, 0);
+    uint poolOptions = divRound(issuedPoolOptions*vestedOptions, issuedPoolOptions + issuedExtraOptions);
+    return (poolOptions, vestedOptions - poolOptions);
+  }
+
+  function calculateFadeoutToPool(uint32 t, uint[9] employee)
+    public
+    constant
+    returns (uint, uint)
+  {
+    Employee memory emp = deserializeEmployee(employee);
+
+    uint vestedOptions = calculateVestedOptions(emp.terminatedAt, emp.issueDate, emp.poolOptions);
+    uint returnedPoolOptions = applyFadeoutToOptions(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions) -
+      applyFadeoutToOptions(t, emp.issueDate, emp.terminatedAt, emp.poolOptions, vestedOptions);
+    uint vestedExtraOptions = calculateVestedOptions(emp.terminatedAt, emp.issueDate, emp.extraOptions);
+    uint returnedExtraOptions = applyFadeoutToOptions(emp.fadeoutStarts, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions) -
+      applyFadeoutToOptions(t, emp.issueDate, emp.terminatedAt, emp.extraOptions, vestedExtraOptions);
+
+    return (returnedPoolOptions, returnedExtraOptions);
   }
 
   function simulateOptions(uint32 issueDate, uint32 terminatedAt, uint32 poolOptions,
@@ -110,11 +153,15 @@ contract OptionsCalculator is Math, ESOPTypes {
   }
 
   function OptionsCalculator(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pResidualAmountPromille,
-    uint32 pbonusOptionsPromille, uint32 pNewEmployeePoolPromille) {
+    uint32 pbonusOptionsPromille, uint32 pNewEmployeePoolPromille, uint32 pOptionsPerShare) {
+
+    if (maxFadeoutPromille > FP_SCALE || bonusOptionsPromille > FP_SCALE || newEmployeePoolPromille > FP_SCALE)
+      throw;
     cliffPeriod = pcliffPeriod;
     vestingPeriod = pvestingPeriod;
     maxFadeoutPromille = FP_SCALE - pResidualAmountPromille;
     bonusOptionsPromille = pbonusOptionsPromille;
     newEmployeePoolPromille = pNewEmployeePoolPromille;
+    optionsPerShare = pOptionsPerShare;
   }
 }
