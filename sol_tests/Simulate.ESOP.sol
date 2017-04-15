@@ -159,7 +159,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     uint vdays = esop.optionsCalculator().vestingPeriod() / 7 days;
     uint32 terminatedAt = uint32(globct + (vdays+4)*(7 days));
     //@doc simulate using simulate function
-    uint32 empopts = uint32(divRound(esop.totalPoolOptions() * esop.optionsCalculator().newEmployeePoolPromille(), esop.FP_SCALE()));
+    uint32 empopts = uint32(divRound(esop.totalPoolOptions() * esop.optionsCalculator().newEmployeePoolPromille(), esop.optionsCalculator().FP_SCALE()));
 
     for(uint d = 0; d < vdays + 4; d++) {
       uint dn = d*7;

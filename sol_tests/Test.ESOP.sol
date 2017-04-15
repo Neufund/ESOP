@@ -254,7 +254,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(uint(rc), 0, "employeeExerciseOptions");
     // we expect all extra options + pool options + 20% exit bonus on pool options
     uint poolopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
-    uint expopts = 100 + poolopts + divRound(poolopts * esop.optionsCalculator().bonusOptionsPromille(), esop.FP_SCALE());
+    uint expopts = 100 + poolopts + divRound(poolopts * esop.optionsCalculator().bonusOptionsPromille(), esop.optionsCalculator().FP_SCALE());
     // what is converted is stored in dummy so compare
     assertEq(converter.totalConvertedOptions(), expopts);
     //@info `uint expopts` converted
