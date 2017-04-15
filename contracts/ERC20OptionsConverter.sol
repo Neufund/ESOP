@@ -40,12 +40,14 @@ contract ERC20OptionsConverter is BaseOptionsConverter, TimeSource, Math {
     return exercisePeriodDeadline;
   }
 
-  function exerciseOptions(address employee, uint options, bool agreeToAcceleratedVestingBonusConditions)
+  function exerciseOptions(address employee, uint poolOptions, uint extraOptions, uint bonusOptions,
+    bool agreeToAcceleratedVestingBonusConditions)
     public
     onlyESOP
     converting
   {
     // if no overflow on totalSupply, no overflows later
+    uint options = safeAdd(safeAdd(poolOptions, extraOptions), bonusOptions);
     totalSupply = safeAdd(totalSupply, options);
     balances[employee] += options;
     Transfer(0, employee, options);

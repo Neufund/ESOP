@@ -15,8 +15,9 @@ contract DummyOptionsConverter is BaseOptionsConverter {
     return exercisePeriodDeadline;
   }
 
-  function exerciseOptions(address employee, uint options, bool acceptAdditionalConditions) onlyESOP public {
-    totalConvertedOptions += options;
+  function exerciseOptions(address employee, uint poolOptions, uint extraOptions, uint bonusOptions,
+    bool acceptAdditionalConditions) onlyESOP public {
+    totalConvertedOptions += poolOptions + extraOptions + bonusOptions;
   }
 
   function DummyOptionsConverter(address esop, uint32 exerciseDeadline) {

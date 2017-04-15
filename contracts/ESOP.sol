@@ -354,20 +354,17 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     if (emp.state == EmployeeState.OptionsExercised) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
-    // terminate user with accelerated vesting disabled
-    if (disableAcceleratedVesting) {
-      emp.state = EmployeeState.Terminated;
-      emp.terminatedAt = calcAtTime;
-    }
     // if we are burning options then send 0
-    uint options = 0;
-    if (exerciseFor != address(0))
-      options = optionsCalculator.calculateOptions(serializeEmployee(emp), calcAtTime, conversionOfferedAt);
+    // uint options = 0;
+    if (exerciseFor != address(0)) {
+      var (pool, extra, bonus) = optionsCalculator.calculateOptionsComponents(serializeEmployee(emp),
+        calcAtTime, conversionOfferedAt);
+      }
     // call before options conversion contract to prevent re-entry
     employees.changeState(employee, EmployeeState.OptionsExercised);
     // exercise options in the name of employee and assign those to exerciseFor
-    optionsConverter.exerciseOptions(exerciseFor, options, !disableAcceleratedVesting);
-    EmployeeOptionsExercised(employee, exerciseFor, uint32(options), !disableAcceleratedVesting);
+    optionsConverter.exerciseOptions(exerciseFor, pool, extra, bonus, !disableAcceleratedVesting);
+    EmployeeOptionsExercised(employee, exerciseFor, uint32(pool + extra + bonus), !disableAcceleratedVesting);
     return ReturnCodes.OK;
   }
 

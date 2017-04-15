@@ -16,5 +16,6 @@ contract BaseOptionsConverter {
   function getExercisePeriodDeadline() public constant returns (uint32);
 
   // exercise of options for given employee and amount
-  function exerciseOptions(address employee, uint options, bool agreeToAcceleratedVestingBonusConditions) onlyESOP public;
+  function exerciseOptions(address employee, uint poolOptions, uint extraOptions, uint bonusOptions,
+    bool agreeToAcceleratedVestingBonusConditions) onlyESOP public;
 }
