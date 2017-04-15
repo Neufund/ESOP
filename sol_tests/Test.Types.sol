@@ -61,10 +61,10 @@ contract ESOPMaker {
     // e.openESOP(1 years, 4 years, 2000, 0, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no bonus
     // e.openESOP(1 years, 4 years, 2000, 0, 0, 0, ESOPLegalWrapperIPFSHash) - no pool, just extra
     // make company sign this
-    OptionsCalculator optcalc = new OptionsCalculator(1 years, 4 years, 2000, 2000, 1000);
+    OptionsCalculator optcalc = new OptionsCalculator(1 years, 4 years, 2000, 2000, 1000, 360);
     EmployeesList emplist = new EmployeesList();
     emplist.transferOwnership(e);
-    uint rc = uint(e.openESOP(optcalc, emplist, 997302, ESOPLegalWrapperIPFSHash));
+    uint rc = uint(e.openESOP(optcalc, emplist, 1000080, ESOPLegalWrapperIPFSHash));
     if (rc != 0)
       throw;
     return e;
