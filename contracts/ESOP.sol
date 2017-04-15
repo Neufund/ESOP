@@ -55,6 +55,8 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
   // option conversion proxy
   BaseOptionsConverter public optionsConverter;
 
+  // migration structure
+  mapping (address => ESOPMigration) private migrations;
 
   modifier hasEmployee(address e) {
     // will throw on unknown address
@@ -96,7 +98,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     for(uint i=idx; i< employees.size(); i++) {
       address ea = employees.addresses(i);
       if (ea != 0) { // address(0) is deleted employee
-        emp = deserializeEmployee(employees.getSerializedEmployee(ea));
+        emp = _loademp(ea);
         // skip employees with no poolOptions and terminated employees
         if( emp.poolOptions > 0 && ( emp.state == EmployeeState.WaitingForSignature || emp.state == EmployeeState.Employed) ) {
           uint newoptions = optionsCalculator.calcNewEmployeePoolOptions(distributedOptions);
@@ -190,7 +192,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
       removeEmployeesWithExpiredSignaturesAndReturnFadeout();
     }
     uint poolOptions = optionsCalculator.calcNewEmployeePoolOptions(remainingPoolOptions);
-    if (poolOptions > 0xFFFFFFFF)
+    if (poolOptions > 0xFFFFFFFF || poolOptions == 0)
       throw;
     employees.setEmployee(e, issueDate, timeToSign, 0, 0, uint32(poolOptions), extraOptions, 0, EmployeeState.WaitingForSignature );
     remainingPoolOptions -= poolOptions;
@@ -227,7 +229,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     notInMigration
     returns (ReturnCodes)
   {
-    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(msg.sender));
+    Employee memory emp = _loademp(msg.sender);
     if (emp.state != EmployeeState.WaitingForSignature) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
@@ -251,7 +253,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     notInMigration
     returns (ReturnCodes)
   {
-    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(e));
+    Employee memory emp = _loademp(e);
     if (emp.state != EmployeeState.Employed) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
@@ -284,7 +286,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
   {
     // terminates an employee
     TerminationType termType = TerminationType(terminationType);
-    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(e));
+    Employee memory emp = _loademp(e);
     // todo: check termination time against issueDate
     if (terminatedAt < emp.issueDate) {
       return _logerror(ReturnCodes.InvalidParameters);
@@ -350,7 +352,7 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     internal
     returns (ReturnCodes)
   {
-    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(employee));
+    Employee memory emp = _loademp(employee);
     if (emp.state == EmployeeState.OptionsExercised) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
@@ -413,21 +415,43 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
     return exerciseOptionsInternal(ct, e, companyAddress, disableAcceleratedVesting);
   }
 
+  function allowEmployeeMigration(address employee, ESOPMigration migration)
+    external
+    onlyESOPOpen
+    hasEmployee(employee)
+    onlyCompany
+    notInMigration
+    returns (ReturnCodes)
+  {
+    // only employed and terminated users may migrate
+    Employee memory emp = _loademp(msg.sender);
+    if (emp.state != EmployeeState.Employed && emp.state != EmployeeState.Terminated) {
+      return _logerror(ReturnCodes.InvalidEmployeeState);
+    }
+    migrations[employee] = migration; // can be cleared with 0 address
+    return ReturnCodes.OK;
+  }
+
   function employeeMigratesToNewESOP(ESOPMigration migration)
+    external
     onlyESOPOpen
     hasEmployee(msg.sender)
     notInMigration
     returns (ReturnCodes)
   {
     // employee may migrate to new ESOP contract with different rules
+    // if migration not set up by company then throw
+    if (address(migration) == 0 || migrations[msg.sender] != migration)
+      throw;
     // first give back what you already own
     removeEmployeesWithExpiredSignaturesAndReturnFadeout();
     // only employed and terminated users may migrate
-    Employee memory emp = deserializeEmployee(employees.getSerializedEmployee(msg.sender));
+    Employee memory emp = _loademp(msg.sender);
     if (emp.state != EmployeeState.Employed && emp.state != EmployeeState.Terminated) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
     var (pool, extra, bonus) = optionsCalculator.calculateOptionsComponents(serializeEmployee(emp), currentTime(), 0);
+    migrations[msg.sender] = ESOPMigration(0);
     // execute migration procedure
     migration.migrate(msg.sender, pool, extra);
     // extra options are moved to new contract
@@ -455,6 +479,10 @@ contract ESOP is ESOPTypes, Upgradeable, TimeSource {
   function _logerror(ReturnCodes c) private returns (ReturnCodes) {
     ReturnCode(c);
     return c;
+  }
+
+  function _loademp(address e) private constant returns (Employee memory) {
+    return deserializeEmployee(employees.getSerializedEmployee(e));
   }
 
   function()
