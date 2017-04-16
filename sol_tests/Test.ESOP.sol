@@ -139,6 +139,47 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(options, divRound(3 * maxopts, 4), "2 susp + term + conv + after");
   }
 
+  function procConversionStopsSuspended(bool accelVesting) {
+    uint32 ct = esop.currentTime();
+    uint32 issueDate = ct;
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 891721, false);
+    emp1.employeeSignsToESOP();
+    // suspend after 2 years
+    uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
+    esop.mockTime(ct);
+    uint rc = uint(esop.toggleEmployeeSuspension(emp1, ct));
+    assertEq(uint(rc), 0);
+    // when suspended value after 2 years is kept
+    uint32 suspensionPeriod = uint32(esop.optionsCalculator().vestingPeriod() / 4);
+    ct += suspensionPeriod;
+    esop.mockTime(ct);
+    // conversion event during suspension
+    DummyOptionsConverter converter = new DummyOptionsConverter(esop, ct + 4 weeks);
+    // options offered in half of the vesting
+    rc = uint(esop.offerOptionsConversion(converter));
+    assertEq(rc, 0, "converter");
+    // agrees to accel vesting
+    rc = uint(emp1.employeeExerciseOptions(accelVesting));
+    assertEq(rc, 0, "exercise accelv");
+    // no accel vesting then divisor is 2 -> employee was suspended hald of the vesting
+    uint divisor = accelVesting ? 1 : 2;
+    var (e1pool, e1extra, e1bonus, e1accel) = converter.getShare(address(emp1));
+    assertEq(e1pool, divRound(maxopts, divisor), "e1pool");
+    assertEq(e1extra, divRound(891721, divisor), "e1extra");
+    uint bonus = accelVesting ? divRound(maxopts*esop.optionsCalculator().bonusOptionsPromille(), esop.optionsCalculator().FP_SCALE()) : 0;
+    assertEq(e1bonus, bonus, "e1bonus");
+    assertEq(accelVesting, e1accel, 'e1accel');
+  }
+
+  function testConversionStopsSuspendedAccel() {
+    procConversionStopsSuspended(true);
+  }
+
+  function testConversionStopsSuspendedNoAccel() {
+    procConversionStopsSuspended(false);
+  }
+
   function testTerminationOnConversion() {
     // this tests use case when employee does not want to work for acquirer and gets no bonus
     uint32 ct = esop.currentTime();
