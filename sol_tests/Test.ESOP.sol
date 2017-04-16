@@ -276,6 +276,36 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(false, e1accel, 'e2accel');
   }
 
+  function testEmployeeDeniesToExerciseOptions() {
+    uint32 ct = esop.currentTime();
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 1289, false);
+    uint emp1issued = esop.totalPoolOptions() - esop.remainingPoolOptions();
+    emp1.employeeSignsToESOP();
+    uint32 vestp = uint32(esop.optionsCalculator().vestingPeriod());
+    esop.mockTime(ct + vestp / 2);
+    uint32 deadlineDelta = vestp / 2 + 4 weeks;
+    DummyOptionsConverter converter = new DummyOptionsConverter(esop, ct + deadlineDelta);
+    // options offered in half of the vesting
+    uint rc = uint(esop.offerOptionsConversion(converter));
+    assertEq(rc, 0, "converter");
+    // agrees to accel vesting
+    rc = uint(emp1.employeeDenyExerciseOptions());
+    assertEq(rc, 0, "deny exercise");
+    var (e1pool, e1extra, e1bonus, e1accel) = converter.getShare(address(emp1));
+    assertEq(e1pool, 0, "e1pool");
+    assertEq(e1extra, 0, "e1extra");
+    assertEq(e1bonus, 0, "e1bonus");
+    assertEq(e1accel, false, 'e1accel');
+    // try again as employee
+    rc = uint(emp1.employeeExerciseOptions(true));
+    assertEq(rc, 1, "exercise 2");
+    // deny again as employee
+    rc = uint(emp1.employeeDenyExerciseOptions());
+    assertEq(rc, 1, "deny 2");
+    // should have 0 options
+    assertEq(esop.calcEffectiveOptionsForEmployee(emp1, ct + vestp / 2), 0);
+  }
+
   function testExpiredOptionsConversion() {
     EmpTester emp2 = new EmpTester();
     uint32 ct = esop.currentTime();
