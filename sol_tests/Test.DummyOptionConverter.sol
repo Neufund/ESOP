@@ -7,6 +7,15 @@ contract DummyOptionsConverter is BaseOptionsConverter {
   uint32 exercisePeriodDeadline;
   uint public totalConvertedOptions;
 
+  struct share {
+    uint pool;
+    uint extra;
+    uint bonus;
+    bool accel;
+  }
+
+  mapping(address => share) public shares;
+
   function getESOP() public constant returns (address) {
     return esopAddress;
   }
@@ -15,9 +24,16 @@ contract DummyOptionsConverter is BaseOptionsConverter {
     return exercisePeriodDeadline;
   }
 
+  function getShare(address e) public constant returns (uint, uint, uint, bool) {
+    share s = shares[e];
+    return (s.pool, s.extra, s.bonus, s.accel);
+  }
+
   function exerciseOptions(address employee, uint poolOptions, uint extraOptions, uint bonusOptions,
     bool acceptAdditionalConditions) onlyESOP public {
     totalConvertedOptions += poolOptions + extraOptions + bonusOptions;
+    shares[employee] = share({pool: poolOptions, extra: extraOptions, bonus: bonusOptions,
+      accel: acceptAdditionalConditions});
   }
 
   function DummyOptionsConverter(address esop, uint32 exerciseDeadline) {
