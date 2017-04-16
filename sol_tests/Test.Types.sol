@@ -23,6 +23,10 @@ contract EmpTester {
       return uint8(ESOP(_t).employeeExerciseOptions(agreeToAccelConditions));
   }
 
+  function employeeDenyExerciseOptions() returns (uint8){
+      return uint8(ESOP(_t).employeeDenyExerciseOptions());
+  }
+
   function employeeSignsToESOP() returns (uint8){
       return uint8(ESOP(_t).employeeSignsToESOP());
   }
