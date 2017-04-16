@@ -61,11 +61,13 @@ contract OptionsCalculator is Math, ESOPTypes {
       (minFadeValue + divRound((vestedOptions - minFadeValue) * (employmentPeriod - timefromTermination), employmentPeriod));
   }
 
-  function calculateOptionsComponents(uint[9] employee, uint32 calcAtTime, uint32 conversionOfferedAt)
+  function calculateOptionsComponents(uint[9] employee, uint32 calcAtTime, uint32 conversionOfferedAt,
+    bool disableAcceleratedVesting)
     public
     constant
     returns (uint, uint, uint)
   {
+    // returns tuple of (vested pool options, vested extra options, bonus)
     Employee memory emp = deserializeEmployee(employee);
     // no options for converted options or when esop is not singed
     if (emp.state == EmployeeState.OptionsExercised || emp.state == EmployeeState.WaitingForSignature)
@@ -74,16 +76,19 @@ contract OptionsCalculator is Math, ESOPTypes {
     bool isESOPConverted = conversionOfferedAt > 0 && calcAtTime >= conversionOfferedAt; // this function time-travels
     uint issuedOptions = emp.poolOptions + emp.extraOptions;
     // employee with no options
-    if (issuedOptions == 0) return (0,0,0);
+    if (issuedOptions == 0)
+      return (0,0,0);
     // if emp is terminated but we calc options before term, simulate employed again
     if (calcAtTime < emp.terminatedAt && emp.terminatedAt > 0)
       emp.state = EmployeeState.Employed;
     uint vestedOptions = issuedOptions;
-    bool accelerateVesting = isESOPConverted && emp.state == EmployeeState.Employed;
+    bool accelerateVesting = isESOPConverted && emp.state == EmployeeState.Employed && !disableAcceleratedVesting;
     if (!accelerateVesting) {
       // choose vesting time for terminated employee to be termination event time IF not after calculation date
       uint32 calcVestingAt = emp.state == EmployeeState.Terminated ? emp.terminatedAt :
-        (emp.suspendedAt > 0 && emp.suspendedAt < calcAtTime ? emp.suspendedAt : calcAtTime);
+        conversionOfferedAt > 0 ? conversionOfferedAt :
+        (emp.suspendedAt > 0 && emp.suspendedAt < calcAtTime ? emp.suspendedAt :
+        calcAtTime);
       vestedOptions = calculateVestedOptions(calcVestingAt, emp.issueDate, issuedOptions);
     }
     // calc fadeout for terminated employees
@@ -94,19 +99,17 @@ contract OptionsCalculator is Math, ESOPTypes {
     }
     var (vestedPoolOptions, vestedExtraOptions) = extractVestedOptionsComponents(emp.poolOptions, emp.extraOptions, vestedOptions);
     // if (vestedPoolOptions + vestedExtraOptions != vestedOptions) throw;
-    // exit bonus only on conversion event and for employees that still employed
-    // do not apply bonus for extraOptions
-    uint bonus = (isESOPConverted && emp.state == EmployeeState.Employed) ?
-      divRound(vestedPoolOptions*bonusOptionsPromille, FP_SCALE) : 0;
-    return  (vestedPoolOptions, vestedExtraOptions, bonus);
+    return  (vestedPoolOptions, vestedExtraOptions,
+      accelerateVesting ? divRound(vestedPoolOptions*bonusOptionsPromille, FP_SCALE) : 0 );
   }
 
-  function calculateOptions(uint[9] employee, uint32 calcAtTime, uint32 conversionOfferedAt)
+  function calculateOptions(uint[9] employee, uint32 calcAtTime, uint32 conversionOfferedAt, bool disableAcceleratedVesting)
     public
     constant
     returns (uint)
   {
-    var (vestedPoolOptions, vestedExtraOptions, bonus) = calculateOptionsComponents(employee, calcAtTime, conversionOfferedAt);
+    var (vestedPoolOptions, vestedExtraOptions, bonus) = calculateOptionsComponents(employee, calcAtTime,
+      conversionOfferedAt, disableAcceleratedVesting);
     return vestedPoolOptions + vestedExtraOptions + bonus;
   }
 
@@ -149,7 +152,7 @@ contract OptionsCalculator is Math, ESOPTypes {
       poolOptions: poolOptions, extraOptions: extraOptions, state: EmployeeState(employeeState),
       timeToSign: issueDate+2 weeks, fadeoutStarts: terminatedAt, suspendedAt: suspendedAt,
       idx:1});
-    return calculateOptions(serializeEmployee(emp), calcAtTime, 0);
+    return calculateOptions(serializeEmployee(emp), calcAtTime, 0, false);
   }
 
   function OptionsCalculator(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pResidualAmountPromille,

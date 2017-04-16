@@ -55,7 +55,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
   // option conversion proxy
   BaseOptionsConverter public optionsConverter;
 
-  // migration structure
+  // migration destinations per employee
   mapping (address => ESOPMigration) private migrations;
 
   modifier hasEmployee(address e) {
@@ -357,10 +357,9 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
     // if we are burning options then send 0
-    // uint options = 0;
     if (exerciseFor != address(0)) {
       var (pool, extra, bonus) = optionsCalculator.calculateOptionsComponents(serializeEmployee(emp),
-        calcAtTime, conversionOfferedAt);
+        calcAtTime, conversionOfferedAt, disableAcceleratedVesting);
       }
     // call before options conversion contract to prevent re-entry
     employees.changeState(employee, EmployeeState.OptionsExercised);
@@ -450,7 +449,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     if (emp.state != EmployeeState.Employed && emp.state != EmployeeState.Terminated) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
-    var (pool, extra, bonus) = optionsCalculator.calculateOptionsComponents(serializeEmployee(emp), currentTime(), 0);
+    var (pool, extra, bonus) = optionsCalculator.calculateOptionsComponents(serializeEmployee(emp), currentTime(), 0, false);
     migrations[msg.sender] = ESOPMigration(0);
     // execute migration procedure
     migration.migrate(msg.sender, pool, extra);
@@ -473,7 +472,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     isCurrentCode
     returns (uint)
   {
-    return optionsCalculator.calculateOptions(employees.getSerializedEmployee(e), calcAtTime, conversionOfferedAt);
+    return optionsCalculator.calculateOptions(employees.getSerializedEmployee(e), calcAtTime, conversionOfferedAt, false);
   }
 
   function _logerror(ReturnCodes c) private returns (ReturnCodes) {
