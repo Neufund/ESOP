@@ -16,8 +16,7 @@ contract EmpReentry is Reporter {
     if (msg.gas < 21000) return; // do not even try to proceed with low gas limit
     //@info gas `uint msg.gas` balance  `uint this.balance`
     //@info _t `address _t` msg.sender `address msg.sender`
-    if (this.balance < 3 ether)
-    {
+    if (this.balance < 3 ether) {
       bool rv = msg.sender.call(bytes4(keccak256("withdraw()")));
       //@info rv `bool rv`
     }
@@ -37,8 +36,7 @@ contract EmpReentry is Reporter {
 }
 
 
-contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
-{
+contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math {
     EmpTester emp1;
     ESOP esop;
 
@@ -121,10 +119,6 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math
     ERC20OptionsConverter(emp1).transfer(emp2, emp1b);
     assertEq(converter.balanceOf(emp1), 0);
     assertEq(converter.balanceOf(emp2), emp1b + emp2b);
-  }
-
-  function testERC20OptionsConverterOptionsRejected() {
-
   }
 
   function testProceedsOptionsConverter() {
