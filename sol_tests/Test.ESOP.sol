@@ -198,7 +198,7 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     assertEq(optionsAtConv, maxopts / 2, "vested still");
   }
 
-  function testConversionStopsFadeout() {
+  function conversionFreezesOptions(bool terminate, bool exercise) {
     uint32 ct = esop.currentTime();
     esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 100, false);
     emp1._target(esop);
@@ -206,7 +206,8 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     // then after a year employee terminated regular
     ct += 1 years;
     esop.mockTime(ct);
-    rc = uint8(esop.terminateEmployee(emp1, ct, 0));
+    if (terminate)
+      rc = uint8(esop.terminateEmployee(emp1, ct, 0));
     assertEq(uint(rc), 0);
     uint optsOnTerm = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
     // then after a month fund converts
@@ -215,15 +216,37 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     converter = new DummyOptionsConverter(address(esop), ct + 1 years);
     uint8 rc = uint8(esop.offerOptionsConversion(converter));
     assertEq(uint(rc), 0, "offerOptionsConversion");
-    uint optionsAtConv = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
+    // get options directly from calculator so accel vesting can be disabled
+    var sere = esop.employees().getSerializedEmployee(address(emp1));
+    uint optionsAtConv = esop.optionsCalculator().calculateOptions(sere, ct, esop.conversionOfferedAt(), true);
     // opts on term should be different
     if (optsOnTerm == optionsAtConv) {
       //@warn fadeout is not applied `uint optsOnTerm` == `uint optionsAtConv`
       fail();
     }
-    uint optionsCv1y = esop.calcEffectiveOptionsForEmployee(address(emp1), ct + 1 years);
+    uint optionsCv1y;
+    if (exercise) {
+      esop.mockTime(ct + 1 years);
+      rc = uint8(emp1.employeeExerciseOptions(false));
+      assertEq(uint(rc), 0, "opt exercise");
+      optionsCv1y = converter.totalConvertedOptions();
+    } else {
+      optionsCv1y = esop.optionsCalculator().calculateOptions(sere, ct + 1 years, esop.conversionOfferedAt(), true);
+    }
     //@info options diff should be 0 `uint optionsAtConv` `uint optionsCv1y`
     assertEq(optionsCv1y, optionsAtConv);
+  }
+
+  function testConversionStopsFadeout() {
+    conversionFreezesOptions(true, false);
+  }
+
+  function testConversionStopsVestingOfTerminated() {
+    conversionFreezesOptions(true, true);
+  }
+
+  function testConversionStopsVesting() {
+    conversionFreezesOptions(false, true);
   }
 
   function testEmployeeConversion() logs_gas() {
