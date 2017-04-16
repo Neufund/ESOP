@@ -42,7 +42,7 @@ contract Math {
       throw;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
+  function safeAdd(uint a, uint b) internal constant returns (uint) {
     uint c = a + b;
     if (!(c>=a && c>=b)) throw;
     return c;
