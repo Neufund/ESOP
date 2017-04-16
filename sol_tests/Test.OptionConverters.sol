@@ -241,4 +241,25 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math {
     //@warn `uint stolen` wei stolen
     //assertEq(cb, emp1.balance, "faithful rv");
   }
+
+  function testProceedsOptionsConverterOptionsDenied() {
+    uint32 ct = esop.currentTime();
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 1289, false);
+    uint emp1issued = esop.totalPoolOptions() - esop.remainingPoolOptions();
+    emp1.employeeSignsToESOP();
+    uint32 vestp = uint32(esop.optionsCalculator().vestingPeriod());
+    esop.mockTime(ct + vestp / 2);
+    uint32 deadlineDelta = vestp / 2 + 4 weeks;
+    ProceedsOptionsConverter converter = new ProceedsOptionsConverter(esop, ct + deadlineDelta, ct + deadlineDelta + 1 weeks);
+    // options offered in half of the vesting
+    uint rc = uint(esop.offerOptionsConversion(converter));
+    assertEq(rc, 0, "converter");
+    // agrees to accel vesting
+    rc = uint(emp1.employeeDenyExerciseOptions());
+    assertEq(rc, 0, "deny exercise");
+    // total supply should be 0
+    assertEq(converter.totalSupply(), 0);
+    // burned to 0 address 0 options
+    assertEq(converter.balanceOf(address(0)), 0);
+  }
 }

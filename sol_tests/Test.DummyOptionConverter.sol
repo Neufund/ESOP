@@ -30,8 +30,12 @@ contract DummyOptionsConverter is BaseOptionsConverter {
   }
 
   function exerciseOptions(address employee, uint poolOptions, uint extraOptions, uint bonusOptions,
-    bool acceptAdditionalConditions) onlyESOP public {
+    bool acceptAdditionalConditions)
+    public
+    onlyESOP
+  {
     totalConvertedOptions += poolOptions + extraOptions + bonusOptions;
+    // overwrite previous share, do not add values for multiple conversions for single address
     shares[employee] = share({pool: poolOptions, extra: extraOptions, bonus: bonusOptions,
       accel: acceptAdditionalConditions});
   }
