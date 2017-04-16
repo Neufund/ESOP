@@ -4,6 +4,7 @@ import "./ESOP.sol";
 import "./RoT.sol";
 import "./ERC20OptionsConverter.sol";
 import "./ProceedsOptionsConverter.sol";
+import "./ESOPMigration.sol";
 
 contract EmpTester {
   address _t;
@@ -25,6 +26,10 @@ contract EmpTester {
 
   function employeeDenyExerciseOptions() returns (uint8){
       return uint8(ESOP(_t).employeeDenyExerciseOptions());
+  }
+
+  function employeeMigratesToNewESOP(ESOPMigration m) returns (uint8){
+      return uint8(ESOP(_t).employeeMigratesToNewESOP(m));
   }
 
   function employeeSignsToESOP() returns (uint8){
