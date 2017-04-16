@@ -84,10 +84,15 @@ contract OptionsCalculator is Math, ESOPTypes {
     uint vestedOptions = issuedOptions;
     bool accelerateVesting = isESOPConverted && emp.state == EmployeeState.Employed && !disableAcceleratedVesting;
     if (!accelerateVesting) {
-      // choose vesting time for terminated employee to be termination event time IF not after calculation date
-      uint32 calcVestingAt = emp.state == EmployeeState.Terminated ? emp.terminatedAt :
-        conversionOfferedAt > 0 ? conversionOfferedAt :
+      // choose vesting time
+      uint32 calcVestingAt = emp.state ==
+        // if terminated then vesting calculated at termination
+        EmployeeState.Terminated ? emp.terminatedAt :
+        // if employee is supended then compute vesting at suspension time
         (emp.suspendedAt > 0 && emp.suspendedAt < calcAtTime ? emp.suspendedAt :
+        // if conversion offer then vesting calucated at time the offer was made
+        conversionOfferedAt > 0 ? conversionOfferedAt :
+        // otherwise use current time
         calcAtTime);
       vestedOptions = calculateVestedOptions(calcVestingAt, emp.issueDate, issuedOptions);
     }
