@@ -422,8 +422,10 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     isCurrentCode
     returns (ReturnCodes)
   {
+    if (address(migration) == 0)
+      throw;
     // only employed and terminated users may migrate
-    Employee memory emp = _loademp(msg.sender);
+    Employee memory emp = _loademp(employee);
     if (emp.state != EmployeeState.Employed && emp.state != EmployeeState.Terminated) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
@@ -449,16 +451,17 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     if (emp.state != EmployeeState.Employed && emp.state != EmployeeState.Terminated) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
+    // with accelerated vesting if possible - take out all possible options
     var (pool, extra, bonus) = optionsCalculator.calculateOptionsComponents(serializeEmployee(emp), currentTime(), 0, false);
-    migrations[msg.sender] = ESOPMigration(0);
+    delete migrations[msg.sender];
     // execute migration procedure
     migration.migrate(msg.sender, pool, extra);
     // extra options are moved to new contract
-    totalExtraOptions -= extra;
+    totalExtraOptions -= emp.state == EmployeeState.Employed ? emp.extraOptions : extra;
     // pool options are moved to new contract and removed from The Pool
     // please note that separate Pool will manage migrated options and
     // algorithm that returns to pool and distributes will not be used
-    totalPoolOptions -= pool;
+    totalPoolOptions -= emp.state == EmployeeState.Employed ? emp.poolOptions : pool;
     // gone from current contract
     employees.removeEmployee(msg.sender);
     EmployeeMigrated(msg.sender, migration, pool, extra);
