@@ -1,10 +1,10 @@
 {
   "name": "esop",
   "version": "1.0.0",
-  "description": "## What is ESOP and why we do it?",
-  "main": "truffle.js",
+  "description": "Legal and smart contracts framework to implement Employee Stock Options Plan",
   "dependencies": {
-    "babel-register": "^6.24.1"
+    "babel-register": "^6.24.1",
+    "dapple": "^0.8.48"
   },
   "devDependencies": {},
   "scripts": {
