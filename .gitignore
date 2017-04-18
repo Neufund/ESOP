@@ -3,3 +3,4 @@ solc
 build
 .idea
 node_modules
+test
