@@ -8,7 +8,7 @@ module.exports = function (deployer, network) {
     // do not deploy options converters on mainnet
     if (network !== 'live') {
         deployer.then(async function () {
-            let year_ahead = Math.floor(new Date() / 1000) + 365*24*60*60;
+            let year_ahead = Math.floor(new Date() / 1000) + 365 * 24 * 60 * 60;
             await deployer.deploy(ERC20OptionsConverter, ESOP.address, year_ahead);
             await deployer.deploy(ProceedsOptionsConverter, ESOP.address, year_ahead);
             deployer.logger.log(`conversion deadline is ${year_ahead}`);

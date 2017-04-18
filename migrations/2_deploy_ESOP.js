@@ -4,7 +4,7 @@ const RoT = artifacts.require("RoT");
 const ESOP = artifacts.require("ESOP");
 
 module.exports = function (deployer, network) {
-    deployer.then( async function() {
+    deployer.then(async function () {
         await deployer.deploy(RoT);
         let rot = await RoT.deployed();
         var ceoAddr;
