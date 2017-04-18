@@ -14,8 +14,8 @@
     "type": "git",
     "url": "git+https://github.com/Neufund/ESOP.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Marcin Rudolf <rudolfix@neufund.org>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Neufund/ESOP/issues"
   },
