@@ -3,7 +3,7 @@ import "./Types.sol";
 
 contract CodeUpdateable is Ownable {
     // allows to stop operations and migrate data to different contract
-    enum CodeUpdateState { CurrentCode, OngoingUpdate, CodeUpdated}
+    enum CodeUpdateState { CurrentCode, OngoingUpdate /*, CodeUpdated*/}
     CodeUpdateState public codeUpdateState;
 
     modifier isCurrentCode() {
@@ -17,15 +17,16 @@ contract CodeUpdateable is Ownable {
         throw;
       _;
     }
-    modifier codeUpdated() {
+
+    /*modifier codeUpdated() {
       if (codeUpdateState != CodeUpdateState.CodeUpdated)
         throw;
       _;
-    }
+    }*/
 
-    function kill() onlyOwner codeUpdated {
+    /*function kill() onlyOwner codeUpdated {
       selfdestruct(owner);
-    }
+    }*/
 
     function beginCodeUpdate() public onlyOwner isCurrentCode {
       codeUpdateState = CodeUpdateState.OngoingUpdate;
@@ -36,6 +37,7 @@ contract CodeUpdateable is Ownable {
     }
 
     function completeCodeUpdate() public onlyOwner inCodeUpdate {
-      codeUpdateState = CodeUpdateState.CodeUpdated;
+      selfdestruct(owner);
+      // codeUpdateState = CodeUpdateState.CodeUpdated;
     }
 }
