@@ -9,7 +9,7 @@ const weeks = 7 * 24 * 60 * 60;
 
 module.exports = function (deployer, network, accounts) {
     // do not deploy options converters on mainnet
-    if (network != 'live') {
+    if (network !== 'live') {
         deployer.then(async function () {
             let esop = await ESOP.deployed();
             // open esop
@@ -23,7 +23,7 @@ module.exports = function (deployer, network, accounts) {
             await emplist.transferOwnership(ESOP.address);
             deployer.logger.log('opening esop');
             let tx = await esop.openESOP(CALCULATOR.address, EMPLIST.address, 1000000, web3.toBigNumber('0x' + ipfsHash.toString('hex')));
-            if (tx.logs.some(e => e.event == 'ReturnCode')) {
+            if (tx.logs.some(e => e.event === 'ReturnCode')) {
                 // error code returned
                 deployer.logger.log(`openESOP returned rc: ${tx.logs[0].args['rc']}`);
                 throw `openESOP returned rc: ${tx.logs[0].args['rc']}`;

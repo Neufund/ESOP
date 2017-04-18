@@ -8,7 +8,7 @@ module.exports = function (deployer, network) {
         await deployer.deploy(RoT);
         let rot = await RoT.deployed();
         var ceoAddr;
-        if (network == 'live')
+        if (network === 'live')
             ceoAddr = ''; // provide company address that will manage contract on live network
         else {
             ceoAddr = await rot.owner(); // on other networks deploying account is the company

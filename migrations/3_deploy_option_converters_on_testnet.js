@@ -6,7 +6,7 @@ const ProceedsOptionsConverter = artifacts.require("ProceedsOptionsConverter");
 
 module.exports = function (deployer, network) {
     // do not deploy options converters on mainnet
-    if (network != 'live') {
+    if (network !== 'live') {
         deployer.then(async function () {
             let year_ahead = Math.floor(new Date() / 1000) + 365*24*60*60;
             await deployer.deploy(ERC20OptionsConverter, ESOP.address, year_ahead);
