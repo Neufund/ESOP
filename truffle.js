@@ -1,4 +1,4 @@
-require('babel-register')
+require('babel-register');
 
 module.exports = {
   networks: {
@@ -27,6 +27,6 @@ module.exports = {
       // gas
       // gasPrice
       // from - default address to use for any transaction Truffle makes during migrations
-  }
+    }
   }
 };
