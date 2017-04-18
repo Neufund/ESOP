@@ -3,7 +3,7 @@ require('babel-register');
 const RoT = artifacts.require("RoT");
 const ESOP = artifacts.require("ESOP");
 
-contract('RoT', function (accounts) {
+contract('RoT', function () {
   it('rot should selfdestruct', async () => {
       let rot = await RoT.deployed();
       let ceoAddr = await rot.owner();
