@@ -4,8 +4,6 @@ const ESOP = artifacts.require("ESOP");
 const CALCULATOR = artifacts.require("OptionsCalculator");
 const EMPLIST = artifacts.require("EmployeesList");
 const years = 365 * 24 * 60 * 60;
-const currdate = (new Date()) / 1;
-const weeks = 7 * 24 * 60 * 60;
 
 module.exports = function (deployer, network, accounts) {
     // do not deploy options converters on mainnet
@@ -29,18 +27,8 @@ module.exports = function (deployer, network, accounts) {
                 throw `openESOP returned rc: ${tx.logs[0].args['rc']}`;
             }
             deployer.logger.log('esop opened');
-            let company = await esop.companyAddress();
-            let startdate = currdate;
-            accounts.filter(a => a !== company).map(async function(e) {
-                // function offerOptionsToEmployee(address e, uint32 vestingStarts, uint32 timeToSign, uint32 extraOptions, bool poolCleanup)
-                let tx = await esop.offerOptionsToEmployee(e, startdate - 1 * weeks, startdate + 4 * weeks, 0, false);
-                if (tx.logs.some(e => e.event === 'ESOPOffered')) {
-                    deployer.logger.log(`employee ${e} added with ${tx.logs[0].args['poolOptions']} poolOptions`);
-                } else {
-                    deployer.logger.log(`offerOptionsToEmployee returned rc: ${tx.logs[0].args['rc']}`);
-                    throw `offerOptionsToEmployee returned rc: ${tx.logs[0].args['rc']}`;
-                }
-            });
+            //let company = await esop.companyAddress();
+
         } );
     }
 };
