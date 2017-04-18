@@ -3,14 +3,14 @@ import "./Types.sol";
 
 contract RoT is Ownable {
     address public ESOPAddress;
-    event ESOPAndCEOSet(address ESOPAddress, address ceoAddress);
+    event ESOPAndCompanySet(address ESOPAddress, address companyAddress);
 
     function setESOP(address ESOP, address company) public onlyOwner {
       // owner sets ESOP and company only once then passes ownership to company
       // initially owner is a developer/admin
       ESOPAddress = ESOP;
       transferOwnership(company);
-      ESOPAndCEOSet(ESOP, company);
+      ESOPAndCompanySet(ESOP, company);
     }
 
     function killOnUnsupportedFork() public onlyOwner {
