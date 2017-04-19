@@ -47,8 +47,8 @@ contract EmpTester {
   /*uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pMaxFadeoutPromille, uint32 pbonusOptionsPromille,
     uint32 pNewEmployeePoolPromille
     pcliffPeriod, pvestingPeriod, pMaxFadeoutPromille, pbonusOptionsPromille, pNewEmployeePoolPromille*/
-  function openESOP(OptionsCalculator pOptionsCalculator, EmployeesList pEmployeesList, uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash) returns (uint8) {
-      return uint8(ESOP(_t).openESOP(pOptionsCalculator, pEmployeesList, ptotalPoolOptions, pESOPLegalWrapperIPFSHash));
+  function openESOP(uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash) returns (uint8) {
+      return uint8(ESOP(_t).openESOP(ptotalPoolOptions, pESOPLegalWrapperIPFSHash));
     }
 }
 
@@ -57,7 +57,9 @@ contract ESOPMaker {
 
   function makeNFESOP() public returns (ESOP) {
     root = new RoT();
-    ESOP e = new ESOP(address(this), address(root));
+    OptionsCalculator optcalc = new OptionsCalculator(address(this));
+    EmployeesList emplist = new EmployeesList();
+    ESOP e = new ESOP(address(this), address(root), optcalc, emplist);
     root.setESOP(e, address(this));
     //bytes32 ESOPLegalWrapperIPFSHash = sha256("hereby pool #1 is established");
     bytes memory ESOPLegalWrapperIPFSHash = "qmv8ndh7ageh9b24zngaextmuhj7aiuw3scc8hkczvjkww";
@@ -69,11 +71,10 @@ contract ESOPMaker {
     // e.openESOP(1 years, 4 years, 10000, 2000, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no fadeout
     // e.openESOP(1 years, 4 years, 2000, 0, 1000, 1000000, ESOPLegalWrapperIPFSHash) - no bonus
     // e.openESOP(1 years, 4 years, 2000, 0, 0, 0, ESOPLegalWrapperIPFSHash) - no pool, just extra
-    // make company sign this
-    OptionsCalculator optcalc = new OptionsCalculator(1 years, 4 years, 2000, 2000, 1000, 360);
-    EmployeesList emplist = new EmployeesList();
     emplist.transferOwnership(e);
-    uint rc = uint(e.openESOP(optcalc, emplist, 1000080, ESOPLegalWrapperIPFSHash));
+    // company calls this
+    optcalc.setParameters(1 years, 4 years, 2000, 2000, 1000, 360);
+    uint rc = uint(e.openESOP(1000080, ESOPLegalWrapperIPFSHash));
     if (rc != 0)
       throw;
     return e;
