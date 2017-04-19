@@ -149,7 +149,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     }
   }
 
-  function openESOP(OptionsCalculator pOptionsCalculator, EmployeesList pEmployeesList, uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash)
+  function openESOP(uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash)
     external
     onlyCompany
     onlyESOPNew
@@ -161,8 +161,6 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
       return _logerror(ReturnCodes.InvalidParameters);
     }
 
-    employees = pEmployeesList;
-    optionsCalculator = pOptionsCalculator;
     totalPoolOptions = ptotalPoolOptions;
     remainingPoolOptions = totalPoolOptions;
     ESOPLegalWrapperIPFSHash = pESOPLegalWrapperIPFSHash;
@@ -493,9 +491,11 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
       throw;
   }
 
-  function ESOP(address company, address pRootOfTrust) {
+  function ESOP(address company, address pRootOfTrust, OptionsCalculator pOptionsCalculator, EmployeesList pEmployeesList) {
     //esopState = ESOPState.New; // thats initial value
     companyAddress = company;
     rootOfTrust = pRootOfTrust;
+    employees = pEmployeesList;
+    optionsCalculator = pOptionsCalculator;
   }
 }
