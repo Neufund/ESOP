@@ -8,6 +8,8 @@ contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
   uint public vestingPeriod;
   // maximum promille that can fade out
   uint public maxFadeoutPromille;
+  // minimal options after fadeout
+  function residualAmountPromille() public constant returns(uint) { return FP_SCALE - maxFadeoutPromille; }
   // exit bonus promille
   uint public bonusOptionsPromille;
   // per mille of unassigned poolOptions that new employee gets
