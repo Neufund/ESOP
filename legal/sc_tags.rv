@@ -1,0 +1,19 @@
+# tags replaced from smart contract values (per employee)
+{company-address}=
+# this is root of trust address
+{esop-sc-address}=
+{options-per-share}=
+{strike-price}=
+{pool-options}=
+{new-employee-pool-share}=
+{employee-address}=
+{issued-options}=
+{employee-pool-options}=
+{employee-extra-options}=
+{issue-date}=
+{vesting-period}=
+{cliff-period}=
+{bonus-options}=
+{residual-amount}=
+{time-to-sign}=
+{curr-block-hash}=
