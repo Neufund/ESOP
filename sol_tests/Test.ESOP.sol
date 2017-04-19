@@ -17,10 +17,6 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1._target(esop);
   }
 
-  function testSignTooLate() {
-
-  }
-
   function testUnsupportedFork() logs_gas {
     // company can kill on unsupported fork
     root.killOnUnsupportedFork();

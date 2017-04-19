@@ -50,10 +50,6 @@ contract TestESOPMigration is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1._target(esop);
   }
 
-  function testExtractVestedOptionsComponents() {
-
-  }
-
   function testEmployeeMigration() {
     NewESOP newesop = new NewESOP(esop);
     EmpTester emp2 = new EmpTester();
