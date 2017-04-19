@@ -19,6 +19,13 @@ contract Ownable {
   }
 }
 
+contract Destructable is Ownable {
+  function selfdestruct() external onlyOwner {
+    // free ethereum network state when done
+    selfdestruct(owner);
+  }
+}
+
 
 contract Math {
   // scale of the emulated fixed point operations
