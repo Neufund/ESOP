@@ -485,6 +485,11 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     return deserializeEmployee(employees.getSerializedEmployee(e));
   }
 
+  function completeCodeUpdate() public onlyOwner inCodeUpdate {
+    employees.transferOwnership(msg.sender);
+    CodeUpdateable.completeCodeUpdate();
+  }
+
   function()
       payable
   {
