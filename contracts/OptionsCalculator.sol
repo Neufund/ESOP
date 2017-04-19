@@ -1,7 +1,7 @@
 pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 
-contract OptionsCalculator is Math, ESOPTypes {
+contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
   // cliff duration in seconds
   uint public cliffPeriod;
   // vesting duration in seconds
@@ -16,6 +16,14 @@ contract OptionsCalculator is Math, ESOPTypes {
   uint public optionsPerShare;
   // options strike price
   uint constant public strikePrice = 1;
+  // company address
+  address public companyAddress;
+
+  modifier onlyCompany() {
+    if (companyAddress != msg.sender)
+      throw;
+    _;
+  }
 
   function calcNewEmployeePoolOptions(uint remainingPoolOptions)
     public
@@ -160,9 +168,11 @@ contract OptionsCalculator is Math, ESOPTypes {
     return calculateOptions(serializeEmployee(emp), calcAtTime, 0, false);
   }
 
-  function OptionsCalculator(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pResidualAmountPromille,
-    uint32 pbonusOptionsPromille, uint32 pNewEmployeePoolPromille, uint32 pOptionsPerShare) {
-
+  function setParameters(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pResidualAmountPromille,
+    uint32 pbonusOptionsPromille, uint32 pNewEmployeePoolPromille, uint32 pOptionsPerShare)
+    external
+    onlyCompany
+  {
     if (maxFadeoutPromille > FP_SCALE || bonusOptionsPromille > FP_SCALE || newEmployeePoolPromille > FP_SCALE ||
       pOptionsPerShare == 0)
       throw;
@@ -172,5 +182,9 @@ contract OptionsCalculator is Math, ESOPTypes {
     bonusOptionsPromille = pbonusOptionsPromille;
     newEmployeePoolPromille = pNewEmployeePoolPromille;
     optionsPerShare = pOptionsPerShare;
+  }
+
+  function OptionsCalculator(address pCompanyAddress) {
+    companyAddress = pCompanyAddress;
   }
 }
