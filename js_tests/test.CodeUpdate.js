@@ -7,18 +7,19 @@ const EMPLIST = artifacts.require("EmployeesList");
 // test types
 const UPD_ESOP = artifacts.require("UpdatedESOP");
 const UPDATER = artifacts.require("TestCodeUpdater");
+const UPD_CALCULATOR = artifacts.require("UpdatedOptionsCalculator");
 
-const currdate = (new Date()) / 1;
 const weeks = 7 * 24 * 60 * 60;
 const extraOptionsAmount = 8172;
 
 
 contract('CodeUpdateable', function (accounts) {
-  function addemployees(esop, company) {
+  function addemployees(esop, company, currdate) {
     let startdate = currdate;
     accounts.filter(a => a !== company).map(async function(e) {
         // function offerOptionsToEmployee(address e, uint32 vestingStarts, uint32 timeToSign, uint32 extraOptions, bool poolCleanup)
-        let tx = await esop.offerOptionsToEmployee(e, startdate - 1 * weeks, startdate + 4 * weeks, extraOptionsAmount, false);
+        let tx = await esop.offerOptionsToEmployee(e, startdate - 1 * weeks, startdate + 4 * weeks, extraOptionsAmount, false,
+          {from: company});
         if (tx.logs.some(e => e.event === 'ESOPOffered')) {
             console.log(`employee ${e} added with ${tx.logs[0].args['poolOptions']} poolOptions`);
         } else {
@@ -31,11 +32,11 @@ contract('CodeUpdateable', function (accounts) {
       let rot = await RoT.deployed();
       let esop = ESOP.at(await rot.ESOPAddress());
       let companyAddress = await esop.companyAddress();
-      addemployees(esop, companyAddress);
+      let currdate = Number(await esop.currentTime());
+      addemployees(esop, companyAddress, currdate);
       // updated options calculator
       let oldcal = CALCULATOR.at(await esop.optionsCalculator());
-      let newcal = await CALCULATOR.new(await oldcal.cliffPeriod(), await oldcal.vestingPeriod(), await oldcal.FP_SCALE() - await oldcal.maxFadeoutPromille(),
-        await oldcal.bonusOptionsPromille(), await oldcal.newEmployeePoolPromille(), await oldcal.optionsPerShare());
+      let newcal = await UPD_CALCULATOR.new(companyAddress);
       // empty employees list
       let newemplist = await EMPLIST.new();
       let oldemplist = EMPLIST.at(await esop.employees());
@@ -48,11 +49,12 @@ contract('CodeUpdateable', function (accounts) {
       console.log('creating new esop instance');
       let newLegalWHash = new Buffer("QmRsjnNkEpnDdmYB7wMR7FSy1eGZ12pDuhST3iNLJTzAXF", 'ascii');
       // give a lot of gas
-      let newesop = await UPD_ESOP.new(companyAddress, rot.address, {gas: 15000000});
+      let newesop = await UPD_ESOP.new(companyAddress, rot.address, newcal.address, newemplist.address, {gas: 15000000});
       console.log('migrating state to new esop');
-      await newesop.migrateState(esop.address, newcal.address, newemplist.address, web3.toBigNumber('0x' + newLegalWHash.toString('hex')));
-      // put old esop in maintenance mode
+      // put old esop in maintenance mode before any values are read from it
       await esop.beginCodeUpdate();
+      await newcal.migrateState(oldcal.address);
+      await newesop.migrateState(esop.address, web3.toBigNumber('0x' + newLegalWHash.toString('hex')));
       // move all employees
       let idx = 0, processed = 0, maxcount = 2;
       let tot_size = await oldemplist.size();
@@ -79,18 +81,20 @@ contract('CodeUpdateable', function (accounts) {
       assert.equal(Number(await esop.totalExtraOptions()), newesop_extraoptions, 'totalExtraOptions');
       assert.equal(Number(await esop.remainingPoolOptions()), newesop_remainingpool, 'remainingPoolOptions');
       // sign to esop with employee no 1
-      let sign_tx = await newesop.employeeSignsToESOP({from: accounts[1]});
-      assert.equal(sign_tx.logs[0].args['employee'], accounts[1], 'employee signs to ESOP');
+      console.log(currdate);
+      await newesop.mockTime(currdate + 4 * weeks);
+      let sign_tx = await newesop.employeeSignsToESOP({from: accounts[2]});
+      assert.equal(sign_tx.logs[0].args['employee'], accounts[2], 'employee signs to ESOP');
       // CEO removes last employee
       let employee_l = await newemplist.getSerializedEmployee(accounts[accounts.length-1]);
       // console.log(employee_4);
-      let rem_tx = await newesop.terminateEmployee(accounts[accounts.length-1], currdate, 0);
+      let rem_tx = await newesop.terminateEmployee(accounts[accounts.length-1], currdate, 0, {from: companyAddress});
       // check pool management
       assert.equal(Number(await newesop.totalExtraOptions()), newesop_extraoptions - extraOptionsAmount, 'totalExtraOptions - terminated');
       // last employee was terminated so all options were returned to pool
       assert.equal(Number(await newesop.remainingPoolOptions()), newesop_remainingpool + Number(employee_l[4]), 'remainingPoolOptions + terminated');
-      // change in RoT
-      let rot_change_tx = await rot.setESOP(newesop.address, companyAddress);
+      // change in RoT must be done by company
+      let rot_change_tx = await rot.setESOP(newesop.address, companyAddress, {from: companyAddress});
       let ev_set = rot_change_tx.logs[0];
       assert.equal(ev_set.args['ESOPAddress'], newesop.address, 'ESOPAddress');
       assert.equal(ev_set.args['companyAddress'], companyAddress, 'companyAddress');
@@ -102,6 +106,13 @@ contract('CodeUpdateable', function (accounts) {
       await updater.selfdestruct();
       nocode = web3.eth.getCode(updater.address);
       assert.equal('0x0', nocode, 'updater must die');
+      await oldcal.selfdestruct();
+      nocode = web3.eth.getCode(oldcal.address);
+      assert.equal('0x0', nocode, 'oldcal must die');
+      await oldemplist.selfdestruct();
+      nocode = web3.eth.getCode(oldemplist.address);
+      assert.equal('0x0', nocode, 'oldemplist must die');
+
 
   });
 });

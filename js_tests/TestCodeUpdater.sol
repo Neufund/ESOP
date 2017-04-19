@@ -2,7 +2,7 @@ pragma solidity ^0.4.0;
 import "../contracts/ESOP.sol";
 
 // used to group code update transactions and provide atomicity
-contract TestCodeUpdater is Ownable, ESOPTypes {
+contract TestCodeUpdater is Ownable, Destructable, ESOPTypes {
   EmployeesList private oldList;
   EmployeesList private newList;
   event RV(int rc);
@@ -34,11 +34,6 @@ contract TestCodeUpdater is Ownable, ESOPTypes {
     onlyOwner
   {
     newList.transferOwnership(newOwner);
-  }
-
-  function selfdestruct() external onlyOwner {
-    // free ethereum network state when done
-    selfdestruct(owner);
   }
 
   function TestCodeUpdater(EmployeesList ol, EmployeesList nl) Ownable() {
