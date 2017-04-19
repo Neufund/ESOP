@@ -1,7 +1,7 @@
 pragma solidity ^0.4.0;
 import "./ESOPTypes.sol";
 
-contract EmployeesList is ESOPTypes, Ownable {
+contract EmployeesList is ESOPTypes, Ownable, Destructable {
   event CreateEmployee(address indexed e, uint32 poolOptions, uint32 extraOptions, uint16 idx);
   event UpdateEmployee(address indexed e, uint32 poolOptions, uint32 extraOptions, uint16 idx);
   event ChangeEmployeeState(address indexed e, EmployeeState oldState, EmployeeState newState);
