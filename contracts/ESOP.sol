@@ -37,7 +37,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
   // root of immutable root of trust pointing to given ESOP implementation
   address public rootOfTrust;
   // default period for employee signature
-  uint32 constant public waitForSignPeriod = 2 weeks;
+  uint32 constant public minimumManualSignPeriod = 2 weeks;
 
   // STATE
   // poolOptions that remain to be assigned
@@ -181,7 +181,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     if(employees.hasEmployee(e)) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
-    if (timeToSign < currentTime() + waitForSignPeriod) {
+    if (timeToSign < currentTime() + minimumManualSignPeriod) {
       return _logerror(ReturnCodes.TooLate);
     }
     if (poolCleanup) {
@@ -326,7 +326,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     returns (ReturnCodes)
   {
     uint32 offerMadeAt = currentTime();
-    if (converter.getExercisePeriodDeadline() - offerMadeAt < waitForSignPeriod) {
+    if (converter.getExercisePeriodDeadline() - offerMadeAt < minimumManualSignPeriod) {
       return _logerror(ReturnCodes.TooLate);
     }
     // exerciseOptions must be callable by us
