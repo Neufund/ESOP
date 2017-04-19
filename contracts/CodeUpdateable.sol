@@ -18,16 +18,6 @@ contract CodeUpdateable is Ownable {
       _;
     }
 
-    /*modifier codeUpdated() {
-      if (codeUpdateState != CodeUpdateState.CodeUpdated)
-        throw;
-      _;
-    }*/
-
-    /*function kill() onlyOwner codeUpdated {
-      selfdestruct(owner);
-    }*/
-
     function beginCodeUpdate() public onlyOwner isCurrentCode {
       codeUpdateState = CodeUpdateState.OngoingUpdate;
     }
@@ -38,6 +28,5 @@ contract CodeUpdateable is Ownable {
 
     function completeCodeUpdate() public onlyOwner inCodeUpdate {
       selfdestruct(owner);
-      // codeUpdateState = CodeUpdateState.CodeUpdated;
     }
 }
