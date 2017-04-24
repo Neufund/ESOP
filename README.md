@@ -3,14 +3,13 @@
 There is a lot of stuff below on what ESOP is, how vesting works etc. If you are just interested in smart contract info go here, for info on testing and deployment go here.
 
 ## What is ESOP and why we do it?
-ESOP stands for Employees Stock Options Plan. Many companies decide to involve their employees in company's success by offering them shares. Shares are typically available in form of options (mostly due to tax reasons) and are converted directly into cash when company has an IPO or gets acquired. There is a lot of interesting reasoning behind various ESOP's structures and a lot of discussions when it works best and when not. Here is a nice introduction:
-https://www.accion.org/sites/default/files/Accion%20Venture%20Lab%20-%20ESOP%20Best%20Practices.pdf
+ESOP stands for Employees Stock Options Plan. Many companies decide to involve their employees in company's success by offering them shares. Shares are typically available in form of options (mostly due to tax reasons) and are converted directly into cash when company has an IPO or gets acquired. There is a lot of interesting reasoning behind various ESOP's structures and a lot of discussions when it works best and when not. Here is a nice introduction: https://www.accion.org/sites/default/files/Accion%20Venture%20Lab%20-%20ESOP%20Best%20Practices.pdf
 
-Neufund preaches what it prays and offers its employees ESOP via a smart contract where options are represented as Ethereum tokens. On the other side employees are still provided with ESOP terms in readable English (we call it *legal wrapper*) which are generated from before mentioned smart contract. Such construct replaces paper agreement employee signs and adds many interesting things on top.
+Neufund preaches what it prays and offers its employees ESOP via a smart contract where options are represented as Ethereum tokens. On the other hand employees are still provided with ESOP terms in readable English (we call it *legal wrapper*) which are generated from before mentioned smart contract. Such construct replaces paper agreement employee signs and adds many interesting things on top.
 
-1. Process of assigning options, vesting and converting is immutable and transparent, all the nice things you get by using smart contracts are here.
-2. It is enforceable in off-chain court like standard paper agreement, *however* as smart contracts are self-enforcing probability of such occurrence is much lower!
-3. Typical criticism of ESOP is that you need to wait till the exit or IPO to get your shares and money. This is too long for being a real incentive. **This is not the case with tokenized options.** Being an Ethereum token extends ways in which you can put your options to use. For example **you can convert them into ERC20 compliant tokens when company is doing its ICO** or **make options directly trade-able** (via migration mechanism described later).
+1. Process of assigning options, vesting and converting are immutable and transparent. That includes rules on changing rules. Trustless trust is to large degree provided.
+2. It is enforceable in off-chain court like standard paper agreement, *however* as smart contracts are self-enforcing a need for legal action should be negligible!
+3. Typical criticism of ESOP is that you need to wait till the exit or IPO to get your shares and money. This is too long for being a real incentive. **This is not the case with tokenized options.** Use of Ethereum token extends ways you can profit from your options. For example **you can convert them into ERC20 compliant tokens when company is doing its ICO** or **make options directly trade-able** (via migration mechanism described later).
 4. Smart contracts are self-enforcing and do their own book keeping. They are very cheap once written and tested. Together with companys/employee dapp (http://github.com/Neufund/...) [...]
 
 ## ESOP Algorithm
@@ -35,7 +34,7 @@ Both methods can be combined. `pool options + extra options == issued options`
 
 ### Employee's options over time
 Employee will not get all his/her options at the moment they are issued (however you can configure our smart contract to act in such way). Smart contract will release options up to all `issued options` with an algorithm called *vesting*.
-[image in vesting]
+![accelerated  vesting](/doc/accelerated_vesting.jpg)
 As you can see there is a period of time called `cliff period` (for example 1 year, configurable, may be 0) during which employee does not get any options.
 
 Then during the `vesting period` (period configurable, also may be 0), number of options increases up until `issued options`. In case of exit, IPO, ICO etc. additional `bonus options` (for example 20%, configurable) are added on top of issued options.
@@ -47,9 +46,7 @@ Sometimes people leave and ESOP smart contract handles that as well.
 
 1. Company may remove employee from ESOP smart contract and cancel all his/her options. This is called `bad leaver event` in legal wrapper and may happen when for example employee breaks the law and needs to be fired. As you can expect such event cannot be defined in smart contract (there's no proper oracle yet in court system ;>) so this definition remains in legal wrapper.
 2. Employee may just leave company and go working somewhere else. This case is more complicated.
-
-[img termination]
-
+![fadeout](/doc/accelerated_vesting.jpg)
 As you can see, vesting stops at the moment employee stops working at the company and all vested options are issued to employee. From that time amount of `vested options` is slowly decreasing down to `residual amount` (value configurable). Such process is called `fadeout` and fadeout period equals period of time employee worked at company. Smart contract may be configured for full fadeout and to not do fadeout at all.
 
 Terminated employee has no rights to `accelerated vesting` and no rights to `bonus options`.
@@ -92,12 +89,13 @@ Please note that `owner` cannot execute any ESOP logic. S/he can deploy contract
 
 |Description|Cliff Period|Vesting Period|Residual Amount %|Bonus Options %|New Employee Pool %|
 |-----|----|----|----|----|----|
-|Neufund configuration|1 year|4 years|20%|20%|10%|
+|Neufund configuration|1 year|4 years|50%|20%|10%|
 |No cliff|0|4 years|20%|20%|10%|
 |No fadeout|1 year|4 years|100%|20%|10%|
 |Full fadeout|1 year|4 years|0|20%|10%|
 |Disable pool options, only extra|1 year|4 years|20%|10%|0|
-|Disable vesting, fadeout and bonus|0|2 weeks|100%|0|10%|
+|Disable vesting, fadeout and bonus<sup>*</sup>|0|2 weeks|100%|0|10%|
+<sup>*</sup> this options was not thoroughly testes, 2 weeks vesting period equals deadline for employee signature, cannot be 0 as tests are not prepared for that.
 
 Neufund configuration sets options pool size to 1000080 and options per share to 360.
 
@@ -152,34 +150,47 @@ It's here.
 Please note that options subscription form has terminology and content defined in legal wrapper and d-app UI conforms to that.
 
 ## Development
-We used solc 0.4.8
-install binary packages cpp solc from solc repo http://solidity.readthedocs.io/en/develop/installing-solidity.html to use with dapple
-upgrade truffle by modifying package.js of truffle and putting right solc version like
-```
-cd /usr/lib/node_modules/truffle
-atom package.js <- change solc version
-npm update
-```
+### Compiler
+We used solc 0.4.8 for mainnet deployment. `Dapple` framework that we use for Solidity tests compiles with c++ solc that you should install from repo: http://solidity.readthedocs.io/en/develop/installing-solidity.html.
+We use `truffle v3.2.1` for integration tests and compilation of deployed artifacts, which is using emscripten 0.4.8 solc build.
+(FYI: bytecode produced by c++ and emscripten matches: http://)
 
 ### Running unit (solidity) tests
-Solidity tests are run with dapple. This is unfortunate as dapple is discontinued and does not support libraries
+Solidity tests are run with `dapple`. This is unfortunate as `dapple` is discontinued and does not support libraries. There are a few things I liked about it: debug output, writing to CSV files from Solidity (nice thing for financial simulations). Anyway, I'll never use it again and I plan to port current tests to truffle.
+Solidity tests can be found in `sol_tests`, there are also shell scripts to make test easier.
+`./test.sh <test name>` will execute all test cases from test with given name. if name is not provided then all tests will be executed. For example  `./test.sh ReturnToPool` will run tests from `./sol_tests/Test.ReturnToPool.sol` file.
+
+There are a few interesting test contracts defined:
+* `EmpTester` which is a employee's proxy to ESOP contract that allows you to call its method with different senders.
+* `ESOPMaker` which created `ESOP` smart contract with and necessary dependencies.
+* `EmpReentry` that is doing re-entry attack on `ProceedsOptionsConverter`
+
+There is also a ESOP simulator that stores results in `./solc/simulations.csv`, you can run it from `./simulate.sh` script.
 
 ### Running integration (js) tests
+Those tests are run in truffle from `./js_test.sh` script. Tests are defined in `./js_tests`. We use integration tests when we want to check smart contract behavior that spans many blocks, contracts are created and destroyed etc. `test.CodeUpdate.js` is a notable tests that demonstrated a whole procedure of code update of ESOP smart contract.
 
-RoT.at(RoT.address).ESOPAddress()
-ESOP.at(ESOP.address).rootOfTrust()
-
+### Deployment on testrpc
 running testrpc with lower block gas limit ~ mainnet limit
 `testrpc --gasLimit=4000000  -i=192837991`
 `truffle deploy --network deployment`
 
-### setting up dev chain on parity and get some eth
-parity --chain dev --jsonrpc-port 8444 ui
-https://github.com/paritytech/parity/wiki/Private-development-chain
+### Deployment on mainnet
+
 
 ## Steps to reproduce and verify bytecode deployed on mainnet
 
 
 --------------------
+scratchbook
+```
+RoT.at(RoT.address).ESOPAddress()
+ESOP.at(ESOP.address).rootOfTrust()
+
+# setting up dev chain on parity and get some eth
+parity --chain dev --jsonrpc-port 8444 ui
+https://github.com/paritytech/parity/wiki/Private-development-chain
+
+```
 fineprints:
 I hereby subscribe for the Issued Options for shares in {company} under the terms and conditions as set out in the ESOP Smart Contract at address {sc-address} and made available to me in [title of legal wrapper].
