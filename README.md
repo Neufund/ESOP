@@ -1,6 +1,6 @@
 # Legal and smart contracts framework to implement Employee Stock Options Plan
 
-There is a lot of stuff below on what ESOP is, how vesting works etc. If you are just interested in smart contract info go here, for info on testing and deployment go here.
+There is a lot of stuff below on what ESOP is, how vesting works etc. If you are just interested in smart contract info go [here](#smart-contracts), for info on testing and deployment go [here](#development).
 
 ## What is ESOP and why we do it?
 ESOP stands for Employees Stock Options Plan. Many companies decide to involve their employees in company's success by offering them shares. Shares are typically available in form of options (mostly due to tax reasons) and are converted directly into cash when company has an IPO or gets acquired. There is a lot of interesting reasoning behind various ESOP's structures and a lot of discussions when it works best and when not. Here is a nice introduction: https://www.accion.org/sites/default/files/Accion%20Venture%20Lab%20-%20ESOP%20Best%20Practices.pdf
@@ -46,8 +46,8 @@ Sometimes people leave and ESOP smart contract handles that as well.
 
 1. Company may remove employee from ESOP smart contract and cancel all his/her options. This is called `bad leaver event` in legal wrapper and may happen when for example employee breaks the law and needs to be fired. As you can expect such event cannot be defined in smart contract (there's no proper oracle yet in court system ;>) so this definition remains in legal wrapper.
 2. Employee may just leave company and go working somewhere else. This case is more complicated.
-![fadeout](/doc/accelerated_vesting.jpg)
-As you can see, vesting stops at the moment employee stops working at the company and all vested options are issued to employee. From that time amount of `vested options` is slowly decreasing down to `residual amount` (value configurable). Such process is called `fadeout` and fadeout period equals period of time employee worked at company. Smart contract may be configured for full fadeout and to not do fadeout at all.
+![fadeout](/doc/esop_with_fadeout.jpg)
+As you can see, vesting stops at the moment employee stops working at the company and all vested options are issued to employee. From that time amount of `vested options` is slowly decreasing down to `residual amount` sometimes called `floor`. Such process is called `fadeout` and fadeout period equals period of time employee worked at company. Smart contract may be configured for full fadeout and to not do any fadeout at all.
 
 Terminated employee has no rights to `accelerated vesting` and no rights to `bonus options`.
 
@@ -151,29 +151,40 @@ Please note that options subscription form has terminology and content defined i
 
 ## Development
 ### Compiler
-We used solc 0.4.8 for mainnet deployment. `Dapple` framework that we use for Solidity tests compiles with c++ solc that you should install from repo: http://solidity.readthedocs.io/en/develop/installing-solidity.html.
+We use solc 0.4.8. `Dapple` framework that we use for Solidity tests compiles with c++ solc that you should install from repo: http://solidity.readthedocs.io/en/develop/installing-solidity.html.
 We use `truffle v3.2.1` for integration tests and compilation of deployed artifacts, which is using emscripten 0.4.8 solc build.
 (FYI: bytecode produced by c++ and emscripten matches: http://)
 
 ### Running unit (solidity) tests
-Solidity tests are run with `dapple`. This is unfortunate as `dapple` is discontinued and does not support libraries. There are a few things I liked about it: debug output, writing to CSV files from Solidity (nice thing for financial simulations). Anyway, I'll never use it again and I plan to port current tests to truffle.
-Solidity tests can be found in `sol_tests`, there are also shell scripts to make test easier.
+Solidity tests are run with `dapple`. This is unfortunate as `dapple` is discontinued and does not support libraries. There are a few things I liked about it: debug output, writing to CSV files from Solidity (nice thing for financial simulations), test for events and throws. Anyway, I'll never use it again and I plan to port current tests to truffle.
+Solidity tests can be found in `sol_tests`, there are also shell scripts to make testing easier.
 `./test.sh <test name>` will execute all test cases from test with given name. if name is not provided then all tests will be executed. For example  `./test.sh ReturnToPool` will run tests from `./sol_tests/Test.ReturnToPool.sol` file.
 
 There are a few interesting test contracts defined:
 * `EmpTester` which is a employee's proxy to ESOP contract that allows you to call its method with different senders.
-* `ESOPMaker` which created `ESOP` smart contract with and necessary dependencies.
+* `ESOPMaker` which created `ESOP` smart contract with and necessary dependencies. Here you can mainpulate `ESOP` and `OptionsCalculator` parameters to match your case.
 * `EmpReentry` that is doing re-entry attack on `ProceedsOptionsConverter`
 
-There is also a ESOP simulator that stores results in `./solc/simulations.csv`, you can run it from `./simulate.sh` script.
+There is also an ESOP simulator that stores results in `./solc/simulations.csv`, you can run it from `./simulate.sh` script.
 
 ### Running integration (js) tests
-Those tests are run in truffle from `./js_test.sh` script. Tests are defined in `./js_tests`. We use integration tests when we want to check smart contract behavior that spans many blocks, contracts are created and destroyed etc. `test.CodeUpdate.js` is a notable tests that demonstrated a whole procedure of code update of ESOP smart contract.
+We use integration tests when we want to check smart contract behavior that spans many blocks, contracts are created and destroyed etc. Those tests are run in truffle from `./js_test.sh` script. Tests are defined in `./js_tests`. There is a network defined in `truffle.js` called `test` for which deployment scripts are deploying example options converters and opening the ESOP.
+Run tests with:
+`./js_test.sh --network test`
+with testrepc run with
+`testrpc --gasLimit=0x1500000 -i=192837992`
 
-### Deployment on testrpc
-running testrpc with lower block gas limit ~ mainnet limit
-`testrpc --gasLimit=4000000  -i=192837991`
-`truffle deploy --network deployment`
+`test.CodeUpdate.js` is a notable test that demonstrated a whole procedure of code update of ESOP smart contract.
+
+### Test deployment
+We have defined following test deployments:
+**test_deployment** where block gas limit approximates mainnet limit
+Run testrpc with:
+`testrpc --gasLimit=4100000  -i=192837991 --port=8546`
+then run
+`truffle deploy --network test_deployment`
+
+**test** to run integration tests, see chapter above.
 
 ### Deployment on mainnet
 
