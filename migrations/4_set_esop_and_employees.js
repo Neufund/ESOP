@@ -6,7 +6,7 @@ const years = 365 * 24 * 60 * 60;
 
 module.exports = function (deployer, network, accounts) {
     // do not deploy options converters on mainnet
-    if (network !== 'live') {
+    if (network === 'test') {
         deployer.then(async function () {
             let esop = await ESOP.deployed();
             let companyAddress = await esop.companyAddress();
