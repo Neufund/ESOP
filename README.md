@@ -1,28 +1,28 @@
-# Legal and smart contracts framework to implement Employee Stock Options Plan
+# Smart contracts and legal wrapper for implementing Employee Stock Options Plan
 
 There is a lot of stuff below on what ESOP is, how vesting works etc. If you are just interested in smart contract info go [here](#smart-contracts), for info on testing and deployment go [here](#development).
 
 ## What is ESOP and why we do it?
-ESOP stands for Employees Stock Options Plan. Many companies decide to involve their employees in company's success by offering them shares. Shares are typically available in form of options (mostly due to tax reasons) and are converted directly into cash when company has an IPO or gets acquired. There is a lot of interesting reasoning behind various ESOP's structures and a lot of discussions when it works best and when not. Here is a nice introduction: https://www.accion.org/sites/default/files/Accion%20Venture%20Lab%20-%20ESOP%20Best%20Practices.pdf
+ESOP stands for Employees Stock Options Plan. Many companies decide to include employees in company's success by offering them shares. Shares are typically available in form of options (mostly due to tax reasons) and are converted directly into cash when company has an IPO or gets acquired. There is a lot of interesting reasoning behind various ESOP structures and opinions when it works and when not. Here is a nice introduction: https://www.accion.org/sites/default/files/Accion%20Venture%20Lab%20-%20ESOP%20Best%20Practices.pdf
 
-Neufund preaches what it prays and offers its employees ESOP via a smart contract where options are represented as Ethereum tokens. On the other hand employees are still provided with ESOP terms in readable English (we call it *legal wrapper*) which are generated from before mentioned smart contract. Such construct replaces paper agreement employee signs and adds many interesting things on top.
+Neufund preaches what it prays and offers its employees ESOP via a smart contract where options are represented as Ethereum tokens. Employees are still provided with ESOP terms in readable English (we call it *legal wrapper*) which is generated from before mentioned smart contract. Such construct replaces paper agreement employee signs and adds many interesting things on top.
 
-1. Process of assigning options, vesting and converting are immutable and transparent. That includes rules on changing rules. Trustless trust is to large degree provided.
-2. It is enforceable in off-chain court like standard paper agreement, *however* as smart contracts are self-enforcing a need for legal action should be negligible!
-3. Typical criticism of ESOP is that you need to wait till the exit or IPO to get your shares and money. This is too long for being a real incentive. **This is not the case with tokenized options.** Use of Ethereum token extends ways you can profit from your options. For example **you can convert them into ERC20 compliant tokens when company is doing its ICO** or **make options directly trade-able** (via migration mechanism described later).
-4. Smart contracts are self-enforcing and do their own book keeping. They are very cheap once written and tested. Together with companys/employee dapp (http://github.com/Neufund/...) [...]
+1. Process of assigning options, vesting and converting are immutable and transparent (including rules on changing rules). Trustless trust is to large degree provided.
+2. It is enforceable in off-chain court like standard paper agreement, *however* as smart contracts are self-enforcing a need for legal action should be negligible.
+3. Typical criticism of ESOP is that you need to wait till the exit or IPO to get your shares and money. This is too long for being a real incentive. **This is not the case with tokenized options.** Use of Ethereum token extends opportunities to profit from options. For example **you can convert them into ERC20 compliant tokens when company is doing its ICO** or **make options directly trade-able** (via migration mechanism described later).
+4. Smart contracts are self-enforcing and do all calculations and bookkeeping. They are very cheap once written and tested. ESOP d-app UI (https://github.com/Neufund/ESOP-ui) is easy to deploy with minimal maintenance costs.
 
 ## ESOP Algorithm
 ### ESOP Roles and Lifecycles
 There are 3 main roles in ESOP project:
-1. `owner` which represents company's sysadmin - deploys and upgrades smart contracts.
-2. `company` which represents company management. Transactions signed by this role are deemed to be executed by Neufund (in case of our ESOP deployment). There are several reasons to have a separate account for this, but primarily we do not want `owner` to execute any ESOP logic, instead we provide nice D-app which our CEO can directly use.
+1. `owner` which represents company's sysadmin that deploys and upgrades smart contracts.
+2. `company` which represents company management. Transactions signed by this role are deemed to be executed by Neufund (in case of our ESOP deployment). There are several reasons to have a separate account for this, but primarily we do not want `owner` to execute any ESOP logic, instead we provide nice d-app which our can be used by non-technical people.
 3. `employee` which corresponds to employee receiving and exercising options.
 
-Employee life within ESOP starts when company offers him/her options. Employee should sign the offer within provided deadline. This starts his/her employment period (counted from so called `issue date`) If employee leaves company then he goes to terminated state which also stops the vesting. Employee may be also fired in which case s/he is simply removed from employees list. Finally when exit/ICO etc. happens, conversion offer is made by company to employee which when accepted puts employee in converted state.
-Check `ESOPTypes.sol` for employees possible states and properties.
+Employee life within ESOP starts when company offers him/her options. Employee should sign the offer within provided deadline. This starts his/her employment period (counted from so called `issue date`) If employee leaves company then he goes to `terminated` state which also stops the vesting. Employee may be also fired in which case s/he is removed from contract. Finally when exit/ICO etc. happens, conversion offer is made by company to employee which when accepted puts employee in `converted` state.
+Check `ESOPTypes.sol` for employee's possible states and properties.
 
-ESOP itself has simple lifecycle. When deployed, it is in `new` state. It is opened by providing configuration parameters by `company` role. At that point all functions involving employees may happen. When there is conversion event like exit, `company` will switch ESOP into `conversion` state in which options may be exercised by employees.
+ESOP itself has simple lifecycle. When deployed, it is in `new` state. It is opened by providing configuration parameters by `company` role. At that point all actions involving employees may happen. When there is conversion event like exit, `company` will switch ESOP into `conversion` state in which options may be exercised by employees.
 
 ### Assigning new options
 Options are assigned to employees in two ways.
@@ -60,16 +60,16 @@ As you could expect there is no oracle for conversion events so those are define
 Here's how Neufund handles security when issuing options.
 
 1. All our employees and company's dog get basic training in blockchain and security. We've published our training material here and here. May be pretty useful!
-2. All our employees get Nano Ledger and store their private keys in there. We encourage employees to store their backup codes in some safe place (like notary).
-3. Backup codes of Neufund admin's Nano Ledger which is used to deploy smart contract and company management Nano Ledger are kept in safe at notary office.
-4. Options are offered via subscription forms implemented as d-apps where we enforce usage of Nano Ledger for our employees (however, we support Metamask and other web3 providers).
+2. All our employees get Nano Ledger and store their private keys in hardware wallets. We encourage employees to store their backup codes in some safe place (like at notary).
+3. Backup codes of Neufund admin's Nano Ledger which is used to deploy smart contract and company management Nano Ledger are kept in a safe at notary office.
+4. Options are offered via subscription forms implemented as d-app where we enforce usage of Nano Ledger for our employees (however, we support Metamask and other web3 providers).
 
 Also it is clear for everyone that if you loose your private key you will loose all your options.
 
 ## Smart Contracts
 ### `ESOP` contract
 `ESOP` smart contracts handles employees' lifecycle, manages options' pool and handles conversion offer via calling provided implementation of options conversion contracts. Implementation is pretty straightforward and functions more or less correspond to provisions in legal wrapper. Terminology is also preserved.
-All non-const functions return "businees logic" errors via return codes and throw only in case generic problems like no permission to call function or invalid state of smart contracts. Return codes correspond to `ReturnCode` event, in case of `OK` return code, specific event is logged (like `EmployeeSignedToESOP`). I hope `revert` opcode gets implemented soon!
+All non-const functions return "logic" errors via return codes and can throw only in case of generic problems like no permission to call a function or invalid state of smart contracts. Return codes correspond to `ReturnCode` event, in case of `OK` return code, specific event is logged (like `EmployeeSignedToESOP`). I hope `revert` opcode gets implemented soon!
 `ESOP` aggregates the following contracts:
 * `OptionsCalculator` which handles all options calculations like computing vesting, fadeout etc. and after configuring provides just a set of public constant methods.
 * `EmployeesList` that contains iterable mapping of employees. Please note that `ESOP` is the sole writer to `EmployeesList` instance.
@@ -95,12 +95,12 @@ Please note that `owner` cannot execute any ESOP logic. S/he can deploy contract
 |Full fadeout|1 year|4 years|0|20%|10%|
 |Disable pool options, only extra|1 year|4 years|20%|10%|0|
 |Disable vesting, fadeout and bonus<sup>*</sup>|0|2 weeks|100%|0|10%|
-<sup>*</sup> this options was not thoroughly testes, 2 weeks vesting period equals deadline for employee signature, cannot be 0 as tests are not prepared for that.
+<sup>*</sup> this option was not thoroughly tested, 2 weeks vesting period equals deadline for employee signature, cannot be 0 as unit tests are not prepared for that.
 
 Neufund configuration sets options pool size to 1000080 and options per share to 360.
 
 ### Root of Trust
-`RoT` is an immutable, deployed once contract that points to other contracts that are deemed currently "supported/official/endorsed by company" etc. At this moment `RoT` points to current ESOP implementation (see code update and migration procedures). Our d-app uses `RoT` address (which never changes) to infer all other addresses it needs.
+`RoT` is an immutable, deployed-once contract that points to other contracts that are deemed currently "supported/official/endorsed by company" etc. At this moment `RoT` points to current ESOP implementation (see code update and migration procedures). Our d-app uses `RoT` address (which never changes) to infer all other addresses it needs.
 The right to change ESOP implementation and current owner `RoT` is with `company` not `owner`.
 
 ### Option Converters
@@ -127,12 +127,13 @@ Employee and company may agree to migrate to ESOP with different set of rules. T
 Migration process is strictly defined in the legal wrapper.
 
 ### TODO
-* `ESOPTypes` asks to be an library that defines `Employee` type. Update is simple however `dapple` test framework does not appear to support libraries anymore and currently I will not port all the test to truffle (it lacks many useful features - see later).
-* Options pool management functions (fadeout and options re-distribution, see `removeEmployeesWithExpiredSignaturesAndReturnFadeout`) should go to separate library. Why not now? See above.
-* Port all solidity tests from `dapple` (which is sadly discontinues) to `truffle`.
+* `ESOPTypes` should be a library that defines `Employee` type. Update is simple however `dapple` test framework does not appear to support libraries anymore and currently I will not port all the test to truffle (which lacks many useful features - see later).
+* Options pool management functions (fadeout and options re-distribution, see `removeEmployeesWithExpiredSignaturesAndReturnFadeout`) should go to separate library.
+* Port all solidity tests from `dapple` (which is sadly discontinued) to `truffle`.
+* Let employees allow company to recover their options if they loose their private key.
 
 ## Legal Wrapper
-Legal wrapper establishes ESOP and accompanying smart contracts as legally binding in off-chain court system. Please read the source document [here], it is really interesting!
+Legal wrapper establishes ESOP and accompanying smart contracts as legally binding in off-chain court system. Please read the source document /legal/ESOP.doc , it is really interesting!
 
 A fundamental problem we had to solve is **which contract form should prevail in case of conflict: computer code vs. terms in legal wrapper**. It's a story similar to multi-lingual legal documents (like you sign your ESOP with Chinese company which is originally in Chinese but translated to English).
 
