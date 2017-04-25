@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.8;
 
 contract BaseOptionsConverter {
 
@@ -15,7 +15,8 @@ contract BaseOptionsConverter {
   // deadline for employees to exercise options
   function getExercisePeriodDeadline() public constant returns (uint32);
 
-  // exercise of options for given employee and amount
+  // exercise of options for given employee and amount, please note that employee address may be 0
+  // .. in which case the intention is to burn options
   function exerciseOptions(address employee, uint poolOptions, uint extraOptions, uint bonusOptions,
     bool agreeToAcceleratedVestingBonusConditions) onlyESOP public;
 }

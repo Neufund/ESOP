@@ -1,6 +1,7 @@
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.8;
+import "./Types.sol";
 
-contract Migrations {
+contract Migrations is Destructable {
   address public owner;
   uint public last_completed_migration;
 

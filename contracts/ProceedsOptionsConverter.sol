@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.8;
 import './ERC20OptionsConverter.sol';
 
 contract ProceedsOptionsConverter is Ownable, ERC20OptionsConverter {
