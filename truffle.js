@@ -7,10 +7,16 @@ module.exports = {
       port: 8545,
       network_id: "*" // Match any network id
     },
-    deployment: {
+    test: {
       host: "localhost",
       port: 8545,
-      gas: 4000000, // close to current mainnet limit
+      gas: 4800000, // close to current ropsten limit
+      network_id: "192837992" // Match any network id
+    },
+    test_deployment: {
+      host: "localhost",
+      port: 8546,
+      gas: 4100000, // close to current mainnet limit
       network_id: "192837991" // Match any network id
     },
     paritydev: {
