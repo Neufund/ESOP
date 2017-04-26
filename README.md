@@ -5,7 +5,7 @@ There is a lot of stuff below on what ESOP is, how vesting works etc. If you are
 ## What is ESOP and why we do it?
 ESOP stands for Employees Stock Options Plan. Many companies decide to include employees in company's success by offering them shares. Shares are typically available in form of options (mostly due to tax reasons) and are converted directly into cash when company has an IPO or gets acquired. There is a lot of interesting reasoning behind various ESOP structures and opinions when it works and when not. Here is a nice introduction: https://www.accion.org/sites/default/files/Accion%20Venture%20Lab%20-%20ESOP%20Best%20Practices.pdf
 
-Neufund preaches what it prays and offers its employees ESOP via a smart contract where options are represented as Ethereum tokens. Employees are still provided with ESOP terms in readable English (we call it *legal wrapper*) which is generated from before mentioned smart contract. Such construct replaces paper agreement employee signs and adds many interesting things on top.
+Neufund eats its own food and offers employees ESOP via a smart contract where options are represented as Ethereum tokens. Employees are still provided with ESOP terms in readable English (we call it *legal wrapper*) which is generated from before mentioned smart contract. Such construct replaces paper agreement employee signs and adds many interesting things on top.
 
 1. Process of assigning options, vesting and converting are immutable and transparent (including rules on changing rules). Trustless trust is to large degree provided.
 2. It is enforceable in off-chain court like standard paper agreement, *however* as smart contracts are self-enforcing a need for legal action should be negligible.
@@ -54,13 +54,13 @@ Terminated employee has no rights to `accelerated vesting` and no rights to `bon
 ### What is options conversion?
 Here is the most interesting thing about ESOP smart contract. At some point in time (called `conversion event`), if company is successful it gets acquired or does an IPO and shareholders make a lot of money. This is what happens classically and we fully support it. We, however, extend this definition to any ICO, tokenization event or even further by allowing direct trade of vested options.
 
-As you could expect there is no oracle for conversion events so those are defined in legal wrapper (see chapter 3). When such event happens employee may convert his/her options into shares, tokens or directly into EUR/ETH/BTC according to a Options Conversion Smart Contract (we have a few examples later) which will be provided by company when conversion event hapens.
+As you could expect there is no oracle for conversion events so those are defined in legal wrapper (see chapter 3). When such event happens employee may convert his/her options into shares, tokens or directly into EUR/ETH/BTC according to a Options Conversion Smart Contract (we have a few examples later) which will be provided by company when conversion event happens.
 
 ## Procedures and Security
 Here's how Neufund handles security when issuing options.
 
-1. All our employees and company's dog get basic training in blockchain and security. We've published our training material here and here. May be pretty useful!
-2. All our employees get Nano Ledger and store their private keys in hardware wallets. We encourage employees to store their backup codes in some safe place (like at notary).
+1. All our employees get basic training in blockchain and security. We've published our training material [here](https://docs.google.com/document/d/171b6zvukuuV2UhWLJm9GTrLpIRaW16-xprH-JsRnlfc/edit#). May be pretty useful!
+2. All our employees get [Nano Ledger](https://www.ledgerwallet.com/products/ledger-nano-s) and store their private keys in hardware wallets. We encourage employees to store their backup codes in some safe place (like at notary).
 3. Backup codes of Neufund admin's Nano Ledger which is used to deploy smart contract and company management Nano Ledger are kept in a safe at notary office.
 4. Options are offered via subscription forms implemented as d-app where we enforce usage of Nano Ledger for our employees (however, we support Metamask and other web3 providers).
 
@@ -133,28 +133,27 @@ Migration process is strictly defined in the legal wrapper.
 * Let employees allow company to recover their options if they loose their private key.
 
 ## Legal Wrapper
-Legal wrapper establishes ESOP and accompanying smart contracts as legally binding in off-chain court system. Please read the source document /legal/ESOP.doc , it is really interesting!
+Legal wrapper establishes ESOP and accompanying smart contracts as legally binding in off-chain legal system. Please read the source document in /legal folder, it is really interesting!
 
 A fundamental problem we had to solve is **which contract form should prevail in case of conflict: computer code vs. terms in legal wrapper**. It's a story similar to multi-lingual legal documents (like you sign your ESOP with Chinese company which is originally in Chinese but translated to English).
 
-* In case of ESOP agreement we have an asymmetric situation in terms of information and power. Employees are clearly at disadvantage in both. In such case, to make agreement legally binding, **it must be proven that employee could understand what s/he was signing**. Thus we had to make **legal wrapper to prevail over smart contract** as it is extremely easy for any employee to prove s/he could not understood the Solidity code and make court take his/her side. If there are any conflicts, English is the ground truth. This unfortunate situation will persist until there is a smart contract language that ordinary people can understand or they all learn Solidity. Whichever happens first.
-* In case of b2b agreements like when Limited Partner joins VC Fund, there is a symmetry both in information and power. This allows a smart contract to be a source of truth (if you are rich guy you can always ask your developer buddies to check the contract for you - it may be much cheaper than to ask lawyers to do the same). In case of b2b the legal wrapper may be limited to just the most important business terms and still hold in court.
+* In case of ESOP agreement we have an asymmetric situation in terms of information and power. Employees are considered at disadvantage in both. In such case, to make agreement legally binding, **it must be proven that employee could understand what s/he was signing**. Thus we had to make **legal wrapper to prevail over smart contract** as it is easy for an employee to prove s/he could not understood the Solidity code and make court take his/her side. If there are any conflicts, English language is to prevail. This situation will persist until there is a smart contract language that people are able to understand or they all learn Solidity. Whichever happens first.
+* In case of b2b agreements like when Limited Partner joins VC Fund, there is a symmetry both in information and power. This allows a smart contract to prevail (if you are rich person you can always ask your developer buddies to check the contract for you, still it may be much cheaper than to ask lawyers to do the same). In case of b2b the legal wrapper may be limited to just the most important business terms and still hold in court.
 
 Other fundamental problem is a possible conflict of spirit and letter of the law (remember TheDAO?). Can we have bugs in the code or all code is law? We are clearly on the side of spirit of law prevailing and our legal wrapper (and corresponding smart contract code!) contains **bug fixing provision** and **provision to change ESOP rules** in chapter 8.
 
 The same chapter defines a few other blockchain-related provisions like what we do in case of fork and what should happen when employee looses his/her private key (in short: s/he looses all their options so keep your keys safe).
 
-Technically, wrapper is just a text document stored in ipfs, whose hash is added to ESOP smart contract. This document is filled with employee-specific variables and may be printed for reference. As you could expect we do not translate EVM assembly to English.
+Technically, wrapper is just a text document stored in IPFS, whose hash is added to ESOP smart contract. This document is filled with employee-specific variables and may be printed for reference. As you could expect we do not translate EVM bytecode to English.
 
 ## UI/D-APP
-It's here.
-Please note that options subscription form has terminology and content defined in legal wrapper and d-app UI conforms to that.
+It's [here](https://github.com/Neufund/ESOP-ui). Please note that options subscription form has terminology and content defined in legal wrapper and d-app UI conforms to that.
 
 ## Development
 ### Compiler
 We use solc 0.4.8. `Dapple` framework that we use for Solidity tests compiles with c++ solc that you should install from repo: http://solidity.readthedocs.io/en/develop/installing-solidity.html.
 We use `truffle v3.2.1` for integration tests and compilation of deployed artifacts, which is using emscripten 0.4.8 solc build.
-(FYI: bytecode produced by c++ and emscripten matches: http://)
+(FYI: bytecode produced by c++ and emscripten is identical: https://github.com/ethereum/solidity-test-bytecode)
 
 ### Running unit (solidity) tests
 Solidity tests are run with `dapple`. This is unfortunate as `dapple` is discontinued and does not support libraries. There are a few things I liked about it: debug output, writing to CSV files from Solidity (nice thing for financial simulations), test for events and throws. Anyway, I'll never use it again and I plan to port current tests to truffle.
@@ -170,8 +169,10 @@ There is also an ESOP simulator that stores results in `./solc/simulations.csv`,
 
 ### Running integration (js) tests
 We use integration tests when we want to check smart contract behavior that spans many blocks, contracts are created and destroyed etc. Those tests are run in truffle from `./js_test.sh` script. Tests are defined in `./js_tests`. There is a network defined in `truffle.js` called `test` for which deployment scripts are deploying example options converters and opening the ESOP.
+
 Run tests with:
 `./js_test.sh --network test`
+
 with testrepc run with
 `testrpc --gasLimit=0x1500000 -i=192837992`
 
@@ -179,6 +180,7 @@ with testrepc run with
 
 ### Test deployment
 We have defined following test deployments:
+
 **test_deployment** where block gas limit approximates mainnet limit
 Run testrpc with:
 `testrpc --gasLimit=4100000  -i=192837991 --port=8546`
