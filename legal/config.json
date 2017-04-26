@@ -1,0 +1,6 @@
+{
+  "ssh-user":"mostafa@10.15.1.12",
+  "files" : ["20170419-ESOP"],
+  "docker" :"b1f1b3a59ee6" ,
+  "destination":"/var/lib/docker/volumes/ipfs_ipfs_exports/_data/"
+}
