@@ -4,3 +4,4 @@ build
 .idea
 node_modules
 test
+.DS_Store
