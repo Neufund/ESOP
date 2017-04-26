@@ -1,14 +1,17 @@
 {
   "name": "esop",
   "version": "1.0.0",
-  "description": "Legal and smart contracts framework to implement Employee Stock Options Plan",
+  "description": "Smart contracts and legal wrapper for implementing Employee Stock Options Plan",
   "dependencies": {
     "babel-register": "^6.24.1",
-    "dapple": "^0.8.48"
+    "dapple": "^0.8.48",
+    "truffle": "^3.2.1",
+    "solium": "^0.2.2"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./test.sh && ./js_test.sh --network test",
+    "lint": "solium -d contracts"
   },
   "repository": {
     "type": "git",
