@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 import "./ESOPTypes.sol";
 
+
 contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
   // cliff duration in seconds
   uint public cliffPeriod;
@@ -17,7 +18,7 @@ contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
   // options per share
   uint public optionsPerShare;
   // options strike price
-  uint constant public strikePrice = 1;
+  uint constant public STRIKE_PRICE = 1;
   // company address
   address public companyAddress;
 
@@ -175,8 +176,8 @@ contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
     external
     onlyCompany
   {
-    if (maxFadeoutPromille > FP_SCALE || bonusOptionsPromille > FP_SCALE || newEmployeePoolPromille > FP_SCALE ||
-      pOptionsPerShare == 0)
+    if (maxFadeoutPromille > FP_SCALE || bonusOptionsPromille > FP_SCALE || newEmployeePoolPromille > FP_SCALE
+     || pOptionsPerShare == 0)
       throw;
     cliffPeriod = pcliffPeriod;
     vestingPeriod = pvestingPeriod;

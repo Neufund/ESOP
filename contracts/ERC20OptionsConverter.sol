@@ -18,15 +18,15 @@ contract ERC20OptionsConverter is BaseOptionsConverter, TimeSource, Math {
   event Transfer(address indexed from, address indexed to, uint value);
 
   modifier converting() {
+    // throw after deadline
     if (currentTime() >= exercisePeriodDeadline)
-      // throw after deadline
       throw;
     _;
   }
 
   modifier converted() {
+    // throw before deadline
     if (currentTime() < optionsConversionDeadline)
-      // throw before deadline
       throw;
     _;
   }
@@ -65,8 +65,7 @@ contract ERC20OptionsConverter is BaseOptionsConverter, TimeSource, Math {
     return balances[_owner];
   }
 
-  function () payable
-  {
+  function () payable {
     throw;
   }
 

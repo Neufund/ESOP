@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 import "./Types.sol";
 
+
 contract CodeUpdateable is Ownable {
     // allows to stop operations and migrate data to different contract
     enum CodeUpdateState { CurrentCode, OngoingUpdate /*, CodeUpdated*/}

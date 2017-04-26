@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 import "./ESOPTypes.sol";
 
+
 contract ESOPMigration {
   modifier onlyOldESOP() {
     if (msg.sender != getOldESOP())

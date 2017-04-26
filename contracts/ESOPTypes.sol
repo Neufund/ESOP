@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 import "./Types.sol";
 
+
 contract ESOPTypes {
   // enums are numbered starting from 0. NotSet is used to check for non existing mapping
   enum EmployeeState { NotSet, WaitingForSignature, Employed, Terminated, OptionsExercised }
@@ -34,7 +35,7 @@ contract ESOPTypes {
     internal
     constant
     returns(uint[9] emp)
-    {
+  {
       // guess what: struct layout in memory is aligned to word (256 bits)
       // struct in storage is byte aligned
       assembly {
@@ -43,13 +44,13 @@ contract ESOPTypes {
         // answer: memory is not deallocated until transaction ends
         emp := employee
       }
-    }
+  }
 
-    function deserializeEmployee(uint[9] serializedEmployee)
-      internal
-      constant
-      returns (Employee memory emp)
-    {
-        assembly { emp := serializedEmployee }
-    }
+  function deserializeEmployee(uint[9] serializedEmployee)
+    internal
+    constant
+    returns (Employee memory emp)
+  {
+      assembly { emp := serializedEmployee }
+  }
 }
