@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 import "./Types.sol";
 
+
 contract RoT is Ownable {
     address public ESOPAddress;
     event ESOPAndCompanySet(address ESOPAddress, address companyAddress);

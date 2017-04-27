@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 import "./ESOPTypes.sol";
 
+
 contract EmployeesList is ESOPTypes, Ownable, Destructable {
   event CreateEmployee(address indexed e, uint32 poolOptions, uint32 extraOptions, uint16 idx);
   event UpdateEmployee(address indexed e, uint32 poolOptions, uint32 extraOptions, uint16 idx);
@@ -13,7 +14,6 @@ contract EmployeesList is ESOPTypes, Ownable, Destructable {
   function size() external constant returns (uint16) {
     return uint16(addresses.length);
   }
-
 
   function setEmployee(address e, uint32 issueDate, uint32 timeToSign, uint32 terminatedAt, uint32 fadeoutStarts,
     uint32 poolOptions, uint32 extraOptions, uint32 suspendedAt, EmployeeState state)
@@ -52,7 +52,8 @@ contract EmployeesList is ESOPTypes, Ownable, Destructable {
     external
     onlyOwner
   {
-    if (employees[e].idx == 0) throw;
+    if (employees[e].idx == 0)
+      throw;
     ChangeEmployeeState(e, employees[e].state, state);
     employees[e].state = state;
   }
@@ -61,7 +62,8 @@ contract EmployeesList is ESOPTypes, Ownable, Destructable {
     external
     onlyOwner
   {
-    if (employees[e].idx == 0) throw;
+    if (employees[e].idx == 0)
+      throw;
     UpdateEmployee(e, employees[e].poolOptions, employees[e].extraOptions, employees[e].idx);
     employees[e].fadeoutStarts = fadeoutStarts;
   }
@@ -88,7 +90,8 @@ contract EmployeesList is ESOPTypes, Ownable, Destructable {
     if (state != EmployeeState.Terminated)
         throw;
     Employee employee = employees[e]; // gets reference to storage and optimizer does it with one SSTORE
-    if (employee.idx == 0) throw;
+    if (employee.idx == 0)
+      throw;
     ChangeEmployeeState(e, employee.state, state);
     employee.state = state;
     employee.issueDate = issueDate;

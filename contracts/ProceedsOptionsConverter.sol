@@ -1,6 +1,7 @@
 pragma solidity ^0.4.8;
 import './ERC20OptionsConverter.sol';
 
+
 contract ProceedsOptionsConverter is Ownable, ERC20OptionsConverter {
   mapping (address => uint) internal withdrawals;
   uint[] internal payouts;
@@ -22,8 +23,7 @@ contract ProceedsOptionsConverter is Ownable, ERC20OptionsConverter {
     if (paymentId == payouts.length)
       return 0;
     uint payout = 0;
-    for (uint i = paymentId; i<payouts.length; i++)
-    {
+    for (uint i = paymentId; i<payouts.length; i++) {
       // it is safe to make payouts pro-rata: (1) token supply will not change - check converted/conversion modifiers
       // -- (2) balances will not change: check transfer override which limits transfer between accounts
       // NOTE: safeMul throws on overflow, can lock users out of their withdrawals if balance is very high
@@ -41,7 +41,7 @@ contract ProceedsOptionsConverter is Ownable, ERC20OptionsConverter {
         payout = this.balance; // send all
       //if(!msg.sender.call.value(payout)()) // re entry test
       //  throw;
-      if(!msg.sender.send(payout))
+      if (!msg.sender.send(payout))
         throw;
     }
     return payout;
@@ -58,5 +58,7 @@ contract ProceedsOptionsConverter is Ownable, ERC20OptionsConverter {
   }
 
   function ProceedsOptionsConverter(address esop, uint32 exerciseDeadline, uint32 conversionDeadline)
-    ERC20OptionsConverter(esop, exerciseDeadline, conversionDeadline) { }
+    ERC20OptionsConverter(esop, exerciseDeadline, conversionDeadline)
+  {
+  }
 }

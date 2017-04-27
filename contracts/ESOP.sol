@@ -37,7 +37,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
   // root of immutable root of trust pointing to given ESOP implementation
   address public rootOfTrust;
   // default period for employee signature
-  uint32 constant public minimumManualSignPeriod = 2 weeks;
+  uint32 constant public MINIMUM_MANUAL_SIGN_PERIOD = 2 weeks;
 
   // STATE
   // poolOptions that remain to be assigned
@@ -60,7 +60,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
 
   modifier hasEmployee(address e) {
     // will throw on unknown address
-    if(!employees.hasEmployee(e))
+    if (!employees.hasEmployee(e))
       throw;
     _;
   }
@@ -95,12 +95,12 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
   {
     // enumerate all employees that were offered poolOptions after than fromIdx -1 employee
     Employee memory emp;
-    for(uint i=idx; i< employees.size(); i++) {
+    for (uint i = idx; i < employees.size(); i++) {
       address ea = employees.addresses(i);
       if (ea != 0) { // address(0) is deleted employee
         emp = _loademp(ea);
         // skip employees with no poolOptions and terminated employees
-        if( emp.poolOptions > 0 && ( emp.state == EmployeeState.WaitingForSignature || emp.state == EmployeeState.Employed) ) {
+        if (emp.poolOptions > 0 && ( emp.state == EmployeeState.WaitingForSignature || emp.state == EmployeeState.Employed) ) {
           uint newoptions = optionsCalculator.calcNewEmployeePoolOptions(distributedOptions);
           emp.poolOptions += uint32(newoptions);
           distributedOptions -= uint32(newoptions);
@@ -122,7 +122,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     // we let anyone to call that method and spend gas on it
     Employee memory emp;
     uint32 ct = currentTime();
-    for(uint i=0; i< employees.size(); i++) {
+    for (uint i = 0; i < employees.size(); i++) {
       address ea = employees.addresses(i);
       if (ea != 0) { // address(0) is deleted employee
         var ser = employees.getSerializedEmployee(ea);
@@ -178,10 +178,10 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     returns (ReturnCodes)
   {
     // do not add twice
-    if(employees.hasEmployee(e)) {
+    if (employees.hasEmployee(e)) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
-    if (timeToSign < currentTime() + minimumManualSignPeriod) {
+    if (timeToSign < currentTime() + MINIMUM_MANUAL_SIGN_PERIOD) {
       return _logerror(ReturnCodes.TooLate);
     }
     if (poolCleanup) {
@@ -192,7 +192,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     uint poolOptions = optionsCalculator.calcNewEmployeePoolOptions(remainingPoolOptions);
     if (poolOptions > 0xFFFFFFFF || poolOptions == 0)
       throw;
-    employees.setEmployee(e, issueDate, timeToSign, 0, 0, uint32(poolOptions), extraOptions, 0, EmployeeState.WaitingForSignature );
+    employees.setEmployee(e, issueDate, timeToSign, 0, 0, uint32(poolOptions), extraOptions, 0, EmployeeState.WaitingForSignature);
     remainingPoolOptions -= poolOptions;
     totalExtraOptions += extraOptions;
     ESOPOffered(e, companyAddress, uint32(poolOptions), extraOptions);
@@ -211,10 +211,10 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     returns (ReturnCodes)
   {
     // do not add twice
-    if(employees.hasEmployee(e)) {
+    if (employees.hasEmployee(e)) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
-    employees.setEmployee(e, issueDate, timeToSign, 0, 0, 0, extraOptions, 0, EmployeeState.WaitingForSignature );
+    employees.setEmployee(e, issueDate, timeToSign, 0, 0, 0, extraOptions, 0, EmployeeState.WaitingForSignature);
     totalExtraOptions += extraOptions;
     ESOPOffered(e, companyAddress, 0, extraOptions);
     return ReturnCodes.OK;
@@ -305,8 +305,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
       returnedOptions = emp.poolOptions - optionsCalculator.calculateVestedOptions(terminatedAt, emp.issueDate, emp.poolOptions);
       returnedExtraOptions = emp.extraOptions - optionsCalculator.calculateVestedOptions(terminatedAt, emp.issueDate, emp.extraOptions);
       employees.terminateEmployee(e, emp.issueDate, terminatedAt, terminatedAt, EmployeeState.Terminated);
-    }
-    else if (termType == TerminationType.BadLeaver) {
+    } else if (termType == TerminationType.BadLeaver) {
       // bad leaver - employee is kicked out from ESOP, return all poolOptions
       returnedOptions = emp.poolOptions;
       returnedExtraOptions = emp.extraOptions;
@@ -326,7 +325,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     returns (ReturnCodes)
   {
     uint32 offerMadeAt = currentTime();
-    if (converter.getExercisePeriodDeadline() - offerMadeAt < minimumManualSignPeriod) {
+    if (converter.getExercisePeriodDeadline() - offerMadeAt < MINIMUM_MANUAL_SIGN_PERIOD) {
       return _logerror(ReturnCodes.TooLate);
     }
     // exerciseOptions must be callable by us
@@ -450,7 +449,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
     // with accelerated vesting if possible - take out all possible options
-    var (pool, extra, bonus) = optionsCalculator.calculateOptionsComponents(serializeEmployee(emp), currentTime(), 0, false);
+    var (pool, extra, _) = optionsCalculator.calculateOptionsComponents(serializeEmployee(emp), currentTime(), 0, false);
     delete migrations[msg.sender];
     // execute migration procedure
     migration.migrate(msg.sender, pool, extra);

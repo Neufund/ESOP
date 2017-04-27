@@ -1,5 +1,6 @@
 pragma solidity ^0.4.8;
 
+
 contract BaseOptionsConverter {
 
   // modifiers are inherited, check `owned` pattern

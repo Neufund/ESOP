@@ -1,5 +1,6 @@
 pragma solidity ^0.4.8;
 
+
 contract Ownable {
   // replace with proper zeppelin smart contract
   address public owner;
@@ -15,9 +16,11 @@ contract Ownable {
   }
 
   function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) owner = newOwner;
+    if (newOwner != address(0))
+      owner = newOwner;
   }
 }
+
 
 contract Destructable is Ownable {
   function selfdestruct() external onlyOwner {
@@ -51,7 +54,8 @@ contract Math {
 
   function safeAdd(uint a, uint b) internal constant returns (uint) {
     uint c = a + b;
-    if (!(c>=a && c>=b)) throw;
+    if (!(c>=a && c>=b))
+      throw;
     return c;
   }
 }
@@ -69,7 +73,8 @@ contract TimeSource {
 
   function mockTime(uint32 t) public {
     // no mocking on mainnet
-    if (block.number > 3316029) throw;
+    if (block.number > 3316029)
+      throw;
     mockNow = t;
   }
 }

@@ -3,3 +3,4 @@
 rm -r test/*
 cp -r js_tests/* test/
 truffle test "$@"
+exit $?
