@@ -56,6 +56,10 @@ contract ESOPMaker {
   RoT public root;
 
   function makeNFESOP() public returns (ESOP) {
+    return makeESOPWithParams(2000);
+  }
+
+  function makeESOPWithParams(uint32 residualAmount) public returns (ESOP) {
     root = new RoT();
     OptionsCalculator optcalc = new OptionsCalculator(address(this));
     EmployeesList emplist = new EmployeesList();
@@ -73,7 +77,7 @@ contract ESOPMaker {
     // e.openESOP(1 years, 4 years, 2000, 0, 0, 0, ESOPLegalWrapperIPFSHash) - no pool, just extra
     emplist.transferOwnership(e);
     // company calls this
-    optcalc.setParameters(0 years, 4 years, 2000, 2000, 1000, 360);
+    optcalc.setParameters(1 years, 4 years, residualAmount, 2000, 1000, 360);
     uint rc = uint(e.openESOP(1000080, ESOPLegalWrapperIPFSHash));
     if (rc != 0)
       throw;
