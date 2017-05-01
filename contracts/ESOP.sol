@@ -104,8 +104,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
           uint newoptions = optionsCalculator.calcNewEmployeePoolOptions(distributedOptions);
           emp.poolOptions += uint32(newoptions);
           distributedOptions -= uint32(newoptions);
-          employees.setEmployee(ea, emp.issueDate, emp.timeToSign, emp.terminatedAt, emp.fadeoutStarts, emp.poolOptions,
-            emp.extraOptions, emp.suspendedAt, emp.state);
+          _saveemp(ea, emp);
         }
       }
     }
@@ -192,7 +191,11 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     uint poolOptions = optionsCalculator.calcNewEmployeePoolOptions(remainingPoolOptions);
     if (poolOptions > 0xFFFFFFFF || poolOptions == 0)
       throw;
-    employees.setEmployee(e, issueDate, timeToSign, 0, 0, uint32(poolOptions), extraOptions, 0, EmployeeState.WaitingForSignature);
+    Employee memory emp = Employee({
+      issueDate: issueDate, timeToSign: timeToSign, terminatedAt: 0, fadeoutStarts: 0, poolOptions: uint32(poolOptions),
+      extraOptions: extraOptions, suspendedAt: 0, state: EmployeeState.WaitingForSignature, idx: 0
+    });
+    _saveemp(e, emp);
     remainingPoolOptions -= poolOptions;
     totalExtraOptions += extraOptions;
     ESOPOffered(e, companyAddress, uint32(poolOptions), extraOptions);
@@ -214,7 +217,30 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     if (employees.hasEmployee(e)) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
-    employees.setEmployee(e, issueDate, timeToSign, 0, 0, 0, extraOptions, 0, EmployeeState.WaitingForSignature);
+    Employee memory emp = Employee({
+      issueDate: issueDate, timeToSign: timeToSign, terminatedAt: 0, fadeoutStarts: 0, poolOptions: 0,
+      extraOptions: extraOptions, suspendedAt: 0, state: EmployeeState.WaitingForSignature, idx: 0
+    });
+    _saveemp(e, emp);
+    totalExtraOptions += extraOptions;
+    ESOPOffered(e, companyAddress, 0, extraOptions);
+    return ReturnCodes.OK;
+  }
+
+  function increaseEmployeeExtraOptions(address e, uint32 extraOptions)
+    external
+    onlyESOPOpen
+    onlyCompany
+    isCurrentCode
+    hasEmployee(e)
+    returns (ReturnCodes)
+  {
+    Employee memory emp = _loademp(e);
+    if (emp.state != EmployeeState.Employed) {
+      return _logerror(ReturnCodes.InvalidEmployeeState);
+    }
+    emp.extraOptions += extraOptions;
+    _saveemp(e, emp);
     totalExtraOptions += extraOptions;
     ESOPOffered(e, companyAddress, 0, extraOptions);
     return ReturnCodes.OK;
@@ -269,8 +295,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
       emp.suspendedAt = 0;
       ContinueSuspendedEmployee(e, toggledAt, suspendedPeriod);
     }
-    employees.setEmployee(e, emp.issueDate, emp.timeToSign, emp.terminatedAt,
-      emp.fadeoutStarts, emp.poolOptions, emp.extraOptions, emp.suspendedAt, emp.state);
+    _saveemp(e, emp);
     return ReturnCodes.OK;
   }
 
@@ -482,6 +507,11 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
 
   function _loademp(address e) private constant returns (Employee memory) {
     return deserializeEmployee(employees.getSerializedEmployee(e));
+  }
+
+  function _saveemp(address e, Employee memory emp) private {
+    employees.setEmployee(e, emp.issueDate, emp.timeToSign, emp.terminatedAt, emp.fadeoutStarts, emp.poolOptions,
+      emp.extraOptions, emp.suspendedAt, emp.state);
   }
 
   function completeCodeUpdate() public onlyOwner inCodeUpdate {
