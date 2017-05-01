@@ -93,9 +93,10 @@ Please note that `owner` cannot execute any ESOP logic. S/he can deploy contract
 |No cliff|0|4 years|20%|20%|10%|
 |No fadeout|1 year|4 years|100%|20%|10%|
 |Full fadeout|1 year|4 years|0|20%|10%|
-|Disable pool options, only extra|1 year|4 years|20%|10%|0|
-|Disable vesting, fadeout and bonus<sup>*</sup>|0|2 weeks|100%|0|10%|
-<sup>*</sup> this option was not thoroughly tested, 2 weeks vesting period equals deadline for employee signature, cannot be 0 as unit tests are not prepared for that.
+|Disable pool options, only extra<sup>*</sup>|1 year|4 years|20%|10%|0|
+|Disable vesting, fadeout and bonus<sup>**</sup>|0|2 weeks|100%|0|10%|
+<sup>*</sup> in that case pool option size is ignored, you can set it to any allowed value
+<sup>**</sup> this option was not thoroughly tested, 2 weeks vesting period equals deadline for employee signature, cannot be 0 as unit tests are not prepared for that.
 
 Neufund configuration sets options pool size to 1000080 and options per share to 360.
 
