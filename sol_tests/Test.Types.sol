@@ -56,7 +56,7 @@ contract ESOPMaker {
   RoT public root;
 
   function makeNFESOP() public returns (ESOP) {
-    return makeESOPWithParams(2000);
+    return makeESOPWithParams(5000);
   }
 
   function makeESOPWithParams(uint32 residualAmount) public returns (ESOP) {
