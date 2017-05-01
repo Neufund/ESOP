@@ -171,7 +171,7 @@ contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
     return calculateOptions(serializeEmployee(emp), calcAtTime, 0, false);
   }
 
-  function setParameters(uint32 pcliffPeriod, uint32 pvestingPeriod, uint32 pResidualAmountPromille,
+  function setParameters(uint32 pCliffPeriod, uint32 pVestingPeriod, uint32 pResidualAmountPromille,
     uint32 pbonusOptionsPromille, uint32 pNewEmployeePoolPromille, uint32 pOptionsPerShare)
     external
     onlyCompany
@@ -179,8 +179,10 @@ contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
     if (maxFadeoutPromille > FP_SCALE || bonusOptionsPromille > FP_SCALE || newEmployeePoolPromille > FP_SCALE
      || pOptionsPerShare == 0)
       throw;
-    cliffPeriod = pcliffPeriod;
-    vestingPeriod = pvestingPeriod;
+    if (pCliffPeriod > pVestingPeriod)
+      throw;
+    cliffPeriod = pCliffPeriod;
+    vestingPeriod = pVestingPeriod;
     maxFadeoutPromille = FP_SCALE - pResidualAmountPromille;
     bonusOptionsPromille = pbonusOptionsPromille;
     newEmployeePoolPromille = pNewEmployeePoolPromille;
