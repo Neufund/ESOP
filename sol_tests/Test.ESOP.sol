@@ -233,14 +233,14 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 100, false);
     emp1.employeeSignsToESOP();
     // then after a year employee terminated regular
-    ct += 1 years;
+    ct += uint32(3 * esop.optionsCalculator().vestingPeriod() / 4);
     esop.mockTime(ct);
     if (terminate)
       rc = uint8(esop.terminateEmployee(emp1, ct, 0));
     assertEq(uint(rc), 0);
     uint optsOnTerm = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
-    // then after a month fund converts
-    ct += 30 days;
+    // then after a year fund converts
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 4);
     esop.mockTime(ct);
     converter = new DummyOptionsConverter(address(esop), ct + 1 years);
     uint8 rc = uint8(esop.offerOptionsConversion(converter));
@@ -249,7 +249,10 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     var sere = esop.employees().getSerializedEmployee(address(emp1));
     uint optionsAtConv = esop.optionsCalculator().calculateOptions(sere, ct, esop.conversionOfferedAt(), true);
     // opts on term should be different
-    if (optsOnTerm == optionsAtConv) {
+    if (terminate && esop.optionsCalculator().residualAmountPromille() >= 3 * esop.optionsCalculator().FP_SCALE() / 4) {
+      //@warn this test must have residual amount < 75
+      return;
+    } else if (optsOnTerm == optionsAtConv) {
       //@warn fadeout is not applied `uint optsOnTerm` == `uint optionsAtConv`
       fail();
     }
@@ -440,6 +443,123 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     rc = uint8(esop.terminateEmployee(emp1, ct + 3 weeks, 1));
     assertEq(uint(rc), 0);
     assertEq(initialOptions, esop.remainingPoolOptions());
+  }
+
+  function testCodeUpdateCancel() {
+    esop.beginCodeUpdate();
+    esop.cancelCodeUpdate();
+    // should be able to call normally
+    uint32 ct = esop.currentTime();
+    // will throw
+    uint rc = uint(esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false));
+    assertEq(rc, 0);
+  }
+
+  function testThrowOnCodeUpdate() {
+    // business logic should be prohibited form execution, except constant methods
+    esop.beginCodeUpdate();
+    uint32 ct = esop.currentTime();
+    // will throw
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
+  }
+
+  function testSignTooLate() {
+    uint32 ct = esop.currentTime();
+    uint rc = uint(esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false));
+    assertEq(rc, 0);
+    esop.mockTime(ct);
+    ct += 2 weeks;
+    // should sign OK on deadline
+    rc = emp1.employeeSignsToESOP();
+    assertEq(rc, 0, "on deadline");
+    ct += uint32(esop.optionsCalculator().cliffPeriod());
+    esop.mockTime(ct);
+    uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
+    EmpTester emp2 = new EmpTester();
+    emp2._target(esop);
+    rc = uint(esop.offerOptionsToEmployee(emp2, ct, ct + 2 weeks, 0, false));
+    assertEq(rc, 0);
+    ct += 2 weeks + 1;
+    esop.mockTime(ct);
+    rc = emp2.employeeSignsToESOP();
+    assertEq(rc, 2, "on deadline + 1");
+    // and should be removed
+    assertEq(esop.remainingPoolOptions() + maxopts, esop.totalPoolOptions(), "emp2 removed");
+  }
+
+  function testOfferDeadlineTooSoon() {
+    uint32 ct = esop.currentTime();
+    uint rc = uint(esop.offerOptionsToEmployeeOnlyExtra(emp1, ct, ct + esop.MINIMUM_MANUAL_SIGN_PERIOD() - 1, 100000));
+    assertEq(rc, 2);
+    rc = uint(esop.offerOptionsToEmployee(emp1, ct, ct + esop.MINIMUM_MANUAL_SIGN_PERIOD() - 1, 100000, false));
+    assertEq(rc, 2);
+  }
+
+  function testConversionOfferDeadlineToSoon() {
+    uint32 ct = esop.currentTime();
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 10000, false);
+    emp1.employeeSignsToESOP();
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
+    esop.mockTime(ct);
+    converter = new DummyOptionsConverter(address(esop), ct + esop.MINIMUM_MANUAL_SIGN_PERIOD() - 1 days);
+    uint rc = uint(esop.offerOptionsConversion(converter));
+    assertEq(rc, 2, "converter");
+  }
+
+  function testIncreaseExtraOptions() {
+    uint32 ct = esop.currentTime();
+    uint rc = uint(esop.offerOptionsToEmployeeOnlyExtra(emp1, ct, ct + 2 weeks, 100000));
+    assertEq(rc, 0);
+    emp1.employeeSignsToESOP();
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
+    esop.mockTime(ct);
+    esop.increaseEmployeeExtraOptions(emp1, 20000);
+    uint options = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
+    assertEq(esop.totalExtraOptions(), 120000, "total extra pool");
+    assertEq(options, divRound(120000,2), "vested");
+  }
+
+  function testFadeoutMoreThanCliff() {
+    // make ESOP with huge residual amount
+    esop = makeESOPWithParams(7000);
+    emp1._target(esop); // re-target employee proxy!
+    // terminate at cliff + 1s
+    uint32 ct = esop.currentTime();
+    uint rc = uint(esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false));
+    assertEq(rc, 0);
+    emp1.employeeSignsToESOP();
+    uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
+    ct += uint32(esop.optionsCalculator().cliffPeriod() + 1);
+    esop.mockTime(ct);
+    uint optionsAtCliff = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
+    if (optionsAtCliff >= divRound(esop.optionsCalculator().residualAmountPromille() * maxopts, esop.optionsCalculator().FP_SCALE())) {
+      //@warn this test requires options at cliff < residual amount
+      return;
+    }
+    // terminate employee
+    rc = uint(esop.terminateEmployee(emp1, ct, 0));
+    assertEq(rc, 0);
+    // move by cliff, still should be options at cliff
+    ct += uint32(esop.optionsCalculator().cliffPeriod());
+    uint finalOpts = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
+    assertEq(finalOpts, optionsAtCliff, "opts cliff == fade");
+    //@info maxopts `uint maxopts` at cliff `uint finalOpts`
+  }
+
+  function testFadeoutDuringCliff() {
+    uint32 ct = esop.currentTime();
+    uint rc = uint(esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false));
+    assertEq(rc, 0);
+    emp1.employeeSignsToESOP();
+    ct += uint32(esop.optionsCalculator().cliffPeriod() / 2);
+    esop.mockTime(ct);
+    // terminate employee
+    rc = uint(esop.terminateEmployee(emp1, ct, 0));
+    assertEq(rc, 0);
+    // move by cliff, still should be options at cliff
+    ct += uint32(esop.optionsCalculator().cliffPeriod());
+    uint options = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
+    assertEq(options, 0, "opts fade == 0");
   }
 
   function testMockTime() {
