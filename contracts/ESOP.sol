@@ -148,7 +148,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     }
   }
 
-  function openESOP(uint32 ptotalPoolOptions, bytes pESOPLegalWrapperIPFSHash)
+  function openESOP(uint32 pTotalPoolOptions, bytes pESOPLegalWrapperIPFSHash)
     external
     onlyCompany
     onlyESOPNew
@@ -156,11 +156,11 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     returns (ReturnCodes)
   {
     // options are stored in unit32
-    if (ptotalPoolOptions > 1100000) {
+    if (pTotalPoolOptions > 1100000 || pTotalPoolOptions < 10000) {
       return _logerror(ReturnCodes.InvalidParameters);
     }
 
-    totalPoolOptions = ptotalPoolOptions;
+    totalPoolOptions = pTotalPoolOptions;
     remainingPoolOptions = totalPoolOptions;
     ESOPLegalWrapperIPFSHash = pESOPLegalWrapperIPFSHash;
 
@@ -189,7 +189,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
       removeEmployeesWithExpiredSignaturesAndReturnFadeout();
     }
     uint poolOptions = optionsCalculator.calcNewEmployeePoolOptions(remainingPoolOptions);
-    if (poolOptions > 0xFFFFFFFF || poolOptions == 0)
+    if (poolOptions > 0xFFFFFFFF)
       throw;
     Employee memory emp = Employee({
       issueDate: issueDate, timeToSign: timeToSign, terminatedAt: 0, fadeoutStarts: 0, poolOptions: uint32(poolOptions),
@@ -216,6 +216,9 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     // do not add twice
     if (employees.hasEmployee(e)) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
+    }
+    if (timeToSign < currentTime() + MINIMUM_MANUAL_SIGN_PERIOD) {
+      return _logerror(ReturnCodes.TooLate);
     }
     Employee memory emp = Employee({
       issueDate: issueDate, timeToSign: timeToSign, terminatedAt: 0, fadeoutStarts: 0, poolOptions: 0,
