@@ -50,12 +50,13 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math {
   function procERC20OptionsConverter(ERC20OptionsConverter converter, uint32 ct)
     returns (EmpTester, EmpTester, EmpTester)
   {
-    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 100, false);
     EmpTester emp2 = new EmpTester();
-    esop.offerOptionsToEmployee(emp2, ct, ct + 2 weeks, 0, false);
+    esop.offerOptionsToEmployee(emp2, ct, ct + 2 weeks, 400, false);
     EmpTester emp3 = new EmpTester();
-    esop.offerOptionsToEmployee(emp3, ct, ct + 2 weeks, 0, false);
+    esop.offerOptionsToEmployee(emp3, ct, ct + 2 weeks, 800, false);
     uint poolOptions = esop.totalPoolOptions() - esop.remainingPoolOptions();
+    uint extraOptions = esop.totalExtraOptions();
     emp1._target(esop);
     emp2._target(esop);
     emp3._target(esop);
@@ -74,8 +75,11 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math {
     emp2.employeeExerciseOptions(true);
     emp3.employeeExerciseOptions(true);
     // all options converted + exit bonus
-    if (absDiff(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.optionsCalculator().bonusOptionsPromille(), esop.optionsCalculator().FP_SCALE())) > 1)
-      assertEq(converter.totalSupply(), poolOptions + divRound(poolOptions*esop.optionsCalculator().bonusOptionsPromille(), esop.optionsCalculator().FP_SCALE()));
+    if (absDiff(converter.totalSupply() - extraOptions,
+      poolOptions + divRound(poolOptions*esop.optionsCalculator().bonusOptionsPromille(), esop.optionsCalculator().FP_SCALE())) > 1) {
+      assertEq(converter.totalSupply() - extraOptions,
+        poolOptions + divRound(poolOptions*esop.optionsCalculator().bonusOptionsPromille(), esop.optionsCalculator().FP_SCALE()));
+    }
 
     return (emp1, emp2, emp3);
   }
@@ -211,9 +215,9 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math {
     EmpTester emp0 = new EmpTester();
     EmpTester empx = new EmpTester();
     uint32 ct = esop.currentTime();
-    esop.offerOptionsToEmployee(emp0, ct, ct + 2 weeks, 0, false);
-    esop.offerOptionsToEmployee(empx, ct, ct + 2 weeks, 0, false);
-    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 0, false);
+    esop.offerOptionsToEmployee(emp0, ct, ct + 2 weeks, 100, false);
+    esop.offerOptionsToEmployee(empx, ct, ct + 2 weeks, 400, false);
+    esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 2876, false);
     emp1._target(esop);
     emp1.employeeSignsToESOP();
     emp0._target(esop);
@@ -235,7 +239,7 @@ contract TestOptionConverters is Test, ESOPMaker, Reporter, ESOPTypes, Math {
     emp1._target(converter);
     emp1.malicious_withdraw();
     //uint cb = emp1.withdraw();
-    uint expbalance = (5 ether * emp1b) / converter.totalSupply();
+    uint expbalance = divRound((5 ether * emp1b), converter.totalSupply());
     assertEq(emp1.balance, expbalance, "no re-entry");
     uint stolen = emp1.balance - expbalance;
     //@warn `uint stolen` wei stolen
