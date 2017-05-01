@@ -191,8 +191,26 @@ then run
 
 ### Deployment on mainnet
 
+### Make contract available in Etherscan
 
-## Steps to reproduce and verify bytecode deployed on mainnet
+1. Put all contract files in one .sol files, remove imports etc. (is there Solidity preprocessor?)
+2. Put this code into form in Etherscan, choose a compiler version
+3. If smart contract has a constructor first obtain constructor parameters like for ESOP those would be
+```
+0x279084bb08100eebdb76b5d4eb250ecf0f12f29d options
+0x54bd298c02177d717617d643bf9aedab7314b576 emp
+0xa88828cbbd18244592f4bdd5f536648f95293427 rot
+0x1078291bbcc539f51559f14bc57d1575d3801df8 comp
+```
+4. Insert combined file into Remix, then Create contract by giving parameters, put addresses in quotes like
+`"0x1078291bbcc539f51559f14bc57d1575d3801df8", "0xa88828cbbd18244592f4bdd5f536648f95293427", "0x279084bb08100eebdb76b5d4eb250ecf0f12f29d", "0x54bd298c02177d717617d643bf9aedab7314b576"`
+5. Use debugger to check callcode of create transaction. At the end of the Call Data, you'll find constructor parameters
+6. You'll find them by comparing with bytecode, example
+`0000000000000000000000001078291bbcc539f51559f14bc57d1575d3801df8000000000000000000000000a88828cbbd18244592f4bdd5f536648f95293427000000000000000000000000279084bb08100eebdb76b5d4eb250ecf0f12f29d00000000000000000000000054bd298c02177d717617d643bf9aedab7314b576`
+7. Paste this into Etherescan and run,
+
+## Steps to reproduce and verify bytecode deployed on mainnet/ropsten
+
 
 
 --------------------
@@ -204,6 +222,14 @@ ESOP.at(ESOP.address).rootOfTrust()
 # setting up dev chain on parity and get some eth
 parity --chain dev --jsonrpc-port 8444 ui
 https://github.com/paritytech/parity/wiki/Private-development-chain
+
+# run parity with unlocked account (deployment)
+parity --chain dev --jsonrpc-cors "http://localhost:8081" --jsonrpc-hosts="all" --jsonrpc-port 8444 --unlock 0x00a329c0648769A73afAc7F9381E08FB43dBEA72,0x81866642828E92Aa2659F49925575827596b3443 --password ~/paritypass
+# deploy with truffle
+truffle migrate --network paritydev
+
+# when you get `RPC io error: Address already in use (os error 98)` in parity remove pipe
+rm /home/rudolfix/.local/share/io.parity.ethereum/jsonrpc.ipc
 
 ```
 fineprints:
