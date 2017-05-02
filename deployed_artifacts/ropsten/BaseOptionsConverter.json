@@ -1,0 +1,63 @@
+{
+  "contract_name": "BaseOptionsConverter",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "employee",
+          "type": "address"
+        },
+        {
+          "name": "poolOptions",
+          "type": "uint256"
+        },
+        {
+          "name": "extraOptions",
+          "type": "uint256"
+        },
+        {
+          "name": "bonusOptions",
+          "type": "uint256"
+        },
+        {
+          "name": "agreeToAcceleratedVestingBonusConditions",
+          "type": "bool"
+        }
+      ],
+      "name": "exerciseOptions",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getExercisePeriodDeadline",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getESOP",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1493741717708
+}

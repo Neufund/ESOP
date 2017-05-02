@@ -1,0 +1,42 @@
+{
+  "contract_name": "ESOPMigration",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getOldESOP",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "employee",
+          "type": "address"
+        },
+        {
+          "name": "poolOptions",
+          "type": "uint256"
+        },
+        {
+          "name": "extraOptions",
+          "type": "uint256"
+        }
+      ],
+      "name": "migrate",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1493741717710
+}
