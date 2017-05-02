@@ -9,6 +9,7 @@ contract TestFrontier is Test, ESOPMaker, Reporter, ESOPTypes, Math
 {
     EmpTester emp1;
     ESOP esop;
+    DummyOptionsConverter converter;
 
   function setUp() {
     emp1 = new EmpTester();
@@ -16,7 +17,5 @@ contract TestFrontier is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1._target(esop);
   }
 
-  function testExtractVestedOptionsComponents() {
 
-  }
 }

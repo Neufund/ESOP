@@ -1,0 +1,471 @@
+{
+  "contract_name": "EmployeesList",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "e",
+          "type": "address"
+        }
+      ],
+      "name": "hasEmployee",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "e",
+          "type": "address"
+        }
+      ],
+      "name": "getSerializedEmployee",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256[9]"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "e",
+          "type": "address"
+        },
+        {
+          "name": "fadeoutStarts",
+          "type": "uint32"
+        }
+      ],
+      "name": "setFadeoutStarts",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "e",
+          "type": "address"
+        },
+        {
+          "name": "issueDate",
+          "type": "uint32"
+        },
+        {
+          "name": "terminatedAt",
+          "type": "uint32"
+        },
+        {
+          "name": "fadeoutStarts",
+          "type": "uint32"
+        },
+        {
+          "name": "state",
+          "type": "uint8"
+        }
+      ],
+      "name": "terminateEmployee",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "e",
+          "type": "address"
+        },
+        {
+          "name": "state",
+          "type": "uint8"
+        }
+      ],
+      "name": "changeState",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "e",
+          "type": "address"
+        }
+      ],
+      "name": "getEmployee",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32"
+        },
+        {
+          "name": "",
+          "type": "uint32"
+        },
+        {
+          "name": "",
+          "type": "uint32"
+        },
+        {
+          "name": "",
+          "type": "uint32"
+        },
+        {
+          "name": "",
+          "type": "uint32"
+        },
+        {
+          "name": "",
+          "type": "uint32"
+        },
+        {
+          "name": "",
+          "type": "uint32"
+        },
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "selfdestruct",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "e",
+          "type": "address"
+        },
+        {
+          "name": "issueDate",
+          "type": "uint32"
+        },
+        {
+          "name": "timeToSign",
+          "type": "uint32"
+        },
+        {
+          "name": "terminatedAt",
+          "type": "uint32"
+        },
+        {
+          "name": "fadeoutStarts",
+          "type": "uint32"
+        },
+        {
+          "name": "poolOptions",
+          "type": "uint32"
+        },
+        {
+          "name": "extraOptions",
+          "type": "uint32"
+        },
+        {
+          "name": "suspendedAt",
+          "type": "uint32"
+        },
+        {
+          "name": "state",
+          "type": "uint8"
+        }
+      ],
+      "name": "setEmployee",
+      "outputs": [
+        {
+          "name": "isNew",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "size",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "e",
+          "type": "address"
+        }
+      ],
+      "name": "removeEmployee",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "addresses",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "e",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "poolOptions",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "name": "extraOptions",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "name": "idx",
+          "type": "uint16"
+        }
+      ],
+      "name": "CreateEmployee",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "e",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "poolOptions",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "name": "extraOptions",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "name": "idx",
+          "type": "uint16"
+        }
+      ],
+      "name": "UpdateEmployee",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "e",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "oldState",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "name": "newState",
+          "type": "uint8"
+        }
+      ],
+      "name": "ChangeEmployeeState",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "e",
+          "type": "address"
+        }
+      ],
+      "name": "RemoveEmployee",
+      "type": "event"
+    }
+  ],
+  "unlinked_binary": "0x60606040525b60008054600160a060020a03191633600160a060020a03161790555b5b610f4b806100316000396000f300606060405236156100a95763ffffffff60e060020a60003504166307716dd281146100ae578063091157cb146100db5780632462f6f114610132578063281336b4146101565780632ed4a2c71461018c57806332648e09146101ad578063679d38e01461022e57806373ece9c41461023d5780638da5cb5b1461029e578063949d225d146102c7578063d108177a146102eb578063edf26d9b14610318578063f2fde38b14610344575b610000565b34610000576100c7600160a060020a036004351661035f565b604080519115158252519081900360200190f35b34610000576100f4600160a060020a036004351661038b565b60405180826101208083835b80518252602083111561012057601f199092019160209182019101610100565b50505090500191505060405180910390f35b3461000057610154600160a060020a036004351663ffffffff602435166104e7565b005b3461000057610154600160a060020a036004351663ffffffff6024358116906044358116906064351660ff608435166105ee565b005b3461000057610154600160a060020a036004351660ff602435166107b5565b005b34610000576101c6600160a060020a03600435166108ba565b6040805163ffffffff808b1682528981166020830152888116928201929092528682166060820152858216608082015284821660a082015290831660c082015260e0810182600481116100005760ff1681526020019850505050505050505060405180910390f35b3461000057610154610965565b005b34610000576100c7600160a060020a036004351663ffffffff60243581169060443581169060643581169060843581169060a43581169060c43581169060e4351660ff6101043516610991565b604080519115158252519081900360200190f35b34610000576102ab610d4d565b60408051600160a060020a039092168252519081900360200190f35b34610000576102d4610d5c565b6040805161ffff9092168252519081900360200190f35b34610000576100c7600160a060020a0360043516610d63565b604080519115158252519081900360200190f35b34610000576102ab600435610e69565b60408051600160a060020a039092168252519081900360200190f35b3461000057610154600160a060020a0360043516610e99565b005b600160a060020a03811660009081526001602052604090205460e860020a900461ffff1615155b919050565b610120604051908101604052806009905b600081526020019060019003908161039c5750506040805161012081018252600080825260208201819052918101829052606081018290526080810182905260a0810182905260c081018290529060e0820190815260006020918201819052600160a060020a038516815260018252604090819020815161012081018352815463ffffffff80821683526401000000008204811695830195909552680100000000000000008104851693820193909352606060020a830484166060820152608060020a83048416608082015260a060020a8304841660a082015260c060020a830490931660c08401529060e083019060ff60e060020a90910416600481116100005760048111610000578152905461ffff60e860020a90910481166020909201919091526101008201519192501615156104d557610000565b6104de81610ef1565b91505b50919050565b60005433600160a060020a0390811691161461050257610000565b600160a060020a03821660009081526001602052604090205460e860020a900461ffff16151561053157610000565b600160a060020a03821660008181526001602090815260409182902054825163ffffffff608060020a83048116825260a060020a8304169281019290925261ffff60e860020a909104168183015290517f872bac57d4f4dfabc41b1365cabe11f5d30c016baee0b96cdecbcd677a5be0309181900360600190a2600160a060020a038216600090815260016020526040902080546fffffffff0000000000000000000000001916606060020a63ffffffff8416021790555b5b5050565b6000805433600160a060020a0390811691161461060a57610000565b60038260048111610000571461061f57610000565b50600160a060020a0385166000908152600160205260409020805460e860020a900461ffff16151561065057610000565b85600160a060020a03167fbd797e32cc0b6c7ae8f2c18c2dedba492311d09bd4b55ae94ad3cc2bafd38dfb82600001601c9054906101000a900460ff16846040518083600481116100005760ff16815260200182600481116100005760ff1681526020019250505060405180910390a280548290829060e060020a60ff02191660e060020a8360048111610000570217905550805463ffffffff191663ffffffff868116919091176bffffffff000000000000000019166801000000000000000086831602176fffffffff0000000000000000000000001916606060020a858316021760c060020a63ffffffff02191680835560408051608060020a83048416815260a060020a8304909316602084015260e860020a90910461ffff168282015251600160a060020a038816917f872bac57d4f4dfabc41b1365cabe11f5d30c016baee0b96cdecbcd677a5be030916060918190039190910190a25b5b505050505050565b60005433600160a060020a039081169116146107d057610000565b600160a060020a03821660009081526001602052604090205460e860020a900461ffff1615156107ff57610000565b600160a060020a038216600081815260016020526040908190205490517fbd797e32cc0b6c7ae8f2c18c2dedba492311d09bd4b55ae94ad3cc2bafd38dfb9160e060020a900460ff169084908083600481116100005760ff16815260200182600481116100005760ff1681526020019250505060405180910390a2600160a060020a0382166000908152600160205260409020805482919060e060020a60ff02191660e060020a83600481116100005702179055505b5b5050565b600160a060020a0381166000908152600160205260408120805482918291829182918291829182919060e860020a900461ffff1615156108f957610000565b805463ffffffff8082169a5064010000000082048116995068010000000000000000820481169850606060020a820481169750608060020a82048116965060a060020a82048116955060c060020a820416935060e060020a900460ff1691505b50919395975091939597565b60005433600160a060020a0390811691161461098057610000565b600054600160a060020a0316ff5b5b565b600080548190819033600160a060020a039081169116146109b157610000565b600160a060020a038c1660009081526001602052604090205460e860020a900461ffff169150811515610aed575060025461ffff8114156109f157610000565b6001925080600101915060028054806001018281815481835581811511610a3d57600083815260209020610a3d9181019083015b80821115610a395760008155600101610a25565b5090565b5b505050916000526020600020900160005b8e909190916101000a815481600160a060020a030219169083600160a060020a03160217905550508b600160a060020a03167fd7c8f959cdcdb249d238ea3d756c6b22f79aa6e8b92f909ca4c53a20d9b16f0d888885604051808463ffffffff1663ffffffff1681526020018363ffffffff1663ffffffff1681526020018261ffff1661ffff168152602001935050505060405180910390a2610b48565b6040805163ffffffff808a1682528816602082015261ffff841681830152905160009450600160a060020a038e16917f872bac57d4f4dfabc41b1365cabe11f5d30c016baee0b96cdecbcd677a5be030919081900360600190a25b610120604051908101604052808c63ffffffff1681526020018b63ffffffff1681526020018a63ffffffff1681526020018963ffffffff1681526020018863ffffffff1681526020018763ffffffff1681526020018663ffffffff168152602001856004811161000057815261ffff8416602091820152600160a060020a038e166000908152600182526040908190208351815493850151928501516060860151608087015160a088015160c089015163ffffffff1990981663ffffffff9586161767ffffffff00000000191664010000000097861697909702969096176bffffffff000000000000000019166801000000000000000093851693909302929092176fffffffff0000000000000000000000001916606060020a918416919091021773ffffffff000000000000000000000000000000001916608060020a918316919091021777ffffffff0000000000000000000000000000000000000000191660a060020a938216939093029290921760c060020a63ffffffff02191660c060020a92909316919091029190911780825560e083015190829060e060020a60ff02191660e060020a83600481116100005702179055506101009190910151815461ffff90911660e860020a027fff0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9091161790555b5b50509998505050505050505050565b600054600160a060020a031681565b6002545b90565b60008054819033600160a060020a03908116911614610d8157610000565b50600160a060020a03821660009081526001602052604081205460e860020a900461ffff1690811115610e5d57600160a060020a038316600090815260016020526040902080547fff0000000000000000000000000000000000000000000000000000000000000016905560028054600019830161ffff169081101561000057906000526020600020900160005b8154600160a060020a036101009290920a82021916909155604051908416907f52d6abdca596d1c4a93f3df131dcf3a55ecaaa92ab3a0be58a15b98aab12d49b90600090a2600191506104e1565b600091505b5b50919050565b600281815481101561000057906000526020600020900160005b915054906101000a9004600160a060020a031681565b60005433600160a060020a03908116911614610eb457610000565b600160a060020a03811615610eec576000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0383161790555b5b5b50565b610120604051908101604052806009905b6000815260200190600190039081610f025750829150505b9190505600a165627a7a723058208b9c431360f079fab2ef0dc73f366a505292e5432092e5e665a01945ffddca4a0029",
+  "networks": {
+    "3": {
+      "events": {
+        "0xd7c8f959cdcdb249d238ea3d756c6b22f79aa6e8b92f909ca4c53a20d9b16f0d": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "e",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "poolOptions",
+              "type": "uint32"
+            },
+            {
+              "indexed": false,
+              "name": "extraOptions",
+              "type": "uint32"
+            },
+            {
+              "indexed": false,
+              "name": "idx",
+              "type": "uint16"
+            }
+          ],
+          "name": "CreateEmployee",
+          "type": "event"
+        },
+        "0x872bac57d4f4dfabc41b1365cabe11f5d30c016baee0b96cdecbcd677a5be030": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "e",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "poolOptions",
+              "type": "uint32"
+            },
+            {
+              "indexed": false,
+              "name": "extraOptions",
+              "type": "uint32"
+            },
+            {
+              "indexed": false,
+              "name": "idx",
+              "type": "uint16"
+            }
+          ],
+          "name": "UpdateEmployee",
+          "type": "event"
+        },
+        "0xbd797e32cc0b6c7ae8f2c18c2dedba492311d09bd4b55ae94ad3cc2bafd38dfb": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "e",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "oldState",
+              "type": "uint8"
+            },
+            {
+              "indexed": false,
+              "name": "newState",
+              "type": "uint8"
+            }
+          ],
+          "name": "ChangeEmployeeState",
+          "type": "event"
+        },
+        "0x52d6abdca596d1c4a93f3df131dcf3a55ecaaa92ab3a0be58a15b98aab12d49b": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "e",
+              "type": "address"
+            }
+          ],
+          "name": "RemoveEmployee",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0x3f42222c101401d6870d90d416deb32599347083",
+      "updated_at": 1493742107862
+    }
+  },
+  "schema_version": "0.0.5",
+  "updated_at": 1493742107862
+}

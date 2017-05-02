@@ -1,0 +1,72 @@
+{
+  "contract_name": "CodeUpdateable",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "codeUpdateState",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "cancelCodeUpdate",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "beginCodeUpdate",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "completeCodeUpdate",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "unlinked_binary": "0x60606040525b60008054600160a060020a03191633600160a060020a03161790555b5b6102b6806100316000396000f3006060604052361561005c5763ffffffff60e060020a60003504166379a958c281146100615780638da5cb5b1461008f578063950dff20146100b8578063ba3f41da146100c7578063c85c75b2146100d6578063f2fde38b146100e5575b610000565b346100005761006e610100565b6040518082600181116100005760ff16815260200191505060405180910390f35b346100005761009c610110565b60408051600160a060020a039092168252519081900360200190f35b34610000576100c561011f565b005b34610000576100c561017f565b005b34610000576100c56101e3565b005b34610000576100c5600160a060020a0360043516610232565b005b60005460a060020a900460ff1681565b600054600160a060020a031681565b60005433600160a060020a0390811691161461013a57610000565b600160005460ff60a060020a9091041660018111610000571461015c57610000565b6000805474ff0000000000000000000000000000000000000000191690555b5b5b565b60005433600160a060020a0390811691161461019a57610000565b6000805460a060020a900460ff166001811161000057146101ba57610000565b6000805474ff0000000000000000000000000000000000000000191660a060020a1790555b5b5b565b60005433600160a060020a039081169116146101fe57610000565b600160005460ff60a060020a9091041660018111610000571461022057610000565b600054600160a060020a0316ff5b5b5b565b60005433600160a060020a0390811691161461024d57610000565b600160a060020a03811615610285576000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0383161790555b5b5b505600a165627a7a72305820fc6a6f562d8479b8b5c195f2334704e6d2d5b82fed81f731d492dbc618c4886b0029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1493741717708
+}

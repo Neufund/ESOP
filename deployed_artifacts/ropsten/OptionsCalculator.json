@@ -1,0 +1,511 @@
+{
+  "contract_name": "OptionsCalculator",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "maxFadeoutPromille",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "t",
+          "type": "uint256"
+        },
+        {
+          "name": "vestingStarts",
+          "type": "uint256"
+        },
+        {
+          "name": "options",
+          "type": "uint256"
+        }
+      ],
+      "name": "calculateVestedOptions",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "issueDate",
+          "type": "uint32"
+        },
+        {
+          "name": "terminatedAt",
+          "type": "uint32"
+        },
+        {
+          "name": "poolOptions",
+          "type": "uint32"
+        },
+        {
+          "name": "extraOptions",
+          "type": "uint32"
+        },
+        {
+          "name": "suspendedAt",
+          "type": "uint32"
+        },
+        {
+          "name": "employeeState",
+          "type": "uint8"
+        },
+        {
+          "name": "calcAtTime",
+          "type": "uint32"
+        }
+      ],
+      "name": "simulateOptions",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "cliffPeriod",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "residualAmountPromille",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "t",
+          "type": "uint32"
+        },
+        {
+          "name": "issueDate",
+          "type": "uint32"
+        },
+        {
+          "name": "terminatedAt",
+          "type": "uint32"
+        },
+        {
+          "name": "options",
+          "type": "uint256"
+        },
+        {
+          "name": "vestedOptions",
+          "type": "uint256"
+        }
+      ],
+      "name": "applyFadeoutToOptions",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "companyAddress",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "FP_SCALE",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "STRIKE_PRICE",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "selfdestruct",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "vestingPeriod",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "bonusOptionsPromille",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "employee",
+          "type": "uint256[9]"
+        },
+        {
+          "name": "calcAtTime",
+          "type": "uint32"
+        },
+        {
+          "name": "conversionOfferedAt",
+          "type": "uint32"
+        },
+        {
+          "name": "disableAcceleratedVesting",
+          "type": "bool"
+        }
+      ],
+      "name": "calculateOptions",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "issuedPoolOptions",
+          "type": "uint256"
+        },
+        {
+          "name": "issuedExtraOptions",
+          "type": "uint256"
+        },
+        {
+          "name": "vestedOptions",
+          "type": "uint256"
+        }
+      ],
+      "name": "extractVestedOptionsComponents",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "pCliffPeriod",
+          "type": "uint32"
+        },
+        {
+          "name": "pVestingPeriod",
+          "type": "uint32"
+        },
+        {
+          "name": "pResidualAmountPromille",
+          "type": "uint32"
+        },
+        {
+          "name": "pbonusOptionsPromille",
+          "type": "uint32"
+        },
+        {
+          "name": "pNewEmployeePoolPromille",
+          "type": "uint32"
+        },
+        {
+          "name": "pOptionsPerShare",
+          "type": "uint32"
+        }
+      ],
+      "name": "setParameters",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "newEmployeePoolPromille",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "v1",
+          "type": "uint256"
+        },
+        {
+          "name": "v2",
+          "type": "uint256"
+        }
+      ],
+      "name": "absDiff",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "t",
+          "type": "uint32"
+        },
+        {
+          "name": "employee",
+          "type": "uint256[9]"
+        }
+      ],
+      "name": "calculateFadeoutToPool",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "optionsPerShare",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "uint256"
+        },
+        {
+          "name": "b",
+          "type": "uint256"
+        }
+      ],
+      "name": "safeMul",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "remainingPoolOptions",
+          "type": "uint256"
+        }
+      ],
+      "name": "calcNewEmployeePoolOptions",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "employee",
+          "type": "uint256[9]"
+        },
+        {
+          "name": "calcAtTime",
+          "type": "uint32"
+        },
+        {
+          "name": "conversionOfferedAt",
+          "type": "uint32"
+        },
+        {
+          "name": "disableAcceleratedVesting",
+          "type": "bool"
+        }
+      ],
+      "name": "calculateOptionsComponents",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "pCompanyAddress",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "constructor"
+    }
+  ],
+  "unlinked_binary": "0x60606040523461000057604051602080610e7283398101604052515b5b60008054600160a060020a03191633600160a060020a03161790555b60078054600160a060020a031916600160a060020a0383161790555b505b610e0d806100656000396000f300606060405236156101225763ffffffff60e060020a6000350416630204c16381146101275780632c244618146101465780632e50e3ff1461016e5780632f661946146101bb5780633057d5e0146101da57806342ca08cf146101f957806353e1ead9146102335780635573a34c1461025c57806362e888bb1461027b578063679d38e01461029a5780637313ee5a146102a95780638ad1896c146102c85780638b17ab2f146102e75780638c7a81401461034b5780638da5cb5b1461037a57806398519340146103a35780639dc43f2d146103d9578063a09ae0aa146103f8578063b1989a2b1461041d578063cf02ba9d1461047b578063d05c78da1461049a578063dcec5ecc146104bf578063ec4bfdd4146104e1578063f2fde38b14610551575b610000565b346100005761013461056c565b60408051918252519081900360200190f35b3461000057610134600435602435604435610572565b60408051918252519081900360200190f35b346100005761013463ffffffff60043581169060243581169060443581169060643581169060843581169060ff60a435169060c435166105c7565b60408051918252519081900360200190f35b34610000576101346106be565b60408051918252519081900360200190f35b34610000576101346106c4565b60408051918252519081900360200190f35b346100005761013463ffffffff600435811690602435811690604435166064356084356106cf565b60408051918252519081900360200190f35b346100005761024061075d565b60408051600160a060020a039092168252519081900360200190f35b346100005761013461076c565b60408051918252519081900360200190f35b3461000057610134610772565b60408051918252519081900360200190f35b34610000576102a7610777565b005b34610000576101346107a3565b60408051918252519081900360200190f35b34610000576101346107a9565b60408051918252519081900360200190f35b346100005760408051610120818101909252610134916004916101249183906009908390839080828437509395505063ffffffff84358116946020810135909116935060400135151591506107af9050565b60408051918252519081900360200190f35b34610000576103616004356024356044356107dc565b6040805192835260208301919091528051918290030190f35b3461000057610240610813565b60408051600160a060020a039092168252519081900360200190f35b34610000576102a763ffffffff60043581169060243581169060443581169060643581169060843581169060a43516610822565b005b34610000576101346108c8565b60408051918252519081900360200190f35b34610000576101346004356024356108ce565b60408051918252519081900360200190f35b346100005760408051610120808201909252610361916004803563ffffffff1692909161014491906024906009908390839080828437509395506108ec945050505050565b6040805192835260208301919091528051918290030190f35b3461000057610134610a38565b60408051918252519081900360200190f35b3461000057610134600435602435610a3e565b60408051918252519081900360200190f35b3461000057610134600435610a71565b60408051918252519081900360200190f35b346100005760408051610120818101909252610533916004916101249183906009908390839080828437509395505063ffffffff8435811694602081013590911693506040013515159150610a8b9050565b60408051938452602084019290925282820152519081900360600190f35b34610000576102a7600160a060020a0360043516610cf6565b005b60035481565b60008083851161058557600091506105be565b838503905060015481101561059d57600091506105be565b60025481106105ac57826105ba565b6105ba818402600254610d4e565b5b91505b5b509392505050565b6040805161012081018252600080825260208201819052918101829052606081018290526080810182905260a0810182905260c0810182905260e08101828152602001600061ffff16815250610120604051908101604052808a63ffffffff1681526020018a621275000163ffffffff1681526020018963ffffffff1681526020018963ffffffff1681526020018863ffffffff1681526020018763ffffffff1681526020018663ffffffff1681526020018560ff16600481116100005760048111610000578152600160209091015290506106af6106a582610d67565b84600060006107af565b91505b50979650505050505050565b60015481565b600354612710035b90565b60006000600060008663ffffffff168963ffffffff1610156106f357849350610751565b86890363ffffffff16925087870363ffffffff16915061071d600354612710038702612710610d4e565b905084811061072e57849350610751565b81831161074c576107458383038287030283610d4e565b810161074e565b805b93505b50505095945050505050565b600754600160a060020a031681565b61271081565b600181565b60005433600160a060020a0390811691161461079257610000565b600054600160a060020a0316ff5b5b565b60025481565b60045481565b60006000600060006107c388888888610a8b565b925092509250808284010193505b505050949350505050565b600080808415156107f3578392506000915061080a565b610801848702868801610d4e565b92505050808203815b50935093915050565b600054600160a060020a031681565b60075433600160a060020a0390811691161461083d57610000565b61271060035411806108525750612710600454115b806108605750612710600554115b8061086f575063ffffffff8116155b1561087957610000565b8463ffffffff168663ffffffff16111561089257610000565b63ffffffff8087166001558581166002558481166127100360035583811660045582811660055581166006555b5b505050505050565b60055481565b60008183116108df578282036108e3565b8183035b90505b92915050565b6040805161012081018252600080825260208201819052918101829052606081018290526080810182905260a0810182905260c0810182905260e08101829052610100810182905281908180808061094388610d95565b945061096e856040015163ffffffff16866000015163ffffffff16876080015163ffffffff16610572565b935061098f8986600001518760400151886080015163ffffffff16886106cf565b6109b2866060015187600001518860400151896080015163ffffffff16896106cf565b0392506109de856040015163ffffffff16866000015163ffffffff168760a0015163ffffffff16610572565b91506109ff89866000015187604001518860a0015163ffffffff16866106cf565b610a228660600151876000015188604001518960a0015163ffffffff16876106cf565b0390508281965096505b50505050509250929050565b60065481565b6000828202831580610a57575082848281156100005704145b1561012257809150610a69565b610000565b5b5092915050565b6000610a836005548302612710610d4e565b90505b919050565b6040805161012081018252600080825260208201819052918101829052606081018290526080810182905260a0810182905260c0810182905260e0810182905261010081018290528190819081808080808080610ae78f610d95565b975060048860e0015160048111610000571480610b10575060018860e001516004811161000057145b15610b245760009a508a9950899850610ce4565b60008d63ffffffff16118015610b4657508c63ffffffff168e63ffffffff1610155b96508760a0015188608001510163ffffffff1695508560001415610b735760009a508a9950899850610ce4565b876040015163ffffffff168e63ffffffff16108015610b9c57506000886040015163ffffffff16115b15610ba957600260e08901525b859450868015610bc5575060028860e001516004811161000057145b8015610bcf57508b155b9350831515610c655760038860e00151600481116100005714610c3f5760008860c0015163ffffffff16118015610c1557508d63ffffffff168860c0015163ffffffff16105b610c345760008d63ffffffff1611610c2d578d610c2f565b8c5b610c3a565b8760c001515b610c45565b87604001515b9250610c628363ffffffff16896000015163ffffffff1688610572565b94505b60038860e0015160048111610000571415610c9b57610c9887610c88578e610c8a565b8d5b895160408b015189896106cf565b94505b610cba886080015163ffffffff168960a0015163ffffffff16876107dc565b91509150818185610ccc576000610cdc565b610cdc6004548502612710610d4e565b5b9a509a509a505b50505050505050509450945094915050565b60005433600160a060020a03908116911614610d1157610000565b600160a060020a03811615610d49576000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0383161790555b5b5b50565b6000816002810484018115610000570490505b92915050565b610120604051908101604052806009905b6000815260200190600190039081610d785750829150505b919050565b6040805161012081018252600080825260208201819052918101829052606081018290526080810182905260a0810182905260c0810182905260e081018290526101000152805b9190505600a165627a7a72305820372faecf0cbdb20f24c760096c4db996e94ce9f1da0c3750878dbaff5a2d095a0029",
+  "networks": {
+    "3": {
+      "events": {},
+      "links": {},
+      "address": "0x376eaf60822099187533d9e7bd4fb3021159a2c3",
+      "updated_at": 1493742107925
+    }
+  },
+  "schema_version": "0.0.5",
+  "updated_at": 1493742107925
+}
