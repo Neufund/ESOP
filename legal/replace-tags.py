@@ -1,4 +1,9 @@
+#!/usr/bin/env python
+
 import sys,argparse,os,json,traceback
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 currentPath = os.path.dirname(os.path.realpath(__file__))
 
@@ -17,17 +22,25 @@ def replaceTags(fileName , output = None ,**tags):
       print ("File Converted successfully" + '%s/%s' % (currentPath, output))
    else:
       print(inputFile)
+import sys
+
+class MyParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.stderr.write('error: %s\n' % message)
+        self.print_help()
+        sys.exit(2)
+
 
 def main():
    requirements = [
       'input',
       'config',
    ]
-   parser = argparse.ArgumentParser()
-   for req in requirements:
-      parser.add_argument('--%s'%req, action='append')
-   parser.add_argument('--output', action='append')
+   parser = MyParser()
+   parser.add_argument('input', action='append', help='<html file name>')
+   parser.add_argument('config', action='append', help='<json with tag replacement file name>')
 
+   parser.add_argument('-o','--output', action='append')
    args = parser.parse_args()
 
    myDict = vars(args)
@@ -38,7 +51,7 @@ def main():
    fileChecking= None
    try:
       for r in requirements:
-         fileChecking = r
+         fileChecking = myDict[r][0]
          assert os.path.isfile('%s/%s'%(currentPath,myDict[r][0]))
 
       with open('%s/%s' % (currentPath, configFile), "r") as file:
