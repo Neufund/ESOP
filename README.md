@@ -120,7 +120,7 @@ Please note that `admin` cannot execute any ESOP logic. S/he can deploy contract
 
 <sup>**</sup> this option was not thoroughly tested, 2 weeks vesting period equals deadline for employee signature, cannot be 0 as unit tests are not prepared for that.
 
-Neufund configuration sets options pool size to 1000080 and options per share to 360.
+Neufund configuration sets options pool size to 1000080 and options per share to 360. When you set your own values please make sure that options pool size is evenly divisible by options per share so options correspond to integer number of shares. ESOP UI app will however prevent you from making this mistake.
 
 ### Root of Trust
 
