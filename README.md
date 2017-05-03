@@ -3,6 +3,7 @@
 There is a lot of stuff below on what ESOP is, how vesting works etc. If you are just interested in smart contract info go [here](#smart-contracts), for info on testing and deployment go [here](#development).
 
 ## What is ESOP and why we do it?
+
 ESOP stands for Employees Stock Options Plan. Many companies decide to allow employees to participate in company's long-term upside by offering them stock. Stock is typically available in form of options (mostly due to tax reasons) that are converted directly into cash when company has an IPO or gets acquired. There is a lot of interesting reasoning behind various ESOP structures and discussion when it works and when not. Here is a nice introduction: https://www.accion.org/sites/default/files/Accion%20Venture%20Lab%20-%20ESOP%20Best%20Practices.pdf
 
 Neufund eats its own food and offers employees ESOP via a smart contract where options are represented as Ethereum tokens. Employees are still provided with ESOP terms in readable English (we call it *ESOP Terms & Conditions Document*) which is generated from before mentioned smart contract. Such construct replaces paper agreement employee signs and adds many interesting things on top.
@@ -39,7 +40,7 @@ ESOP itself has simple lifecycle. When deployed, it is in `new` state. It change
 Options are assigned to employees in two ways:
 
 1. `pool options`: There is a pool of 1 000 000 options of which employee 1 gets 10% which is 100 000. Employee 2 gets 10% of what remains in the pool (that is 900 000 options) which equals 90 000 and so on and so on.
-2. `extra options`: Additional options allocated at descrition of the company.
+2. `extra options`: Additional options allocated at discretion of the company.
 
 The `pool options` allocates more to employees that came to work for us earlier, this is our preferred method for rewarding the risk taken. Both methods can be combined, then `pool options + extra options == issued options`
 
@@ -51,7 +52,7 @@ As you can see there is a period of time called `cliff period` during which empl
 
 Then during the `vesting period` (period configurable, also may be 0), number of options increases up until `issued options`. In case of exit, IPO, ICO etc. additional `bonus options` (for example 20%, configurable) are added on top of issued options.
 
-Please note that if exit, ICO etc. happens before `vesting period` is over, employee gets all `issued options` + `bonus` (we call this case `accelerated vesting.`).
+Please note that if exit, ICO etc. happens before `vesting period` is over, employee gets all `issued options` + `bonus` (we call this case `accelerated vesting`).
 
 ### What happens when employee stops working for a company?
 Sometimes people leave and ESOP smart contract handles that as well.
@@ -97,12 +98,12 @@ All non-const functions return "logic" errors via return codes and can throw onl
 * `ESOPTypes` defines `Employee` struct that is used everywhere in this project (I know, it should be a library)
 * `CodeUpdateable` provides method to lock ESOP contract state when migrating to updated code (see later)
 
-Ownership structure is worth mentioning. In `ESOP` and `OptionsCalculator` we have two owners:
+Access control structure is worth mentioning. In `ESOP` and `OptionsCalculator` we have two managing accounts:
 
-* `owner` which deploys and upgrades code
+* `admin` which deploys and upgrades code and corresponds to `owner` in `Ownable` base class.
 * `company` that represents company's management
 
-Please note that `owner` cannot execute any ESOP logic. S/he can deploy contracts and upgrade code but cannot open (activate) ESOP nor add employees.
+Please note that `admin` cannot execute any ESOP logic. S/he can deploy contracts and upgrade code but cannot open (activate) ESOP nor add employees.
 
 #### ESOP configuration examples
 
@@ -125,11 +126,11 @@ Neufund configuration sets options pool size to 1000080 and options per share to
 
 `RoT` is an immutable, deployed-once contract that points to other contracts that are deemed currently "supported/official/endorsed by company" etc. At this moment `RoT` points to current ESOP implementation (see code update and migration procedures). Our d-app uses `RoT` address (which never changes) to infer all other addresses it needs.
 
-The right to change ESOP implementation and current owner `RoT` is with `company` not `owner`.
+The right to choose new ESOP implementation and current owner `RoT` is with `company` not `admin`.
 
 ### Option Converters
 
-Options converter implementation will correspond to given conversion scenario (for example cash payout after exit is different from getting tokens in ICO). However, each such contract must derive from `BaseOptionsConverter` which is provided to `ESOP` smart contract by `company`.
+Options converter implementation will correspond to given conversion scenario (for example cash payout after exit is different from getting tokens in ICO). However, each such contract must derive from `BaseOptionsConverter` which is provided to `ESOP` smart contract by `company` role. According to ESOP Terms & Conditions Document this is on par with making with options conversion offer to employees so at this point ESOP goest into `conversion` state and stops accepting new employees.
 
 At minimum `exerciseOptions` function must be implemented (except two getters) that will be called by `ESOP` smart contract on behalf of employee when s/he decides to execute options. Please note that employee can burn his/her options - see comments in base class for details.
 We provide two implementations of `BaseOptionsConverter`:
@@ -151,7 +152,7 @@ Please note that all old ESOP contracts (including `ESOP`, `EmployeesList` and `
 
 ### Migration to new ESOP
 
-Employee and company may agree to migrate to ESOP with different set of rules. This happens via `ESOPMigration` smart contract that is provided by company and then accepted by employee. Please check comments around `allowEmployeeMigration` and `employeeMigratesToNewESOP` functions in `ESOP` for many interesting details.
+Employee and company may agree to migrate to ESOP with different terms and conditions. This happens via `ESOPMigration` smart contract that is provided by company and then accepted by employee. Please check comments around `allowEmployeeMigration` and `employeeMigratesToNewESOP` functions in `ESOP` for many interesting details.
 
 Migration process is strictly defined in ESOP Terms & Conditions Document.
 
@@ -178,7 +179,15 @@ The same chapter defines a few other blockchain-related provisions like what we 
 
 Technically, wrapper is just a text document stored in IPFS, whose hash is added to ESOP smart contract. This document is filled with employee-specific variables and may be printed for reference. As you could expect we do not translate EVM bytecode to English.
 
-## UI/D-APP
+### Customizing and storing your Terms document
+
+Document is available in Word (docx) and html (converted from Word, do not expect too much!). This document is a template within which several tags marked with curly braces needs to be replaced before document is stored in IPFS. We provide a simple python utility `legal/replace-tags.py` and a dictionary of tags to be replaced in `legal/ipfs_tags.json`.
+
+You should store customized document in IPFS (https://ipfs.io/), to make sure that is never forgotten by the network you should run your own node, add Terms to it and pin. We are using go implementation (https://github.com/ipfs/go-ipfs). The hash you obtain should be passed to ESOP smart contract by `company` role.
+
+Please note that some tags will be replaced in the d-app when Terms are generated for a given employee. You can inspect this list of tags in `legal/sc_tags.rv`.
+
+## ESOP UI D-APP
 
 It's [here](https://github.com/Neufund/ESOP-ui). Please note that options subscription form has terminology and content defined in ESOP Terms & Conditions Document and d-app UI conforms to that.
 
@@ -237,22 +246,22 @@ then run
 
 ### Deployment on mainnet or ropsten
 
-* run local parity () node configured for ropsten or mainnet. if you want extended Nano Ledger support, use Neufund's parity fork ()
+* run local parity (https://parity.io/) node configured for ropsten or mainnet. if you want extended Nano Ledger support, use Neufund's parity fork (https://github.com/Neufund/parity)
 
 ```
-# run parity on ropsten with custom derivation path
-
+# run parity on ropsten with custom derivation path (remove --hardware-wallet-key-path)
+parity ui --chain ropsten --jsonrpc-cors "http://localhost:8081" --jsonrpc-hosts="all" --jsonrpc-port 8444 --hardware-wallet-key-path "44'/60'/103'/0"
 # run parity on mainnet
 ```
 
-* create account for the `owner` role (at Neufund we use hardware wallet for that). insert `owner` address into network definition in truffle.js
+* create account for the `admin` role (at Neufund we use hardware wallet for that). insert `admin` address into network definition in truffle.js
 
 ```
 ropsten: {
     host: "localhost", // local parity ropsten node with nano attached
     port: 8444,
     network_id: "3",
-    from: '0xDba5a21D0B5DEAD8D63d5A4edf881005751211C2' // public key of owner role
+    from: '0xDba5a21D0B5DEAD8D63d5A4edf881005751211C2' // public key of admin role
 },
 ```
 * create account for the `company` role and place it in deployment script `migrations/2_deploy_ESOP.js`
@@ -272,7 +281,7 @@ if (network === 'live') {
     }
 ```
 
-* make sure owner account has some ether and then deploy with `truffle deploy --network ropsten`
+* make sure `admin` account has some ether and then deploy with `truffle deploy --network ropsten`
 * push artifact to build/ropsten so ESOP-ui can use it
 
 ### Make contract available in Etherscan
