@@ -36,12 +36,12 @@ ESOP itself has simple lifecycle. When deployed, it is in `new` state. It is ope
 
 ### Assigning new options
 
-Options are assigned to employees in two ways.
+Options are assigned to employees in two ways:
 
-1. A method preferred by us that rewards risk taken. It simply gives more options to employees that came to work for us earlier, nothing else matters. It works as follows: there is a pool of 1 000 000 options of which employee 1 gets 10% which is 100 000. Employee 2 gets 10% of what remains in the pool (that is 900 000 options) which equals 90 000 and so on and so on. We call options distributed in this way `pool options`.
-2. A method where company decides how much option it gives to employee. We call this options `extra options`.
+1. `pool options`: There is a pool of 1 000 000 options of which employee 1 gets 10% which is 100 000. Employee 2 gets 10% of what remains in the pool (that is 900 000 options) which equals 90 000 and so on and so on.
+2. `extra options`: Additional options allocated at descrition of the company.
 
-Both methods can be combined. `pool options + extra options == issued options`
+The `pool options` allocates more to employees that came to work for us earlier, this is our preferred method for rewarding the risk taken. Both methods can be combined, then `pool options + extra options == issued options`
 
 ### Employee's options over time
 Employee will not get all his/her options at the moment they are issued (however you can configure our smart contract to act in such way). Smart contract will release options up to all `issued options` with an algorithm called *vesting*.
