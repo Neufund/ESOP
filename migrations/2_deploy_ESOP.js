@@ -10,13 +10,17 @@ module.exports = function (deployer, network, accounts) {
         await deployer.deploy(RoT);
         let rot = await RoT.deployed();
         var companyAddress;
-        if (network === 'live')
-            companyAddress = ''; // provide company address that will manage contract on live network
-        else if (network === 'paritydev')
-          companyAddress = '0x81866642828E92Aa2659F49925575827596b3443'; // here is priv key 0xc038edf5d1ae9b325991acffeab941809f9cbf3f511d7c053522ac0a610d71de
+        if (network === 'live') {
+            // provide company address that will manage contract on live network
+            companyAddress = '';
+        }
+        else if (network === 'ropsten') {
+          // company role public address on ropsten
+          companyAddress = '0x1078291bbcc539f51559f14bc57d1575d3801df8';
+        }
         else {
             // 0 is default account, make company to use account 1
-            companyAddress = accounts[1]; // on other networks deploying account is the company
+            companyAddress = accounts[1];
         }
         deployer.logger.log(`Assuming account ${companyAddress} as a company`);
         await deployer.deploy(CALCULATOR, companyAddress);
