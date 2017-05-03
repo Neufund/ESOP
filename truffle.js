@@ -28,7 +28,7 @@ module.exports = {
             host: "localhost", // local parity ropsten node with nano attached
             port: 8444,
             network_id: "3",
-            from: '0xDba5a21D0B5DEAD8D63d5A4edf881005751211C2' // public key of owner role
+            from: '0xDba5a21D0B5DEAD8D63d5A4edf881005751211C2' // public key of admin role
         },
         "live": {
             network_id: 1 // Ethereum public network
