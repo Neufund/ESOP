@@ -13,11 +13,13 @@ Neufund eats its own food and offers employees ESOP via a smart contract where o
 4. Smart contracts are self-enforcing and do all calculations and bookkeeping. They are very cheap once written and tested. ESOP d-app UI (https://github.com/Neufund/ESOP-ui) is easy to deploy with minimal maintenance costs.
 
 ## ESOP Algorithm
+
 ### ESOP Roles and Lifecycles
-There are 3 main roles in ESOP project:
-1. `owner` which represents company's sysadmin that deploys and upgrades smart contracts.
-2. `company` which represents company management. Transactions signed by this role are deemed to be executed by Neufund (in case of our ESOP deployment). There are several reasons to have a separate account for this, but primarily we do not want `owner` to execute any ESOP logic, instead we provide nice d-app which our can be used by non-technical people.
-3. `employee` which corresponds to employee receiving and exercising options.
+
+There are two main roles in ESOP project:
+
+1. `company` which represents the company management. Transactions signed by this role are deemed to be executed by Neufund (in case of our ESOP deployment).
+2. `employee` which corresponds to employee receiving and exercising options.
 
 Employee life within ESOP starts when company offers him/her options. Employee should sign the offer within provided deadline. This starts his/her employment period (counted from so called `issue date`) If employee leaves company then he goes to `terminated` state which also stops the vesting. Employee may be also fired in which case s/he is removed from contract. Finally when exit/ICO etc. happens, conversion offer is made by company to employee which when accepted puts employee in `converted` state.
 Check `ESOPTypes.sol` for employee's possible states and properties.
