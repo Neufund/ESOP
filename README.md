@@ -22,11 +22,20 @@ There are two main roles in ESOP project:
 2. `employee` which corresponds to employee receiving and exercising options.
 
 Employee life within ESOP starts when company offers him/her options. Employee should sign the offer within provided deadline. This starts his/her employment period (counted from so called `issue date`) If employee leaves company then he goes to `terminated` state which also stops the vesting. Employee may be also fired in which case s/he is removed from contract. Finally when exit/ICO etc. happens, conversion offer is made by company to employee which when accepted puts employee in `converted` state.
-Check `ESOPTypes.sol` for employee's possible states and properties.
+
+The states in the contract are:
+
+1. `WaitingForSignature`: The employee needs to sign the ESOP contract.
+2. `Employed`: The company and employee have and agreement. This is the main state for the duration of employment.
+3. `Terminated`: The employee leaves the company or is fired. The contract distinguishes two types of terminating events:
+    a. `Regular`: The employee leaves, but keeps options subject to fade-out. (More about this later.)
+    b. `BadLeaver`: The employee leaves without any rights to options.
+4. `OptionsExercised`: When the company decides, options can be converted. When the employee has done this s/he goes into this final state.
 
 ESOP itself has simple lifecycle. When deployed, it is in `new` state. It is opened by providing configuration parameters by `company` role. At that point all actions involving employees may happen. When there is conversion event like exit, `company` will switch ESOP into `conversion` state in which options may be exercised by employees.
 
 ### Assigning new options
+
 Options are assigned to employees in two ways.
 
 1. A method preferred by us that rewards risk taken. It simply gives more options to employees that came to work for us earlier, nothing else matters. It works as follows: there is a pool of 1 000 000 options of which employee 1 gets 10% which is 100 000. Employee 2 gets 10% of what remains in the pool (that is 900 000 options) which equals 90 000 and so on and so on. We call options distributed in this way `pool options`.
