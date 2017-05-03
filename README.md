@@ -3,9 +3,9 @@
 There is a lot of stuff below on what ESOP is, how vesting works etc. If you are just interested in smart contract info go [here](#smart-contracts), for info on testing and deployment go [here](#development).
 
 ## What is ESOP and why we do it?
-ESOP stands for Employees Stock Options Plan. Many companies decide to include employees in company's success by offering them shares. Shares are typically available in form of options (mostly due to tax reasons) and are converted directly into cash when company has an IPO or gets acquired. There is a lot of interesting reasoning behind various ESOP structures and opinions when it works and when not. Here is a nice introduction: https://www.accion.org/sites/default/files/Accion%20Venture%20Lab%20-%20ESOP%20Best%20Practices.pdf
+ESOP stands for Employees Stock Options Plan. Many companies decide to allow employees to participate in company's long-term upside by offering them stock. Stock is typically available in form of options (mostly due to tax reasons) that are converted directly into cash when company has an IPO or gets acquired. There is a lot of interesting reasoning behind various ESOP structures and discussion when it works and when not. Here is a nice introduction: https://www.accion.org/sites/default/files/Accion%20Venture%20Lab%20-%20ESOP%20Best%20Practices.pdf
 
-Neufund eats its own food and offers employees ESOP via a smart contract where options are represented as Ethereum tokens. Employees are still provided with ESOP terms in readable English (we call it *legal wrapper*) which is generated from before mentioned smart contract. Such construct replaces paper agreement employee signs and adds many interesting things on top.
+Neufund eats its own food and offers employees ESOP via a smart contract where options are represented as Ethereum tokens. Employees are still provided with ESOP terms in readable English (we call it *ESOP Terms & Conditions Document*) which is generated from before mentioned smart contract. Such construct replaces paper agreement employee signs and adds many interesting things on top.
 
 1. Process of assigning options, vesting and converting are immutable and transparent (including rules on changing rules). Trustless trust is to large degree provided.
 2. It is enforceable in off-chain court like standard paper agreement, *however* as smart contracts are self-enforcing a need for legal action should be negligible.
@@ -22,7 +22,7 @@ There are 3 main roles in ESOP project:
 Employee life within ESOP starts when company offers him/her options. Employee should sign the offer within provided deadline. This starts his/her employment period (counted from so called `issue date`) If employee leaves company then he goes to `terminated` state which also stops the vesting. Employee may be also fired in which case s/he is removed from contract. Finally when exit/ICO etc. happens, conversion offer is made by company to employee which when accepted puts employee in `converted` state.
 Check `ESOPTypes.sol` for employee's possible states and properties.
 
-ESOP itself has simple lifecycle. When deployed, it is in `new` state. It is opened by providing configuration parameters by `company` role. At that point all actions involving employees may happen. When there is conversion event like exit, `company` will switch ESOP into `conversion` state in which options may be exercised by employees.
+ESOP itself has simple lifecycle. When deployed, it is in `new` state. It changes to `open` by providing configuration parameters by `company` role. At that point all actions involving employees may happen. When there is conversion event like exit, `company` will switch ESOP into `conversion` state in which options may be exercised by employees.
 
 ### Assigning new options
 Options are assigned to employees in two ways.
@@ -44,7 +44,7 @@ Please note that if exit, ICO etc. happens before `vesting period` is over, empl
 ### What happens when employee stops working for a company?
 Sometimes people leave and ESOP smart contract handles that as well.
 
-1. Company may remove employee from ESOP smart contract and cancel all his/her options. This is called `bad leaver event` in legal wrapper and may happen when for example employee breaks the law and needs to be fired. As you can expect such event cannot be defined in smart contract (there's no proper oracle yet in court system ;>) so this definition remains in legal wrapper.
+1. Company may remove employee from ESOP smart contract and cancel all his/her options. This is called `bad leaver event` in ESOP Terms & Conditions Document and may happen when for example employee breaks the law and needs to be fired. As you can expect such event cannot be defined in smart contract (there's no proper oracle yet in court system ;>) so this definition remains in Terms document.
 2. Employee may just leave company and go working somewhere else. This case is more complicated.
 ![fadeout](/doc/esop_with_fadeout.jpg)
 As you can see, vesting stops at the moment employee stops working at the company and all vested options are issued to employee. From that time amount of `vested options` is slowly decreasing down to `residual amount` sometimes called `floor`. Such process is called `fadeout` and fadeout period equals period of time employee worked at company. Smart contract may be configured for full fadeout and to not do any fadeout at all.
@@ -54,7 +54,7 @@ Terminated employee has no rights to `accelerated vesting` and no rights to `bon
 ### What is options conversion?
 Here is the most interesting thing about ESOP smart contract. At some point in time (called `conversion event`), if company is successful it gets acquired or does an IPO and shareholders make a lot of money. This is what happens classically and we fully support it. We, however, extend this definition to any ICO, tokenization event or even further by allowing direct trade of vested options.
 
-As you could expect there is no oracle for conversion events so those are defined in legal wrapper (see chapter 3). When such event happens employee may convert his/her options into shares, tokens or directly into EUR/ETH/BTC according to a Options Conversion Smart Contract (we have a few examples later) which will be provided by company when conversion event happens.
+As you could expect there is no oracle for conversion events so those are defined in ESOP Terms & Conditions Document (see chapter 3). When such event happens employee may convert his/her options into shares, tokens or directly into EUR/ETH/BTC according to a Options Conversion Smart Contract (we have a few examples later) which will be provided by company when conversion event happens.
 
 ## Procedures and Security
 Here's how Neufund handles security when issuing options.
@@ -68,7 +68,7 @@ Also it is clear for everyone that if you loose your private key you will loose 
 
 ## Smart Contracts
 ### `ESOP` contract
-`ESOP` smart contracts handles employees' lifecycle, manages options' pool and handles conversion offer via calling provided implementation of options conversion contracts. Implementation is pretty straightforward and functions more or less correspond to provisions in legal wrapper. Terminology is also preserved.
+`ESOP` smart contracts handles employees' lifecycle, manages options' pool and handles conversion offer via calling provided implementation of options conversion contracts. Implementation is pretty straightforward and functions more or less correspond to provisions in ESOP Terms & Conditions Document. Terminology is also preserved.
 All non-const functions return "logic" errors via return codes and can throw only in case of generic problems like no permission to call a function or invalid state of smart contracts. Return codes correspond to `ReturnCode` event, in case of `OK` return code, specific event is logged (like `EmployeeSignedToESOP`). I hope `revert` opcode gets implemented soon!
 `ESOP` aggregates the following contracts:
 * `OptionsCalculator` which handles all options calculations like computing vesting, fadeout etc. and after configuring provides just a set of public constant methods.
@@ -115,7 +115,7 @@ W provide two implementations of `BaseOptionsConverter`:
 Both example converters are nicely tested but they are not considered production grade so beware.
 
 ### Code Update
-Code update is strictly defined in legal wrapper chapter 8 and is reserved for bugfixing, optimization etc. where "spirit of the agreement" is not changed.
+Code update is strictly defined in ESOP Terms & Conditions Document chapter 8 and is reserved for bugfixing, optimization etc. where "spirit of the agreement" is not changed.
 
 Code update starts via calling methods defined in `CodeUpdateable` base class from which `ESOP` contract derives. During code update only constant method of this contract are available so state cannot be changed. Whole procedure ends with replacing ESOP contract address in `RoT` contract instance.
 
@@ -125,30 +125,31 @@ Please note that all old ESOP contracts (including `ESOP`, `EmployeesList` and `
 
 ### Migration to new ESOP
 Employee and company may agree to migrate to ESOP with different set of rules. This happens via `ESOPMigration` smart contract that is provided by company and then accepted by employee. Please check comments around `allowEmployeeMigration` and `employeeMigratesToNewESOP` functions in `ESOP` for many interesting details.
-Migration process is strictly defined in the legal wrapper.
+Migration process is strictly defined in ESOP Terms & Conditions Document.
 
 ### TODO
 * `ESOPTypes` should be a library that defines `Employee` type. Update is simple however `dapple` test framework does not appear to support libraries anymore and currently I will not port all the test to truffle (which lacks many useful features - see later).
 * Options pool management functions (fadeout and options re-distribution, see `removeEmployeesWithExpiredSignaturesAndReturnFadeout`) should go to separate library.
 * Port all solidity tests from `dapple` (which is sadly discontinued) to `truffle`.
 * Let employees allow company to recover their options if they loose their private key.
+* Implement option strike price as per employee variable.
 
-## Legal Wrapper
-Legal wrapper establishes ESOP and accompanying smart contracts as legally binding in off-chain legal system. Please read the source document in /legal folder, it is really interesting!
+## ESOP Terms & Conditions Document
+Terms document establishes ESOP and accompanying smart contracts as legally binding in off-chain legal system. Please read the source document in /legal folder, it is really interesting!
 
-A fundamental problem we had to solve is **which contract form should prevail in case of conflict: computer code vs. terms in legal wrapper**. It's a story similar to multi-lingual legal documents (like you sign your ESOP with Chinese company which is originally in Chinese but translated to English).
+A fundamental problem we had to solve is **which contract form should prevail in case of conflict: computer code vs. terms in Terms document**. It's a story similar to multi-lingual legal documents (like you sign your ESOP with Chinese company which is originally in Chinese but translated to English).
 
-* In case of ESOP agreement we have an asymmetric situation in terms of information and power. Employees are considered at disadvantage in both. In such case, to make agreement legally binding, **it must be proven that employee could understand what s/he was signing**. Thus we had to make **legal wrapper to prevail over smart contract** as it is easy for an employee to prove s/he could not understood the Solidity code and make court take his/her side. If there are any conflicts, English language is to prevail. This situation will persist until there is a smart contract language that people are able to understand or they all learn Solidity. Whichever happens first.
-* In case of b2b agreements like when Limited Partner joins VC Fund, there is a symmetry both in information and power. This allows a smart contract to prevail (if you are rich person you can always ask your developer buddies to check the contract for you, still it may be much cheaper than to ask lawyers to do the same). In case of b2b the legal wrapper may be limited to just the most important business terms and still hold in court.
+* In case of ESOP agreement we have an asymmetric situation in terms of information and power. Employees are considered at disadvantage in both. In such case, to make agreement legally binding, **it must be proven that employee could understand what s/he was signing**. Thus we had to make **ESOP Terms & Conditions Document to prevail over smart contract** as it is easy for an employee to prove s/he could not understood the Solidity code and make court take his/her side. If there are any conflicts, English language is to prevail. This situation will persist until there is a smart contract language that people are able to understand or they all learn Solidity. Whichever happens first.
+* In case of b2b agreements like when Limited Partner joins VC Fund, there is a symmetry both in information and power. This allows a smart contract to prevail (if you are rich person you can always ask your developer buddies to check the contract for you, still it may be much cheaper than to ask lawyers to do the same). In case of b2b the document with the Terms may be limited to just the most important business terms and still hold in court.
 
-Other fundamental problem is a possible conflict of spirit and letter of the law (remember TheDAO?). Can we have bugs in the code or all code is law? We are clearly on the side of spirit of law prevailing and our legal wrapper (and corresponding smart contract code!) contains **bug fixing provision** and **provision to change ESOP rules** in chapter 8.
+Other fundamental problem is a possible conflict of spirit and letter of the law (remember TheDAO?). Can we have bugs in the code or all code is law? We are clearly on the side of spirit of law prevailing and our Term document (and corresponding smart contract code!) contains **bug fixing provision** and **provision to change ESOP rules** in chapter 8.
 
 The same chapter defines a few other blockchain-related provisions like what we do in case of fork and what should happen when employee looses his/her private key (in short: s/he looses all their options so keep your keys safe).
 
 Technically, wrapper is just a text document stored in IPFS, whose hash is added to ESOP smart contract. This document is filled with employee-specific variables and may be printed for reference. As you could expect we do not translate EVM bytecode to English.
 
 ## UI/D-APP
-It's [here](https://github.com/Neufund/ESOP-ui). Please note that options subscription form has terminology and content defined in legal wrapper and d-app UI conforms to that.
+It's [here](https://github.com/Neufund/ESOP-ui). Please note that options subscription form has terminology and content defined in ESOP Terms & Conditions Document and d-app UI conforms to that.
 
 ## Development
 ### Compiler
@@ -179,7 +180,7 @@ with testrepc run with
 
 `test.CodeUpdate.js` is a notable test that demonstrated a whole procedure of code update of ESOP smart contract.
 
-### Test deployment
+### Local testrpc deployment
 We have defined following test deployments:
 
 **test_deployment** where block gas limit approximates mainnet limit
@@ -190,7 +191,45 @@ then run
 
 **test** to run integration tests, see chapter above.
 
-### Deployment on mainnet
+### Deployment on mainnet or ropsten
+
+* run local parity () node configured for ropsten or mainnet. if you want extended Nano Ledger support, use Neufund's parity fork ()
+
+```
+# run parity on ropsten with custom derivation path
+
+# run parity on mainnet
+```
+
+* create account for the `owner` role (at Neufund we use hardware wallet for that). insert `owner` address into network definition in truffle.js
+
+```
+ropsten: {
+    host: "localhost", // local parity ropsten node with nano attached
+    port: 8444,
+    network_id: "3",
+    from: '0xDba5a21D0B5DEAD8D63d5A4edf881005751211C2' // public key of owner role
+},
+```
+* create account for the `company` role and place it in deployment script `migrations/2_deploy_ESOP.js`
+
+```
+if (network === 'live') {
+        // provide company address that will manage contract on live network
+        companyAddress = '';
+    }
+    else if (network === 'ropsten') {
+      // company role public address on ropsten
+      companyAddress = '0x1078291bbcc539f51559f14bc57d1575d3801df8';
+    }
+    else {
+        // 0 is default account, make company to use account 1
+        companyAddress = accounts[1];
+    }
+```
+
+* make sure owner account has some ether and then deploy with `truffle deploy --network ropsten`
+* push artifact to build/ropsten so ESOP-ui can use it
 
 ### Make contract available in Etherscan
 
@@ -233,5 +272,3 @@ truffle migrate --network paritydev
 rm /home/rudolfix/.local/share/io.parity.ethereum/jsonrpc.ipc
 
 ```
-fineprints:
-I hereby subscribe for the Issued Options for shares in {company} under the terms and conditions as set out in the ESOP Smart Contract at address {sc-address} and made available to me in [title of legal wrapper].
