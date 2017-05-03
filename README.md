@@ -44,9 +44,10 @@ Options are assigned to employees in two ways:
 The `pool options` allocates more to employees that came to work for us earlier, this is our preferred method for rewarding the risk taken. Both methods can be combined, then `pool options + extra options == issued options`
 
 ### Employee's options over time
+
 Employee will not get all his/her options at the moment they are issued (however you can configure our smart contract to act in such way). Smart contract will release options up to all `issued options` with an algorithm called *vesting*.
 ![accelerated  vesting](/doc/accelerated_vesting.jpg)
-As you can see there is a period of time called `cliff period` (for example 1 year, configurable, may be 0) during which employee does not get any options.
+As you can see there is a period of time called `cliff period` during which employee does not get any options. In the example it is one year, but it is configurable and can be set to zero.
 
 Then during the `vesting period` (period configurable, also may be 0), number of options increases up until `issued options`. In case of exit, IPO, ICO etc. additional `bonus options` (for example 20%, configurable) are added on top of issued options.
 
@@ -78,7 +79,9 @@ Here's how Neufund handles security when issuing options.
 Also it is clear for everyone that if you loose your private key you will loose all your options.
 
 ## Smart Contracts
+
 ### `ESOP` contract
+
 `ESOP` smart contracts handles employees' lifecycle, manages options' pool and handles conversion offer via calling provided implementation of options conversion contracts. Implementation is pretty straightforward and functions more or less correspond to provisions in legal wrapper. Terminology is also preserved.
 
 All non-const functions return "logic" errors via return codes and can throw only in case of generic problems like no permission to call a function or invalid state of smart contracts. Return codes correspond to `ReturnCode` event, in case of `OK` return code, specific event is logged (like `EmployeeSignedToESOP`). I hope `revert` opcode gets implemented soon!
@@ -129,9 +132,9 @@ The right to change ESOP implementation and current owner `RoT` is with `company
 Options converter implementation will correspond to given conversion scenario (for example cash payout after exit is different from getting tokens in ICO). However, each such contract must derive from `BaseOptionsConverter` which is provided to `ESOP` smart contract by `company`.
 
 At minimum `exerciseOptions` function must be implemented (except two getters) that will be called by `ESOP` smart contract on behalf of employee when s/he decides to execute options. Please note that employee can burn his/her options - see comments in base class for details.
-W provide two implementations of `BaseOptionsConverter`:
+We provide two implementations of `BaseOptionsConverter`:
 
-* `ERC20OptionsConverter` which converts options into ERC20 token.
+* `ERC20OptionsConverter` which converts options into ERC20 tokens.
 * 'ProceedsOptionsConverter' that adds proceeds payouts via withdrawal pattern with several payouts made by company. Token trading is still enabled.
 
 Both example converters are nicely tested but they are not considered production grade so beware.
@@ -149,6 +152,7 @@ Please note that all old ESOP contracts (including `ESOP`, `EmployeesList` and `
 ### Migration to new ESOP
 
 Employee and company may agree to migrate to ESOP with different set of rules. This happens via `ESOPMigration` smart contract that is provided by company and then accepted by employee. Please check comments around `allowEmployeeMigration` and `employeeMigratesToNewESOP` functions in `ESOP` for many interesting details.
+
 Migration process is strictly defined in the legal wrapper.
 
 ### TODO
@@ -159,6 +163,7 @@ Migration process is strictly defined in the legal wrapper.
 * Let employees allow company to recover their options if they loose their private key.
 
 ## Legal Wrapper
+
 Legal wrapper establishes ESOP and accompanying smart contracts as legally binding in off-chain legal system. Please read the source document in /legal folder, it is really interesting!
 
 A fundamental problem we had to solve is **which contract form should prevail in case of conflict: computer code vs. terms in legal wrapper**. It's a story similar to multi-lingual legal documents (like you sign your ESOP with Chinese company which is originally in Chinese but translated to English).
