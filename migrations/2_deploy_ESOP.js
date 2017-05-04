@@ -16,12 +16,16 @@ module.exports = function (deployer, network, accounts) {
         }
         else if (network === 'ropsten') {
             // company role public address on ropsten
-            companyAddress = '0x1078291bbcc539f51559f14bc57d1575d3801df8';
+            companyAddress = '0xa55e5ce2a6f5fbd66ef3d5a5a6407e1b6bedd1c9';
         }
         else if (network == 'paritydev') {
             // local paritu dev company account
             // priv key is c017c5558bed2c8d6ce3b7a488dcbeb470cad1127cbbf024d27322397b2d69ba
             companyAddress = '0x911b1edc92211a549eb1d7080046d631113a148b';
+        }
+        else if (network === 'kovan') {
+            // company role public address on kovan
+            companyAddress = '0xFAFfd72A5fc6375eac399cce6141210723bd8889';
         }
         else {
             // 0 is default account, make company to use account 1
