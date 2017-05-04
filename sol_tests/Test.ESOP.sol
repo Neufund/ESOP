@@ -572,4 +572,18 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     esop.mockTime(0);
     assertEq(uint(esop.currentTime()), block.timestamp);
   }
+
+  function testThrowOnSecondSetParameters() {
+    // options calculator should throw on second call to set parameters
+    OptionsCalculator calc = new OptionsCalculator(this);
+    calc.setParameters(1 years, 4 years, uint32(calc.FP_SCALE()), uint32(calc.FP_SCALE()), uint32(calc.FP_SCALE()), 1);
+    calc.setParameters(1 years, 4 years, uint32(calc.FP_SCALE()), uint32(calc.FP_SCALE()), uint32(calc.FP_SCALE()), 1);
+  }
+
+  function testOptionsCalculatorHasSetParameters() {
+    OptionsCalculator calc = new OptionsCalculator(this);
+    assertEq(calc.hasParameters(), false);
+    calc.setParameters(1 years, 4 years, uint32(calc.FP_SCALE()), uint32(calc.FP_SCALE()), uint32(calc.FP_SCALE()), 1);
+    assertEq(calc.hasParameters(), true);
+  }
 }
