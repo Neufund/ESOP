@@ -21,6 +21,8 @@ contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
   uint constant public STRIKE_PRICE = 1;
   // company address
   address public companyAddress;
+  // checks if calculator i initialized
+  function hasParameters() public constant returns(bool) { return optionsPerShare > 0; }
 
   modifier onlyCompany() {
     if (companyAddress != msg.sender)
@@ -172,19 +174,22 @@ contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
   }
 
   function setParameters(uint32 pCliffPeriod, uint32 pVestingPeriod, uint32 pResidualAmountPromille,
-    uint32 pbonusOptionsPromille, uint32 pNewEmployeePoolPromille, uint32 pOptionsPerShare)
+    uint32 pBonusOptionsPromille, uint32 pNewEmployeePoolPromille, uint32 pOptionsPerShare)
     external
     onlyCompany
   {
-    if (maxFadeoutPromille > FP_SCALE || bonusOptionsPromille > FP_SCALE || newEmployeePoolPromille > FP_SCALE
+    if (pResidualAmountPromille > FP_SCALE || pBonusOptionsPromille > FP_SCALE || pNewEmployeePoolPromille > FP_SCALE
      || pOptionsPerShare == 0)
       throw;
     if (pCliffPeriod > pVestingPeriod)
       throw;
+    // initialization cannot be called for a second time
+    if (hasParameters())
+      throw;
     cliffPeriod = pCliffPeriod;
     vestingPeriod = pVestingPeriod;
     maxFadeoutPromille = FP_SCALE - pResidualAmountPromille;
-    bonusOptionsPromille = pbonusOptionsPromille;
+    bonusOptionsPromille = pBonusOptionsPromille;
     newEmployeePoolPromille = pNewEmployeePoolPromille;
     optionsPerShare = pOptionsPerShare;
   }
