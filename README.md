@@ -1,5 +1,7 @@
 # Smart contracts and legal wrapper for implementing Employee Stock Options Plan
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/Neufund/ESOP.svg)](https://greenkeeper.io/)
+
 There is a lot of stuff below on what ESOP is, how vesting works etc. If you are just interested in smart contract info go [here](#smart-contracts), for info on testing and deployment go [here](#development).
 
 ## What is ESOP and why we do it?
