@@ -26,9 +26,15 @@ module.exports = {
         },
         ropsten: {
             host: "localhost", // local parity ropsten node with nano attached
-            port: 8444,
+            port: 8545,
             network_id: "3",
-            from: '0xDba5a21D0B5DEAD8D63d5A4edf881005751211C2' // public key of admin role
+            // from: '0xDba5a21D0B5DEAD8D63d5A4edf881005751211C2' // public key of admin role
+        },
+        kovan: {
+            host: "localhost", // local parity ropsten node with nano attached
+            port: 8545,
+            network_id: "42",
+            from: '0xE459a8c206B2E91d998CFBB187D0efc4FC7e92D3' // public key of admin role
         },
         "live": {
             network_id: 1 // Ethereum public network
