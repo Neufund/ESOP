@@ -78,7 +78,7 @@ contract ESOPMaker {
     emplist.transferOwnership(e);
     // company calls this
     optcalc.setParameters(1 years, 4 years, residualAmount, 2000, 1000, 360);
-    uint rc = uint(e.openESOP(1000080, ESOPLegalWrapperIPFSHash));
+    uint rc = uint(e.openESOP(833400, ESOPLegalWrapperIPFSHash));
     if (rc != 0)
       throw;
     return e;
