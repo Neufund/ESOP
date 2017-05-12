@@ -513,10 +513,30 @@ contract TestESOP is Test, ESOPMaker, Reporter, ESOPTypes, Math
     emp1.employeeSignsToESOP();
     ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
     esop.mockTime(ct);
-    esop.increaseEmployeeExtraOptions(emp1, 20000);
+    rc = uint(esop.increaseEmployeeExtraOptions(emp1, 20000));
+    assertEq(rc, 0);
     uint options = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
     assertEq(esop.totalExtraOptions(), 120000, "total extra pool");
     assertEq(options, divRound(120000,2), "vested");
+  }
+
+  function testIncreaseEmployeeExtraOptionsNotSigned() {
+    // check if extra options can be added when employee not yet signed
+    uint32 ct = esop.currentTime();
+    uint rc = uint(esop.offerOptionsToEmployee(emp1, ct, ct + 2 weeks, 50000, false));
+    assertEq(rc, 0);
+    uint maxopts = esop.totalPoolOptions() - esop.remainingPoolOptions();
+    rc = uint(esop.increaseEmployeeExtraOptions(emp1, 20000));
+    assertEq(rc, 0);
+    rc = uint(emp1.employeeSignsToESOP());
+    assertEq(rc, 0);
+    rc = uint(esop.increaseEmployeeExtraOptions(emp1, 30000));
+    assertEq(rc, 0);
+    ct += uint32(esop.optionsCalculator().vestingPeriod() / 2);
+    esop.mockTime(ct);
+    uint options = esop.calcEffectiveOptionsForEmployee(address(emp1), ct);
+    assertEq(esop.totalExtraOptions(), 100000, "total extra pool");
+    assertEq(options, divRound(100000 + maxopts,2), "vested");
   }
 
   function testFadeoutMoreThanCliff() {

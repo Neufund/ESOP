@@ -239,7 +239,7 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
     returns (ReturnCodes)
   {
     Employee memory emp = _loademp(e);
-    if (emp.state != EmployeeState.Employed) {
+    if (emp.state != EmployeeState.Employed && emp.state != EmployeeState.WaitingForSignature) {
       return _logerror(ReturnCodes.InvalidEmployeeState);
     }
     emp.extraOptions += extraOptions;
