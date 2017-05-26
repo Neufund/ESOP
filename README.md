@@ -163,6 +163,7 @@ Migration process is strictly defined in ESOP Terms & Conditions Document.
 * Port all solidity tests from `dapple` (which is sadly discontinued) to `truffle`.
 * Let employees allow company to recover their options if they loose their private key.
 * Implement option strike price as per employee variable.
+* Generate instance of the legal wrapper during option offer transaction, upload to IPFS and store the hash with options-offer transation. Then use this document to print. WARNING: this will make ESOP-ui dependent on some backend microservice. It's rather a good idea for future Neufund platform.
 
 ## ESOP Terms & Conditions Document
 
