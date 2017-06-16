@@ -37,7 +37,12 @@ module.exports = {
             from: '0xE459a8c206B2E91d998CFBB187D0efc4FC7e92D3' // public key of admin role
         },
         "live": {
-            network_id: 1 // Ethereum public network
+            network_id: 1, // Ethereum public network
+            host: "192.168.100.30", // local parity ropsten node with nano attached
+            port: 8545,
+            from: '0x11A1cEE1C6681EE8e6891164a3e3EAf17Ed0E207',
+            gas: 4100000, // close to current mainnet limit
+            gasPrice: 15000000000 // 15 gwei /shannon
             // optional config values
             // host - defaults to "localhost"
             // port - defaults to 8545
