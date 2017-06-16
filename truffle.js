@@ -41,8 +41,8 @@ module.exports = {
             host: "192.168.100.30", // local parity ropsten node with nano attached
             port: 8545,
             from: '0x11A1cEE1C6681EE8e6891164a3e3EAf17Ed0E207',
-            gas: 4100000, // close to current mainnet limit
-            gasPrice: 15000000000 // 15 gwei /shannon
+            gas: 4300000, // close to current mainnet limit
+            gasPrice: 21000000000 // 21 gwei /shannon
             // optional config values
             // host - defaults to "localhost"
             // port - defaults to 8545
