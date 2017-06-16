@@ -5,7 +5,7 @@
   "dependencies": {
     "babel-register": "^6.24.1",
     "dapple": "^0.8.48",
-    "truffle": "^3.2.1",
+    "truffle": "^3.2.5",
     "solium": "^0.2.2"
   },
   "devDependencies": {},
