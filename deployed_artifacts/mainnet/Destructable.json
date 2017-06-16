@@ -1,0 +1,43 @@
+{
+  "contract_name": "Destructable",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "selfdestruct",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    }
+  ],
+  "unlinked_binary": "0x60606040525b60008054600160a060020a03191633600160a060020a03161790555b5b610147806100316000396000f300606060405263ffffffff60e060020a600035041663679d38e081146100375780638da5cb5b14610049578063f2fde38b14610075575bfe5b341561003f57fe5b610047610093565b005b341561005157fe5b6100596100c0565b60408051600160a060020a039092168252519081900360200190f35b341561007d57fe5b610047600160a060020a03600435166100cf565b005b60005433600160a060020a039081169116146100af5760006000fd5b600054600160a060020a0316ff5b5b565b600054600160a060020a031681565b60005433600160a060020a039081169116146100eb5760006000fd5b600160a060020a038116156101165760008054600160a060020a031916600160a060020a0383161790555b5b5b505600a165627a7a72305820a22121893073e8e02196445c22559f8a38d5907a46e55ade66ed7cb5e57f28220029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1497615461895
+}

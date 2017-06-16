@@ -1,0 +1,281 @@
+{
+  "contract_name": "ERC20OptionsConverter",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "FP_SCALE",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_owner",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "name": "balance",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "employee",
+          "type": "address"
+        },
+        {
+          "name": "poolOptions",
+          "type": "uint256"
+        },
+        {
+          "name": "extraOptions",
+          "type": "uint256"
+        },
+        {
+          "name": "bonusOptions",
+          "type": "uint256"
+        },
+        {
+          "name": "agreeToAcceleratedVestingBonusConditions",
+          "type": "bool"
+        }
+      ],
+      "name": "exerciseOptions",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "optionsConversionDeadline",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "v1",
+          "type": "uint256"
+        },
+        {
+          "name": "v2",
+          "type": "uint256"
+        }
+      ],
+      "name": "absDiff",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "name": "transfer",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "t",
+          "type": "uint32"
+        }
+      ],
+      "name": "mockTime",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "uint256"
+        },
+        {
+          "name": "b",
+          "type": "uint256"
+        }
+      ],
+      "name": "safeMul",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "currentTime",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getExercisePeriodDeadline",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getESOP",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "esop",
+          "type": "address"
+        },
+        {
+          "name": "exerciseDeadline",
+          "type": "uint32"
+        },
+        {
+          "name": "conversionDeadline",
+          "type": "uint32"
+        }
+      ],
+      "payable": false,
+      "type": "constructor"
+    },
+    {
+      "payable": true,
+      "type": "fallback"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    }
+  ],
+  "unlinked_binary": "0x6060604052341561000c57fe5b6040516060806106278339810160409081528151602083015191909201515b60008054602060020a60c060020a031916640100000000600160a060020a038616021760c060020a63ffffffff021916780100000000000000000000000000000000000000000000000063ffffffff85811691909102919091179091556003805463ffffffff19169183169190911790555b5050505b610577806100b06000396000f3006060604052361561009e5763ffffffff60e060020a60003504166318160ddd81146100ac5780635573a34c146100ce57806370a08231146100f05780638e6df32f1461011e5780639c55519b1461014a578063a09ae0aa14610173578063a9059cbb1461019b578063c4e7099f146101bc578063d05c78da146101d7578063d18e81b3146101ff578063e1a7739c14610228578063f73c30e314610251575b6100aa5b60006000fd5b565b005b34156100b457fe5b6100bc61027d565b60408051918252519081900360200190f35b34156100d657fe5b6100bc610283565b60408051918252519081900360200190f35b34156100f857fe5b6100bc600160a060020a0360043516610289565b60408051918252519081900360200190f35b341561012657fe5b6100aa600160a060020a036004351660243560443560643560843515156102a8565b005b341561015257fe5b61015a61036b565b6040805163ffffffff9092168252519081900360200190f35b341561017b57fe5b6100bc600435602435610377565b60408051918252519081900360200190f35b34156101a357fe5b6100aa600160a060020a0360043516602435610395565b005b34156101c457fe5b6100aa63ffffffff6004351661043a565b005b34156101df57fe5b6100bc600435602435610464565b60408051918252519081900360200190f35b341561020757fe5b61015a61049b565b6040805163ffffffff9092168252519081900360200190f35b341561023057fe5b61015a6104d4565b6040805163ffffffff9092168252519081900360200190f35b341561025957fe5b6102616104e8565b60408051600160a060020a039092168252519081900360200190f35b60025481565b61271081565b600160a060020a0381166000908152600160205260409020545b919050565b60006102b26104e8565b600160a060020a031633600160a060020a03161415156102d25760006000fd5b60005460c060020a900463ffffffff166102ea61049b565b63ffffffff16106102fb5760006000fd5b61030e61030886866104ff565b846104ff565b905061031c600254826104ff565b600255600160a060020a03861660008181526001602090815260408083208054860190558051858152905160008051602061052c833981519152929181900390910190a35b5b5b505050505050565b60035463ffffffff1681565b60008183116103885782820361038c565b8183035b90505b92915050565b60035463ffffffff166103a661049b565b63ffffffff1610156103b85760006000fd5b600160a060020a033316600090815260016020526040902054819010156103df5760006000fd5b600160a060020a033381166000818152600160209081526040808320805487900390559386168083529184902080548601905583518581529351919360008051602061052c833981519152929081900390910190a35b5b5050565b6232993d43111561044b5760006000fd5b6000805463ffffffff191663ffffffff83161790555b50565b6000828202831580610480575082848281151561047d57fe5b04145b156100a257809150610493565b60006000fd5b5b5092915050565b600063ffffffff4211156104af5760006000fd5b6000805463ffffffff16116104c457426104ce565b60005463ffffffff165b90505b90565b60005460c060020a900463ffffffff165b90565b600054602060020a9004600160a060020a03165b90565b60008282018381108015906105145750828110155b15156105205760006000fd5b8091505b50929150505600ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3efa165627a7a72305820d2bdfbc0a8ef130c935047d7e8c60bd6dd9080e04dabf475427c7363f4b87a4f0029",
+  "networks": {
+    "1": {
+      "links": {},
+      "events": {
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "value",
+              "type": "uint256"
+            }
+          ],
+          "name": "Transfer",
+          "type": "event"
+        }
+      },
+      "updated_at": 1497617077375
+    }
+  },
+  "schema_version": "0.0.5",
+  "updated_at": 1497617077375
+}

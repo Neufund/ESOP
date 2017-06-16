@@ -1,0 +1,115 @@
+{
+  "contract_name": "RoT",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "ESOP",
+          "type": "address"
+        },
+        {
+          "name": "company",
+          "type": "address"
+        }
+      ],
+      "name": "setESOP",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "ESOPAddress",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "killOnUnsupportedFork",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "ESOPAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "companyAddress",
+          "type": "address"
+        }
+      ],
+      "name": "ESOPAndCompanySet",
+      "type": "event"
+    }
+  ],
+  "unlinked_binary": "0x60606040525b60008054600160a060020a03191633600160a060020a03161790555b5b610257806100316000396000f300606060405263ffffffff60e060020a60003504166323dd797b811461004d5780638da5cb5b14610071578063a09994361461009d578063f2fde38b146100c9578063f81a1860146100e7575bfe5b341561005557fe5b61006f600160a060020a03600435811690602435166100f9565b005b341561007957fe5b610081610184565b60408051600160a060020a039092168252519081900360200190f35b34156100a557fe5b610081610193565b60408051600160a060020a039092168252519081900360200190f35b34156100d157fe5b61006f600160a060020a03600435166101a2565b005b34156100ef57fe5b61006f6101ee565b005b60005433600160a060020a039081169116146101155760006000fd5b60018054600160a060020a031916600160a060020a038416179055610139816101a2565b60408051600160a060020a0380851682528316602082015281517ffd1343f12ef8aec2cfc51406ac5f6d6d2d4d4586184c43a26901e54e94273cf6929181900390910190a15b5b5050565b600054600160a060020a031681565b600154600160a060020a031681565b60005433600160a060020a039081169116146101be5760006000fd5b600160a060020a038116156101e95760008054600160a060020a031916600160a060020a0383161790555b5b5b50565b60005433600160a060020a0390811691161461020a5760006000fd5b60018054600160a060020a0319169055600054600160a060020a0316ff5b5b5600a165627a7a723058204504faf6e79cc672b12ec866bd8704b5359aefca6e58fdb5711ba39e0fb344840029",
+  "networks": {
+    "1": {
+      "events": {
+        "0xfd1343f12ef8aec2cfc51406ac5f6d6d2d4d4586184c43a26901e54e94273cf6": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "ESOPAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "companyAddress",
+              "type": "address"
+            }
+          ],
+          "name": "ESOPAndCompanySet",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0x0ece93150cd501a5181d0ad03f87b177b1db4e0a",
+      "updated_at": 1497617077089
+    }
+  },
+  "schema_version": "0.0.5",
+  "updated_at": 1497617077089
+}
