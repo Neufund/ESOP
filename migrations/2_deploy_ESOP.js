@@ -12,7 +12,7 @@ module.exports = function (deployer, network, accounts) {
         var companyAddress;
         if (network === 'live') {
             // provide company address that will manage contract on live network
-            companyAddress = '';
+            companyAddress = '0x0c53fe380aba335d144b6f0dbc6b588633f783d7';
         }
         else if (network === 'ropsten') {
             // company role public address on ropsten
