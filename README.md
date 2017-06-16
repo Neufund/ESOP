@@ -303,6 +303,8 @@ if (network === 'live') {
 `0000000000000000000000001078291bbcc539f51559f14bc57d1575d3801df8000000000000000000000000a88828cbbd18244592f4bdd5f536648f95293427000000000000000000000000279084bb08100eebdb76b5d4eb250ecf0f12f29d00000000000000000000000054bd298c02177d717617d643bf9aedab7314b576`
 7. Paste this into Etherescan and run,
 
+*truffle 3.2.5 uses non standard number of optimizer runs (solc 0.4.11) and you will not be able to verify source code with etherscan. modify truffle-compile to get standard behavior https://github.com/ethereum/solidity/issues/2245*
+
 ## Steps to reproduce and verify bytecode deployed on mainnet/ropsten
 
 
@@ -312,6 +314,8 @@ scratchbook
 ```
 RoT.at(RoT.address).ESOPAddress()
 ESOP.at(ESOP.address).rootOfTrust()
+RoT.deployed().then(function(i) { rot = i; } )
+
 
 # setting up dev chain on parity and get some eth
 parity --chain dev --jsonrpc-port 8444 ui
