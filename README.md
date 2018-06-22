@@ -136,7 +136,7 @@ At minimum `exerciseOptions` function must be implemented (except two getters) t
 We provide two implementations of `BaseOptionsConverter`:
 
 * `ERC20OptionsConverter` which converts options into ERC20 tokens.
-* 'ProceedsOptionsConverter' that adds proceeds payouts via withdrawal pattern with several payouts made by company. Token trading is still enabled.
+* `ProceedsOptionsConverter` that adds proceeds payouts via withdrawal pattern with several payouts made by company. Token trading is still enabled.
 
 Both example converters are nicely tested but they are not considered production grade so beware.
 
